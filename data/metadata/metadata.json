@@ -1,0 +1,682 @@
+{
+  "city_boundary": {
+    "dataset_name": "city_boundary",
+    "source": "OpenStreetMap via OSMnx",
+    "provider": "OSMnx",
+    "download_time": "2026-07-30T06:04:06.754627+00:00",
+    "projection": "EPSG:4326",
+    "bounding_box": {
+      "minx": 80.1401875,
+      "miny": 12.8519771,
+      "maxx": 80.3328982,
+      "maxy": 13.235158
+    },
+    "resolution": "Vector Polygon",
+    "file_size_bytes": 17894,
+    "license": "ODbL (Open Database License)",
+    "version": "1.0",
+    "checksum": "110d02617e04fb071ccfb1979b770419afa7545657dc5ea9c12802b8e17a7e15",
+    "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\boundary\\boundary.geojson",
+    "status": "SUCCESS"
+  },
+  "satellite_sentinel_sentinel2_scene_2024_01": {
+    "dataset_name": "satellite_sentinel_sentinel2_scene_2024_01",
+    "source": "Satellite Remote Sensing",
+    "provider": "sentinel",
+    "download_time": "2026-07-30T06:04:06.954358+00:00",
+    "projection": "EPSG:4326",
+    "bounding_box": {
+      "minx": 80.1401875,
+      "miny": 12.8519771,
+      "maxx": 80.3328982,
+      "maxy": 13.235158
+    },
+    "resolution": "10m-30m Multispectral",
+    "file_size_bytes": 30,
+    "license": "Open Access / Public Domain",
+    "version": "1.0",
+    "checksum": "d3edb94aa9b98ea448e6ed16e554eecd9d884af7f948f3b06efed8ac709995f3",
+    "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\satellite\\sentinel\\2024\\01\\sentinel2_scene_2024_01.tif",
+    "status": "SUCCESS"
+  },
+  "satellite_sentinel_sentinel2_scene_2024_02": {
+    "dataset_name": "satellite_sentinel_sentinel2_scene_2024_02",
+    "source": "Satellite Remote Sensing",
+    "provider": "sentinel",
+    "download_time": "2026-07-30T06:04:06.984091+00:00",
+    "projection": "EPSG:4326",
+    "bounding_box": {
+      "minx": 80.1401875,
+      "miny": 12.8519771,
+      "maxx": 80.3328982,
+      "maxy": 13.235158
+    },
+    "resolution": "10m-30m Multispectral",
+    "file_size_bytes": 30,
+    "license": "Open Access / Public Domain",
+    "version": "1.0",
+    "checksum": "d3edb94aa9b98ea448e6ed16e554eecd9d884af7f948f3b06efed8ac709995f3",
+    "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\satellite\\sentinel\\2024\\02\\sentinel2_scene_2024_02.tif",
+    "status": "SUCCESS"
+  },
+  "satellite_sentinel_sentinel2_scene_2024_03": {
+    "dataset_name": "satellite_sentinel_sentinel2_scene_2024_03",
+    "source": "Satellite Remote Sensing",
+    "provider": "sentinel",
+    "download_time": "2026-07-30T06:04:07.012707+00:00",
+    "projection": "EPSG:4326",
+    "bounding_box": {
+      "minx": 80.1401875,
+      "miny": 12.8519771,
+      "maxx": 80.3328982,
+      "maxy": 13.235158
+    },
+    "resolution": "10m-30m Multispectral",
+    "file_size_bytes": 30,
+    "license": "Open Access / Public Domain",
+    "version": "1.0",
+    "checksum": "d3edb94aa9b98ea448e6ed16e554eecd9d884af7f948f3b06efed8ac709995f3",
+    "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\satellite\\sentinel\\2024\\03\\sentinel2_scene_2024_03.tif",
+    "status": "SUCCESS"
+  },
+  "satellite_sentinel_sentinel2_scene_2024_04": {
+    "dataset_name": "satellite_sentinel_sentinel2_scene_2024_04",
+    "source": "Satellite Remote Sensing",
+    "provider": "sentinel",
+    "download_time": "2026-07-30T06:04:07.053023+00:00",
+    "projection": "EPSG:4326",
+    "bounding_box": {
+      "minx": 80.1401875,
+      "miny": 12.8519771,
+      "maxx": 80.3328982,
+      "maxy": 13.235158
+    },
+    "resolution": "10m-30m Multispectral",
+    "file_size_bytes": 30,
+    "license": "Open Access / Public Domain",
+    "version": "1.0",
+    "checksum": "d3edb94aa9b98ea448e6ed16e554eecd9d884af7f948f3b06efed8ac709995f3",
+    "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\satellite\\sentinel\\2024\\04\\sentinel2_scene_2024_04.tif",
+    "status": "SUCCESS"
+  },
+  "satellite_sentinel_sentinel2_scene_2024_05": {
+    "dataset_name": "satellite_sentinel_sentinel2_scene_2024_05",
+    "source": "Satellite Remote Sensing",
+    "provider": "sentinel",
+    "download_time": "2026-07-30T06:04:07.094113+00:00",
+    "projection": "EPSG:4326",
+    "bounding_box": {
+      "minx": 80.1401875,
+      "miny": 12.8519771,
+      "maxx": 80.3328982,
+      "maxy": 13.235158
+    },
+    "resolution": "10m-30m Multispectral",
+    "file_size_bytes": 30,
+    "license": "Open Access / Public Domain",
+    "version": "1.0",
+    "checksum": "d3edb94aa9b98ea448e6ed16e554eecd9d884af7f948f3b06efed8ac709995f3",
+    "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\satellite\\sentinel\\2024\\05\\sentinel2_scene_2024_05.tif",
+    "status": "SUCCESS"
+  },
+  "satellite_sentinel_sentinel2_scene_2024_06": {
+    "dataset_name": "satellite_sentinel_sentinel2_scene_2024_06",
+    "source": "Satellite Remote Sensing",
+    "provider": "sentinel",
+    "download_time": "2026-07-30T06:04:07.149146+00:00",
+    "projection": "EPSG:4326",
+    "bounding_box": {
+      "minx": 80.1401875,
+      "miny": 12.8519771,
+      "maxx": 80.3328982,
+      "maxy": 13.235158
+    },
+    "resolution": "10m-30m Multispectral",
+    "file_size_bytes": 30,
+    "license": "Open Access / Public Domain",
+    "version": "1.0",
+    "checksum": "d3edb94aa9b98ea448e6ed16e554eecd9d884af7f948f3b06efed8ac709995f3",
+    "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\satellite\\sentinel\\2024\\06\\sentinel2_scene_2024_06.tif",
+    "status": "SUCCESS"
+  },
+  "satellite_sentinel_sentinel2_scene_2024_07": {
+    "dataset_name": "satellite_sentinel_sentinel2_scene_2024_07",
+    "source": "Satellite Remote Sensing",
+    "provider": "sentinel",
+    "download_time": "2026-07-30T06:04:07.186317+00:00",
+    "projection": "EPSG:4326",
+    "bounding_box": {
+      "minx": 80.1401875,
+      "miny": 12.8519771,
+      "maxx": 80.3328982,
+      "maxy": 13.235158
+    },
+    "resolution": "10m-30m Multispectral",
+    "file_size_bytes": 30,
+    "license": "Open Access / Public Domain",
+    "version": "1.0",
+    "checksum": "d3edb94aa9b98ea448e6ed16e554eecd9d884af7f948f3b06efed8ac709995f3",
+    "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\satellite\\sentinel\\2024\\07\\sentinel2_scene_2024_07.tif",
+    "status": "SUCCESS"
+  },
+  "satellite_sentinel_sentinel2_scene_2024_08": {
+    "dataset_name": "satellite_sentinel_sentinel2_scene_2024_08",
+    "source": "Satellite Remote Sensing",
+    "provider": "sentinel",
+    "download_time": "2026-07-30T06:04:07.216364+00:00",
+    "projection": "EPSG:4326",
+    "bounding_box": {
+      "minx": 80.1401875,
+      "miny": 12.8519771,
+      "maxx": 80.3328982,
+      "maxy": 13.235158
+    },
+    "resolution": "10m-30m Multispectral",
+    "file_size_bytes": 30,
+    "license": "Open Access / Public Domain",
+    "version": "1.0",
+    "checksum": "d3edb94aa9b98ea448e6ed16e554eecd9d884af7f948f3b06efed8ac709995f3",
+    "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\satellite\\sentinel\\2024\\08\\sentinel2_scene_2024_08.tif",
+    "status": "SUCCESS"
+  },
+  "satellite_sentinel_sentinel2_scene_2024_09": {
+    "dataset_name": "satellite_sentinel_sentinel2_scene_2024_09",
+    "source": "Satellite Remote Sensing",
+    "provider": "sentinel",
+    "download_time": "2026-07-30T06:04:07.240128+00:00",
+    "projection": "EPSG:4326",
+    "bounding_box": {
+      "minx": 80.1401875,
+      "miny": 12.8519771,
+      "maxx": 80.3328982,
+      "maxy": 13.235158
+    },
+    "resolution": "10m-30m Multispectral",
+    "file_size_bytes": 30,
+    "license": "Open Access / Public Domain",
+    "version": "1.0",
+    "checksum": "d3edb94aa9b98ea448e6ed16e554eecd9d884af7f948f3b06efed8ac709995f3",
+    "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\satellite\\sentinel\\2024\\09\\sentinel2_scene_2024_09.tif",
+    "status": "SUCCESS"
+  },
+  "satellite_sentinel_sentinel2_scene_2024_10": {
+    "dataset_name": "satellite_sentinel_sentinel2_scene_2024_10",
+    "source": "Satellite Remote Sensing",
+    "provider": "sentinel",
+    "download_time": "2026-07-30T06:04:07.266146+00:00",
+    "projection": "EPSG:4326",
+    "bounding_box": {
+      "minx": 80.1401875,
+      "miny": 12.8519771,
+      "maxx": 80.3328982,
+      "maxy": 13.235158
+    },
+    "resolution": "10m-30m Multispectral",
+    "file_size_bytes": 30,
+    "license": "Open Access / Public Domain",
+    "version": "1.0",
+    "checksum": "d3edb94aa9b98ea448e6ed16e554eecd9d884af7f948f3b06efed8ac709995f3",
+    "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\satellite\\sentinel\\2024\\10\\sentinel2_scene_2024_10.tif",
+    "status": "SUCCESS"
+  },
+  "satellite_sentinel_sentinel2_scene_2024_11": {
+    "dataset_name": "satellite_sentinel_sentinel2_scene_2024_11",
+    "source": "Satellite Remote Sensing",
+    "provider": "sentinel",
+    "download_time": "2026-07-30T06:04:07.290001+00:00",
+    "projection": "EPSG:4326",
+    "bounding_box": {
+      "minx": 80.1401875,
+      "miny": 12.8519771,
+      "maxx": 80.3328982,
+      "maxy": 13.235158
+    },
+    "resolution": "10m-30m Multispectral",
+    "file_size_bytes": 30,
+    "license": "Open Access / Public Domain",
+    "version": "1.0",
+    "checksum": "d3edb94aa9b98ea448e6ed16e554eecd9d884af7f948f3b06efed8ac709995f3",
+    "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\satellite\\sentinel\\2024\\11\\sentinel2_scene_2024_11.tif",
+    "status": "SUCCESS"
+  },
+  "satellite_sentinel_sentinel2_scene_2024_12": {
+    "dataset_name": "satellite_sentinel_sentinel2_scene_2024_12",
+    "source": "Satellite Remote Sensing",
+    "provider": "sentinel",
+    "download_time": "2026-07-30T06:04:07.315591+00:00",
+    "projection": "EPSG:4326",
+    "bounding_box": {
+      "minx": 80.1401875,
+      "miny": 12.8519771,
+      "maxx": 80.3328982,
+      "maxy": 13.235158
+    },
+    "resolution": "10m-30m Multispectral",
+    "file_size_bytes": 30,
+    "license": "Open Access / Public Domain",
+    "version": "1.0",
+    "checksum": "d3edb94aa9b98ea448e6ed16e554eecd9d884af7f948f3b06efed8ac709995f3",
+    "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\satellite\\sentinel\\2024\\12\\sentinel2_scene_2024_12.tif",
+    "status": "SUCCESS"
+  },
+  "satellite_landsat_landsat8_scene_2024_01": {
+    "dataset_name": "satellite_landsat_landsat8_scene_2024_01",
+    "source": "Satellite Remote Sensing",
+    "provider": "landsat",
+    "download_time": "2026-07-30T06:04:07.482077+00:00",
+    "projection": "EPSG:4326",
+    "bounding_box": {
+      "minx": 80.1401875,
+      "miny": 12.8519771,
+      "maxx": 80.3328982,
+      "maxy": 13.235158
+    },
+    "resolution": "10m-30m Multispectral",
+    "file_size_bytes": 30,
+    "license": "Open Access / Public Domain",
+    "version": "1.0",
+    "checksum": "d3edb94aa9b98ea448e6ed16e554eecd9d884af7f948f3b06efed8ac709995f3",
+    "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\satellite\\landsat\\2024\\01\\landsat8_scene_2024_01.tif",
+    "status": "SUCCESS"
+  },
+  "satellite_landsat_landsat8_scene_2024_02": {
+    "dataset_name": "satellite_landsat_landsat8_scene_2024_02",
+    "source": "Satellite Remote Sensing",
+    "provider": "landsat",
+    "download_time": "2026-07-30T06:04:07.505301+00:00",
+    "projection": "EPSG:4326",
+    "bounding_box": {
+      "minx": 80.1401875,
+      "miny": 12.8519771,
+      "maxx": 80.3328982,
+      "maxy": 13.235158
+    },
+    "resolution": "10m-30m Multispectral",
+    "file_size_bytes": 30,
+    "license": "Open Access / Public Domain",
+    "version": "1.0",
+    "checksum": "d3edb94aa9b98ea448e6ed16e554eecd9d884af7f948f3b06efed8ac709995f3",
+    "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\satellite\\landsat\\2024\\02\\landsat8_scene_2024_02.tif",
+    "status": "SUCCESS"
+  },
+  "satellite_landsat_landsat8_scene_2024_03": {
+    "dataset_name": "satellite_landsat_landsat8_scene_2024_03",
+    "source": "Satellite Remote Sensing",
+    "provider": "landsat",
+    "download_time": "2026-07-30T06:04:07.531186+00:00",
+    "projection": "EPSG:4326",
+    "bounding_box": {
+      "minx": 80.1401875,
+      "miny": 12.8519771,
+      "maxx": 80.3328982,
+      "maxy": 13.235158
+    },
+    "resolution": "10m-30m Multispectral",
+    "file_size_bytes": 30,
+    "license": "Open Access / Public Domain",
+    "version": "1.0",
+    "checksum": "d3edb94aa9b98ea448e6ed16e554eecd9d884af7f948f3b06efed8ac709995f3",
+    "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\satellite\\landsat\\2024\\03\\landsat8_scene_2024_03.tif",
+    "status": "SUCCESS"
+  },
+  "satellite_landsat_landsat8_scene_2024_04": {
+    "dataset_name": "satellite_landsat_landsat8_scene_2024_04",
+    "source": "Satellite Remote Sensing",
+    "provider": "landsat",
+    "download_time": "2026-07-30T06:04:07.556728+00:00",
+    "projection": "EPSG:4326",
+    "bounding_box": {
+      "minx": 80.1401875,
+      "miny": 12.8519771,
+      "maxx": 80.3328982,
+      "maxy": 13.235158
+    },
+    "resolution": "10m-30m Multispectral",
+    "file_size_bytes": 30,
+    "license": "Open Access / Public Domain",
+    "version": "1.0",
+    "checksum": "d3edb94aa9b98ea448e6ed16e554eecd9d884af7f948f3b06efed8ac709995f3",
+    "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\satellite\\landsat\\2024\\04\\landsat8_scene_2024_04.tif",
+    "status": "SUCCESS"
+  },
+  "satellite_landsat_landsat8_scene_2024_05": {
+    "dataset_name": "satellite_landsat_landsat8_scene_2024_05",
+    "source": "Satellite Remote Sensing",
+    "provider": "landsat",
+    "download_time": "2026-07-30T06:04:07.581976+00:00",
+    "projection": "EPSG:4326",
+    "bounding_box": {
+      "minx": 80.1401875,
+      "miny": 12.8519771,
+      "maxx": 80.3328982,
+      "maxy": 13.235158
+    },
+    "resolution": "10m-30m Multispectral",
+    "file_size_bytes": 30,
+    "license": "Open Access / Public Domain",
+    "version": "1.0",
+    "checksum": "d3edb94aa9b98ea448e6ed16e554eecd9d884af7f948f3b06efed8ac709995f3",
+    "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\satellite\\landsat\\2024\\05\\landsat8_scene_2024_05.tif",
+    "status": "SUCCESS"
+  },
+  "satellite_landsat_landsat8_scene_2024_06": {
+    "dataset_name": "satellite_landsat_landsat8_scene_2024_06",
+    "source": "Satellite Remote Sensing",
+    "provider": "landsat",
+    "download_time": "2026-07-30T06:04:07.615129+00:00",
+    "projection": "EPSG:4326",
+    "bounding_box": {
+      "minx": 80.1401875,
+      "miny": 12.8519771,
+      "maxx": 80.3328982,
+      "maxy": 13.235158
+    },
+    "resolution": "10m-30m Multispectral",
+    "file_size_bytes": 30,
+    "license": "Open Access / Public Domain",
+    "version": "1.0",
+    "checksum": "d3edb94aa9b98ea448e6ed16e554eecd9d884af7f948f3b06efed8ac709995f3",
+    "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\satellite\\landsat\\2024\\06\\landsat8_scene_2024_06.tif",
+    "status": "SUCCESS"
+  },
+  "satellite_landsat_landsat8_scene_2024_07": {
+    "dataset_name": "satellite_landsat_landsat8_scene_2024_07",
+    "source": "Satellite Remote Sensing",
+    "provider": "landsat",
+    "download_time": "2026-07-30T06:04:07.650870+00:00",
+    "projection": "EPSG:4326",
+    "bounding_box": {
+      "minx": 80.1401875,
+      "miny": 12.8519771,
+      "maxx": 80.3328982,
+      "maxy": 13.235158
+    },
+    "resolution": "10m-30m Multispectral",
+    "file_size_bytes": 30,
+    "license": "Open Access / Public Domain",
+    "version": "1.0",
+    "checksum": "d3edb94aa9b98ea448e6ed16e554eecd9d884af7f948f3b06efed8ac709995f3",
+    "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\satellite\\landsat\\2024\\07\\landsat8_scene_2024_07.tif",
+    "status": "SUCCESS"
+  },
+  "satellite_landsat_landsat8_scene_2024_08": {
+    "dataset_name": "satellite_landsat_landsat8_scene_2024_08",
+    "source": "Satellite Remote Sensing",
+    "provider": "landsat",
+    "download_time": "2026-07-30T06:04:07.683127+00:00",
+    "projection": "EPSG:4326",
+    "bounding_box": {
+      "minx": 80.1401875,
+      "miny": 12.8519771,
+      "maxx": 80.3328982,
+      "maxy": 13.235158
+    },
+    "resolution": "10m-30m Multispectral",
+    "file_size_bytes": 30,
+    "license": "Open Access / Public Domain",
+    "version": "1.0",
+    "checksum": "d3edb94aa9b98ea448e6ed16e554eecd9d884af7f948f3b06efed8ac709995f3",
+    "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\satellite\\landsat\\2024\\08\\landsat8_scene_2024_08.tif",
+    "status": "SUCCESS"
+  },
+  "satellite_landsat_landsat8_scene_2024_09": {
+    "dataset_name": "satellite_landsat_landsat8_scene_2024_09",
+    "source": "Satellite Remote Sensing",
+    "provider": "landsat",
+    "download_time": "2026-07-30T06:04:07.707449+00:00",
+    "projection": "EPSG:4326",
+    "bounding_box": {
+      "minx": 80.1401875,
+      "miny": 12.8519771,
+      "maxx": 80.3328982,
+      "maxy": 13.235158
+    },
+    "resolution": "10m-30m Multispectral",
+    "file_size_bytes": 30,
+    "license": "Open Access / Public Domain",
+    "version": "1.0",
+    "checksum": "d3edb94aa9b98ea448e6ed16e554eecd9d884af7f948f3b06efed8ac709995f3",
+    "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\satellite\\landsat\\2024\\09\\landsat8_scene_2024_09.tif",
+    "status": "SUCCESS"
+  },
+  "satellite_landsat_landsat8_scene_2024_10": {
+    "dataset_name": "satellite_landsat_landsat8_scene_2024_10",
+    "source": "Satellite Remote Sensing",
+    "provider": "landsat",
+    "download_time": "2026-07-30T06:04:07.735393+00:00",
+    "projection": "EPSG:4326",
+    "bounding_box": {
+      "minx": 80.1401875,
+      "miny": 12.8519771,
+      "maxx": 80.3328982,
+      "maxy": 13.235158
+    },
+    "resolution": "10m-30m Multispectral",
+    "file_size_bytes": 30,
+    "license": "Open Access / Public Domain",
+    "version": "1.0",
+    "checksum": "d3edb94aa9b98ea448e6ed16e554eecd9d884af7f948f3b06efed8ac709995f3",
+    "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\satellite\\landsat\\2024\\10\\landsat8_scene_2024_10.tif",
+    "status": "SUCCESS"
+  },
+  "satellite_landsat_landsat8_scene_2024_11": {
+    "dataset_name": "satellite_landsat_landsat8_scene_2024_11",
+    "source": "Satellite Remote Sensing",
+    "provider": "landsat",
+    "download_time": "2026-07-30T06:04:07.762710+00:00",
+    "projection": "EPSG:4326",
+    "bounding_box": {
+      "minx": 80.1401875,
+      "miny": 12.8519771,
+      "maxx": 80.3328982,
+      "maxy": 13.235158
+    },
+    "resolution": "10m-30m Multispectral",
+    "file_size_bytes": 30,
+    "license": "Open Access / Public Domain",
+    "version": "1.0",
+    "checksum": "d3edb94aa9b98ea448e6ed16e554eecd9d884af7f948f3b06efed8ac709995f3",
+    "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\satellite\\landsat\\2024\\11\\landsat8_scene_2024_11.tif",
+    "status": "SUCCESS"
+  },
+  "satellite_landsat_landsat8_scene_2024_12": {
+    "dataset_name": "satellite_landsat_landsat8_scene_2024_12",
+    "source": "Satellite Remote Sensing",
+    "provider": "landsat",
+    "download_time": "2026-07-30T06:04:07.789449+00:00",
+    "projection": "EPSG:4326",
+    "bounding_box": {
+      "minx": 80.1401875,
+      "miny": 12.8519771,
+      "maxx": 80.3328982,
+      "maxy": 13.235158
+    },
+    "resolution": "10m-30m Multispectral",
+    "file_size_bytes": 30,
+    "license": "Open Access / Public Domain",
+    "version": "1.0",
+    "checksum": "d3edb94aa9b98ea448e6ed16e554eecd9d884af7f948f3b06efed8ac709995f3",
+    "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\satellite\\landsat\\2024\\12\\landsat8_scene_2024_12.tif",
+    "status": "SUCCESS"
+  },
+  "vector_roads": {
+    "dataset_name": "vector_roads",
+    "source": "OpenStreetMap via OSMnx",
+    "provider": "OSMnx",
+    "download_time": "2026-07-30T06:04:08.159877+00:00",
+    "projection": "EPSG:4326",
+    "bounding_box": {
+      "minx": 80.1401875,
+      "miny": 12.8519771,
+      "maxx": 80.3328982,
+      "maxy": 13.235158
+    },
+    "resolution": "Existing feature layer",
+    "file_size_bytes": 292945962,
+    "license": "ODbL (Open Database License)",
+    "version": "1.0",
+    "checksum": "4f94e76c7cbaba17d173a9d3fa68269e86739c7daeceec329659d8aa55bc36ef",
+    "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\vector\\roads.geojson",
+    "status": "SUCCESS"
+  },
+  "vector_buildings": {
+    "dataset_name": "vector_buildings",
+    "source": "OpenStreetMap via OSMnx",
+    "provider": "OSMnx",
+    "download_time": "2026-07-30T06:04:10.198524+00:00",
+    "projection": "EPSG:4326",
+    "bounding_box": {
+      "minx": 80.1401875,
+      "miny": 12.8519771,
+      "maxx": 80.3328982,
+      "maxy": 13.235158
+    },
+    "resolution": "Existing feature layer",
+    "file_size_bytes": 1698973155,
+    "license": "ODbL (Open Database License)",
+    "version": "1.0",
+    "checksum": "31c97e213f5221aa2744d27c0da0330bfd70473a6bf4ae9323eafb9bd8dd85c2",
+    "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\vector\\buildings.geojson",
+    "status": "SUCCESS"
+  },
+  "vector_water": {
+    "dataset_name": "vector_water",
+    "source": "OpenStreetMap via OSMnx",
+    "provider": "OSMnx",
+    "download_time": "2026-07-30T06:04:10.238537+00:00",
+    "projection": "EPSG:4326",
+    "bounding_box": {
+      "minx": 80.1401875,
+      "miny": 12.8519771,
+      "maxx": 80.3328982,
+      "maxy": 13.235158
+    },
+    "resolution": "Existing feature layer",
+    "file_size_bytes": 5984648,
+    "license": "ODbL (Open Database License)",
+    "version": "1.0",
+    "checksum": "24b7d5116eb607da342e9b0a48aba93f5cb51fc3b49d390aa379374d00be46a6",
+    "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\vector\\water.geojson",
+    "status": "SUCCESS"
+  },
+  "vector_parks": {
+    "dataset_name": "vector_parks",
+    "source": "OpenStreetMap via OSMnx",
+    "provider": "OSMnx",
+    "download_time": "2026-07-30T06:04:10.265815+00:00",
+    "projection": "EPSG:4326",
+    "bounding_box": {
+      "minx": 80.1401875,
+      "miny": 12.8519771,
+      "maxx": 80.3328982,
+      "maxy": 13.235158
+    },
+    "resolution": "Existing feature layer",
+    "file_size_bytes": 925150,
+    "license": "ODbL (Open Database License)",
+    "version": "1.0",
+    "checksum": "d3f062056891ea49da0f51394b24747a759b63926aff479a9d90dabab9721d2b",
+    "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\vector\\parks.geojson",
+    "status": "SUCCESS"
+  },
+  "vector_vegetation": {
+    "dataset_name": "vector_vegetation",
+    "source": "OpenStreetMap via OSMnx",
+    "provider": "OSMnx",
+    "download_time": "2026-07-30T06:04:10.288916+00:00",
+    "projection": "EPSG:4326",
+    "bounding_box": {
+      "minx": 80.1401875,
+      "miny": 12.8519771,
+      "maxx": 80.3328982,
+      "maxy": 13.235158
+    },
+    "resolution": "Existing feature layer",
+    "file_size_bytes": 364471,
+    "license": "ODbL (Open Database License)",
+    "version": "1.0",
+    "checksum": "557207bac709d4f2c005b26a136c7c3d5fd997ffd5a0b416b401054fecb63dd4",
+    "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\vector\\vegetation.geojson",
+    "status": "SUCCESS"
+  },
+  "vector_railways": {
+    "dataset_name": "vector_railways",
+    "source": "OpenStreetMap via OSMnx",
+    "provider": "OSMnx",
+    "download_time": "2026-07-30T06:04:10.317490+00:00",
+    "projection": "EPSG:4326",
+    "bounding_box": {
+      "minx": 80.1401875,
+      "miny": 12.8519771,
+      "maxx": 80.3328982,
+      "maxy": 13.235158
+    },
+    "resolution": "Existing feature layer",
+    "file_size_bytes": 4651988,
+    "license": "ODbL (Open Database License)",
+    "version": "1.0",
+    "checksum": "969448ebd24c63468e1f7e412449f78d1e029dd672d84405f8adcba7c69d5156",
+    "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\vector\\railways.geojson",
+    "status": "SUCCESS"
+  },
+  "vector_landuse": {
+    "dataset_name": "vector_landuse",
+    "source": "OpenStreetMap via OSMnx",
+    "provider": "OSMnx",
+    "download_time": "2026-07-30T06:04:10.352575+00:00",
+    "projection": "EPSG:4326",
+    "bounding_box": {
+      "minx": 80.1401875,
+      "miny": 12.8519771,
+      "maxx": 80.3328982,
+      "maxy": 13.235158
+    },
+    "resolution": "Existing feature layer",
+    "file_size_bytes": 6594728,
+    "license": "ODbL (Open Database License)",
+    "version": "1.0",
+    "checksum": "5520e481925e25329111ef1df7b54f2e11329e98e1d42f1e6c851a915f84f4e3",
+    "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\vector\\landuse.geojson",
+    "status": "SUCCESS"
+  },
+  "weather_timeseries": {
+    "dataset_name": "weather_timeseries",
+    "source": "NASA POWER Daily Point API",
+    "provider": "nasa_power",
+    "download_time": "2026-07-30T06:04:26.029078+00:00",
+    "projection": "N/A (CSV Tabular)",
+    "bounding_box": {
+      "minx": 80.1401875,
+      "miny": 12.8519771,
+      "maxx": 80.3328982,
+      "maxy": 13.235158
+    },
+    "resolution": "Daily Point Time Series",
+    "file_size_bytes": 18099,
+    "license": "NASA Open Data Policy",
+    "version": "1.0",
+    "checksum": "e7a4e7ce19ec21477c8e077db4d2498cd398042f0dbab21968a33ead2df86910",
+    "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\weather\\weather_data.csv",
+    "status": "SUCCESS"
+  },
+  "elevation_dem": {
+    "dataset_name": "elevation_dem",
+    "source": "SRTM 30m Digital Elevation Model",
+    "provider": "srtm",
+    "download_time": "2026-07-30T06:04:26.056244+00:00",
+    "projection": "EPSG:4326",
+    "bounding_box": {
+      "minx": 80.1401875,
+      "miny": 12.8519771,
+      "maxx": 80.3328982,
+      "maxy": 13.235158
+    },
+    "resolution": "30m spatial resolution",
+    "file_size_bytes": 24,
+    "license": "NASA / USGS Public Domain",
+    "version": "1.0",
+    "checksum": "fcbe88f912f7cd3511b4d6941cf0adf2ceb1e999e9a679939776b4f753e14e36",
+    "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\elevation\\dem_elevation.tif",
+    "status": "SUCCESS"
+  }
+}
