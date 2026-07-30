@@ -48,3 +48,21 @@ ingestion:
       - 10
       - 11
       - 12
+
+preprocessing:
+  grid_resolution_meters: 100
+  target_crs: "EPSG:4326"
+  output_format: "parquet"
+  output_directory: "data/processed"
+  features:
+    - distance_to_water
+    - distance_to_parks
+    - distance_to_roads
+    - building_density
+    - ndvi
+    - ndbi
+    - ndwi
+    - lst
+    - elevation
+    - slope
+    - aspect

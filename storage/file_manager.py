@@ -44,6 +44,27 @@ class FileManager:
         self.metadata_dir.mkdir(parents=True, exist_ok=True)
         logger.debug(f"Ensured raw subdirectories exist at {self.base_raw_dir}")
 
+    @property
+    def boundary_dir(self) -> Path:
+        return self.base_raw_dir / DIR_BOUNDARY
+
+    @property
+    def satellite_dir(self) -> Path:
+        return self.base_raw_dir / DIR_SATELLITE
+
+    @property
+    def vector_dir(self) -> Path:
+        return self.base_raw_dir / DIR_VECTOR
+
+    @property
+    def weather_dir(self) -> Path:
+        return self.base_raw_dir / DIR_WEATHER
+
+    @property
+    def elevation_dir(self) -> Path:
+        return self.base_raw_dir / DIR_ELEVATION
+
+
     def get_boundary_path(self, filename: str) -> Path:
         return self.base_raw_dir / DIR_BOUNDARY / filename
 

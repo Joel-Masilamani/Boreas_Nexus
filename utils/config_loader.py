@@ -76,9 +76,22 @@ class IngestionConfig:
 
 
 @dataclass
+class PreprocessingConfig:
+    grid_resolution_meters: int = 100
+    target_crs: str = DEFAULT_CRS
+    output_format: str = "parquet"
+    output_directory: Path = field(default_factory=lambda: Path("data/processed"))
+    features: List[str] = field(default_factory=lambda: [
+        "distance_to_water", "distance_to_parks", "distance_to_roads",
+        "building_density", "ndvi", "ndbi", "ndwi", "lst", "elevation", "slope", "aspect"
+    ])
+
+
+@dataclass
 class Config:
     city: CityConfig
     ingestion: IngestionConfig
+    preprocessing: PreprocessingConfig
     config_file_path: Path
 
 
@@ -166,9 +179,22 @@ class ConfigLoader:
             satellite=satellite_cfg
         )
 
+        p_raw = data.get("preprocessing", {})
+        preprocessing_config = PreprocessingConfig(
+            grid_resolution_meters=p_raw.get("grid_resolution_meters", 100),
+            target_crs=p_raw.get("target_crs", DEFAULT_CRS),
+            output_format=p_raw.get("output_format", "parquet"),
+            output_directory=Path(p_raw.get("output_directory", "data/processed")),
+            features=p_raw.get("features", [
+                "distance_to_water", "distance_to_parks", "distance_to_roads",
+                "building_density", "ndvi", "ndbi", "ndwi", "lst", "elevation", "slope", "aspect"
+            ])
+        )
+
         config_obj = Config(
             city=city_config,
             ingestion=ingestion_config,
+            preprocessing=preprocessing_config,
             config_file_path=path.resolve()
         )
 

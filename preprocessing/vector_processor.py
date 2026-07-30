@@ -66,3 +66,20 @@ class VectorProcessor:
         except Exception as e:
             logger.warning(f"Spatial clip operation encountered error: {e}. Returning original GeoDataFrame.")
             return gdf
+
+    @staticmethod
+    def compute_distance_to_features(point_gdf: gpd.GeoDataFrame, target_features_gdf: gpd.GeoDataFrame) -> gpd.GeoSeries:
+        """
+        Computes minimum Euclidean distance (in meters or degrees) from each point in point_gdf
+        to the nearest geometry in target_features_gdf.
+        """
+        if point_gdf.empty or target_features_gdf.empty:
+            return point_gdf.geometry.apply(lambda _: 0.0)
+
+        # Reproject target features to point CRS if needed
+        if target_features_gdf.crs != point_gdf.crs:
+            target_features_gdf = VectorProcessor.reproject(target_features_gdf, str(point_gdf.crs))
+
+        # Unified union geometry for fast nearest-neighbor distance calculation
+        unified_geom = target_features_gdf.geometry.union_all()
+        return point_gdf.geometry.apply(lambda pt: pt.distance(unified_geom) if pt is not None else 0.0)
