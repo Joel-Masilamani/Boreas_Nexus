@@ -64,13 +64,42 @@
   "raster_validation": [
     {
       "file": "dem_elevation.tif",
-      "status": "FAILED",
-      "issues": [
-        "Raster corruption / unreadable header: 'D:\\Projects\\Boreas_Nexus\\data\\raw\\elevation\\dem_elevation.tif' not recognized as being in a supported file format."
-      ],
+      "status": "PASSED",
+      "issues": [],
       "raster_info": {
-        "valid": false,
-        "error": "'D:\\Projects\\Boreas_Nexus\\data\\raw\\elevation\\dem_elevation.tif' not recognized as being in a supported file format."
+        "valid": true,
+        "width": 694,
+        "height": 847,
+        "count": 1,
+        "crs": "GEOGCS[\"WGS 84\",DATUM[\"World Geodetic System 1984\",SPHEROID[\"WGS 84\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AXIS[\"Latitude\",NORTH],AXIS[\"Longitude\",EAST]]",
+        "driver": "GTiff",
+        "nodata": null,
+        "bounding_box": {
+          "minx": 80.1401388888889,
+          "miny": 13.000138888888891,
+          "maxx": 80.33291666666668,
+          "maxy": 13.235416666666667
+        }
+      }
+    },
+    {
+      "file": "landcover_worldcover.tif",
+      "status": "PASSED",
+      "issues": [],
+      "raster_info": {
+        "valid": true,
+        "width": 2313,
+        "height": 4599,
+        "count": 1,
+        "crs": "GEOGCS[\"WGS 84\",DATUM[\"World Geodetic System 1984\",SPHEROID[\"WGS 84\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AXIS[\"Latitude\",NORTH],AXIS[\"Longitude\",EAST]]",
+        "driver": "GTiff",
+        "nodata": 0.0,
+        "bounding_box": {
+          "minx": 80.14016666666667,
+          "miny": 12.851916666666668,
+          "maxx": 80.33291666666668,
+          "maxy": 13.235166666666666
+        }
       }
     },
     {
@@ -97,13 +126,22 @@
     },
     {
       "file": "landsat8_scene_2024_03.tif",
-      "status": "FAILED",
-      "issues": [
-        "Raster corruption / unreadable header: 'D:\\Projects\\Boreas_Nexus\\data\\raw\\satellite\\landsat\\2024\\03\\landsat8_scene_2024_03.tif' not recognized as being in a supported file format."
-      ],
+      "status": "PASSED",
+      "issues": [],
       "raster_info": {
-        "valid": false,
-        "error": "'D:\\Projects\\Boreas_Nexus\\data\\raw\\satellite\\landsat\\2024\\03\\landsat8_scene_2024_03.tif' not recognized as being in a supported file format."
+        "valid": true,
+        "width": 702,
+        "height": 1416,
+        "count": 1,
+        "crs": "PROJCS[\"WGS 84 / UTM zone 44N\",GEOGCS[\"WGS 84\",DATUM[\"World Geodetic System 1984\",SPHEROID[\"WGS 84\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",81],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]",
+        "driver": "GTiff",
+        "nodata": null,
+        "bounding_box": {
+          "minx": 406695.0,
+          "miny": 1420845.0,
+          "maxx": 427755.0,
+          "maxy": 1463325.0
+        }
       }
     },
     {
@@ -251,13 +289,22 @@
     },
     {
       "file": "sentinel2_scene_2024_05.tif",
-      "status": "FAILED",
-      "issues": [
-        "Raster corruption / unreadable header: 'D:\\Projects\\Boreas_Nexus\\data\\raw\\satellite\\sentinel\\2024\\05\\sentinel2_scene_2024_05.tif' not recognized as being in a supported file format."
-      ],
+      "status": "PASSED",
+      "issues": [],
       "raster_info": {
-        "valid": false,
-        "error": "'D:\\Projects\\Boreas_Nexus\\data\\raw\\satellite\\sentinel\\2024\\05\\sentinel2_scene_2024_05.tif' not recognized as being in a supported file format."
+        "valid": true,
+        "width": 465,
+        "height": 6368,
+        "count": 4,
+        "crs": "PROJCS[\"WGS 84 / UTM zone 44N\",GEOGCS[\"WGS 84\",DATUM[\"World Geodetic System 1984\",SPHEROID[\"WGS 84\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",81],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]",
+        "driver": "GTiff",
+        "nodata": 0.0,
+        "bounding_box": {
+          "minx": 406701.6702586207,
+          "miny": 1463313.3332024503,
+          "maxx": 409798.3297413793,
+          "maxy": 1420861.66679755
+        }
       }
     },
     {
@@ -348,7 +395,7 @@
   ],
   "metadata_validation": {
     "status": "PASSED",
-    "total_datasets_tracked": 34,
+    "total_datasets_tracked": 35,
     "missing_fields": {}
   },
   "overall_status": "PASSED_WITH_WARNINGS"

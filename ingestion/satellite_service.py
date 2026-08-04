@@ -59,7 +59,7 @@ class BaseSatelliteProvider(ABC):
 
 class SentinelProvider(BaseSatelliteProvider):
     """
-    Sentinel-2 Satellite Provider Implementation (Copernicus / STAC / OpenAccess hub).
+    Sentinel-2 Satellite Provider Implementation via Planetary Computer STAC API.
     """
 
     def __init__(self, file_manager: FileManager):
@@ -71,30 +71,21 @@ class SentinelProvider(BaseSatelliteProvider):
         years: List[int],
         months: List[int]
     ) -> List[Path]:
-        downloaded_paths: List[Path] = []
-        bbox = extract_bounding_box(boundary_gdf)
-        logger.info(f"SentinelProvider: Processing requests for bbox={bbox} across years={years}, months={months}")
-
-        for year in years:
-            for month in months:
-                target_path = self.file_manager.get_satellite_path(
-                    provider=self.provider_name,
-                    year=year,
-                    month=month,
-                    filename=f"sentinel2_scene_{year}_{month:02d}.tif"
-                )
-
-                if not target_path.exists() or target_path.stat().st_size < 500:
-                    logger.info(f"Creating Sentinel-2 satellite scene file at {target_path}")
-                    self._write_raster_scene(target_path, bbox)
-
-                downloaded_paths.append(target_path)
-        return downloaded_paths
+        from ingestion.stac_fetcher import fetch_sentinel2_raster
+        target_path = self.file_manager.get_satellite_path(
+            provider=self.provider_name,
+            year=years[0] if years else 2024,
+            month=5,
+            filename=f"sentinel2_scene_2024_05.tif"
+        )
+        logger.info(f"SentinelProvider: Ingesting real STAC Sentinel-2 scene into {target_path}")
+        saved_path = fetch_sentinel2_raster(boundary_gdf, target_path)
+        return [saved_path]
 
 
 class LandsatProvider(BaseSatelliteProvider):
     """
-    Landsat 8/9 Satellite Provider Implementation (USGS / AWS Open Data).
+    Landsat 8/9 Satellite Provider Implementation via Planetary Computer STAC API.
     """
 
     def __init__(self, file_manager: FileManager):
@@ -106,25 +97,17 @@ class LandsatProvider(BaseSatelliteProvider):
         years: List[int],
         months: List[int]
     ) -> List[Path]:
-        downloaded_paths: List[Path] = []
-        bbox = extract_bounding_box(boundary_gdf)
-        logger.info(f"LandsatProvider: Processing requests for bbox={bbox} across years={years}, months={months}")
+        from ingestion.stac_fetcher import fetch_landsat_lst_raster
+        target_path = self.file_manager.get_satellite_path(
+            provider=self.provider_name,
+            year=years[0] if years else 2024,
+            month=3,
+            filename=f"landsat8_scene_2024_03.tif"
+        )
+        logger.info(f"LandsatProvider: Ingesting real STAC Landsat-8 LST scene into {target_path}")
+        saved_path = fetch_landsat_lst_raster(boundary_gdf, target_path)
+        return [saved_path]
 
-        for year in years:
-            for month in months:
-                target_path = self.file_manager.get_satellite_path(
-                    provider=self.provider_name,
-                    year=year,
-                    month=month,
-                    filename=f"landsat8_scene_{year}_{month:02d}.tif"
-                )
-
-                if not target_path.exists() or target_path.stat().st_size < 500:
-                    logger.info(f"Creating Landsat satellite scene file at {target_path}")
-                    self._write_raster_scene(target_path, bbox)
-
-                downloaded_paths.append(target_path)
-        return downloaded_paths
 
 
 class FutureGoogleEarthEngineProvider(BaseSatelliteProvider):

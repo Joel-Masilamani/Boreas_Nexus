@@ -3,7 +3,7 @@
     "dataset_name": "city_boundary",
     "source": "OpenStreetMap via OSMnx",
     "provider": "OSMnx",
-    "download_time": "2026-07-30T06:04:06.754627+00:00",
+    "download_time": "2026-08-03T06:17:08.580060+00:00",
     "projection": "EPSG:4326",
     "bounding_box": {
       "minx": 80.1401875,
@@ -12,10 +12,10 @@
       "maxy": 13.235158
     },
     "resolution": "Vector Polygon",
-    "file_size_bytes": 17894,
+    "file_size_bytes": 17902,
     "license": "ODbL (Open Database License)",
     "version": "1.0",
-    "checksum": "110d02617e04fb071ccfb1979b770419afa7545657dc5ea9c12802b8e17a7e15",
+    "checksum": "aeb706ac2ef19de2f457539d88ff1e5248edbc8c593648b138254b3806841260",
     "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\boundary\\boundary.geojson",
     "status": "SUCCESS"
   },
@@ -103,7 +103,7 @@
     "dataset_name": "satellite_sentinel_sentinel2_scene_2024_05",
     "source": "Satellite Remote Sensing",
     "provider": "sentinel",
-    "download_time": "2026-07-30T06:04:07.094113+00:00",
+    "download_time": "2026-08-03T06:17:45.421951+00:00",
     "projection": "EPSG:4326",
     "bounding_box": {
       "minx": 80.1401875,
@@ -112,10 +112,10 @@
       "maxy": 13.235158
     },
     "resolution": "10m-30m Multispectral",
-    "file_size_bytes": 30,
+    "file_size_bytes": 23708691,
     "license": "Open Access / Public Domain",
     "version": "1.0",
-    "checksum": "d3edb94aa9b98ea448e6ed16e554eecd9d884af7f948f3b06efed8ac709995f3",
+    "checksum": "031a509becf61a29ca736d49bd00f3ef84d31b3730a0e716e427e11296f58bb7",
     "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\satellite\\sentinel\\2024\\05\\sentinel2_scene_2024_05.tif",
     "status": "SUCCESS"
   },
@@ -303,7 +303,7 @@
     "dataset_name": "satellite_landsat_landsat8_scene_2024_03",
     "source": "Satellite Remote Sensing",
     "provider": "landsat",
-    "download_time": "2026-07-30T06:04:07.531186+00:00",
+    "download_time": "2026-08-03T06:18:04.228116+00:00",
     "projection": "EPSG:4326",
     "bounding_box": {
       "minx": 80.1401875,
@@ -312,10 +312,10 @@
       "maxy": 13.235158
     },
     "resolution": "10m-30m Multispectral",
-    "file_size_bytes": 30,
+    "file_size_bytes": 3980913,
     "license": "Open Access / Public Domain",
     "version": "1.0",
-    "checksum": "d3edb94aa9b98ea448e6ed16e554eecd9d884af7f948f3b06efed8ac709995f3",
+    "checksum": "f4584d7d28864ef089f86a452aed759a08a60e04bc287efc3f689d930d0a6353",
     "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\satellite\\landsat\\2024\\03\\landsat8_scene_2024_03.tif",
     "status": "SUCCESS"
   },
@@ -503,7 +503,7 @@
     "dataset_name": "vector_roads",
     "source": "OpenStreetMap via OSMnx",
     "provider": "OSMnx",
-    "download_time": "2026-07-30T06:04:08.159877+00:00",
+    "download_time": "2026-08-03T06:18:05.237554+00:00",
     "projection": "EPSG:4326",
     "bounding_box": {
       "minx": 80.1401875,
@@ -512,10 +512,10 @@
       "maxy": 13.235158
     },
     "resolution": "Existing feature layer",
-    "file_size_bytes": 292945962,
+    "file_size_bytes": 293009450,
     "license": "ODbL (Open Database License)",
     "version": "1.0",
-    "checksum": "4f94e76c7cbaba17d173a9d3fa68269e86739c7daeceec329659d8aa55bc36ef",
+    "checksum": "3991323006cb74778889470bfebb7999c7f96d0f018de18ba7d9b09655e1a641",
     "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\vector\\roads.geojson",
     "status": "SUCCESS"
   },
@@ -523,7 +523,7 @@
     "dataset_name": "vector_buildings",
     "source": "OpenStreetMap via OSMnx",
     "provider": "OSMnx",
-    "download_time": "2026-07-30T06:04:10.198524+00:00",
+    "download_time": "2026-08-03T06:18:08.328430+00:00",
     "projection": "EPSG:4326",
     "bounding_box": {
       "minx": 80.1401875,
@@ -532,10 +532,10 @@
       "maxy": 13.235158
     },
     "resolution": "Existing feature layer",
-    "file_size_bytes": 1698973155,
+    "file_size_bytes": 1699250604,
     "license": "ODbL (Open Database License)",
     "version": "1.0",
-    "checksum": "31c97e213f5221aa2744d27c0da0330bfd70473a6bf4ae9323eafb9bd8dd85c2",
+    "checksum": "2849cbf8130a93e6053445085272ba5768580094e31f0898cfadf0eec876630b",
     "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\vector\\buildings.geojson",
     "status": "SUCCESS"
   },
@@ -543,7 +543,7 @@
     "dataset_name": "vector_water",
     "source": "OpenStreetMap via OSMnx",
     "provider": "OSMnx",
-    "download_time": "2026-07-30T06:04:10.238537+00:00",
+    "download_time": "2026-08-03T06:18:08.413179+00:00",
     "projection": "EPSG:4326",
     "bounding_box": {
       "minx": 80.1401875,
@@ -552,10 +552,10 @@
       "maxy": 13.235158
     },
     "resolution": "Existing feature layer",
-    "file_size_bytes": 5984648,
+    "file_size_bytes": 5985598,
     "license": "ODbL (Open Database License)",
     "version": "1.0",
-    "checksum": "24b7d5116eb607da342e9b0a48aba93f5cb51fc3b49d390aa379374d00be46a6",
+    "checksum": "1e9a51ad66e753c3e15c962ecfac56a2892f0318c203dbd1de210d4bf7e2d0fb",
     "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\vector\\water.geojson",
     "status": "SUCCESS"
   },
@@ -563,7 +563,7 @@
     "dataset_name": "vector_parks",
     "source": "OpenStreetMap via OSMnx",
     "provider": "OSMnx",
-    "download_time": "2026-07-30T06:04:10.265815+00:00",
+    "download_time": "2026-08-03T06:18:08.490316+00:00",
     "projection": "EPSG:4326",
     "bounding_box": {
       "minx": 80.1401875,
@@ -572,10 +572,10 @@
       "maxy": 13.235158
     },
     "resolution": "Existing feature layer",
-    "file_size_bytes": 925150,
+    "file_size_bytes": 925734,
     "license": "ODbL (Open Database License)",
     "version": "1.0",
-    "checksum": "d3f062056891ea49da0f51394b24747a759b63926aff479a9d90dabab9721d2b",
+    "checksum": "79de5af09af7ed266c3bf9327f88b7f147c28fcebec9a00a3edbfbb11a0c5549",
     "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\vector\\parks.geojson",
     "status": "SUCCESS"
   },
@@ -583,7 +583,7 @@
     "dataset_name": "vector_vegetation",
     "source": "OpenStreetMap via OSMnx",
     "provider": "OSMnx",
-    "download_time": "2026-07-30T06:04:10.288916+00:00",
+    "download_time": "2026-08-03T06:18:08.544979+00:00",
     "projection": "EPSG:4326",
     "bounding_box": {
       "minx": 80.1401875,
@@ -592,10 +592,10 @@
       "maxy": 13.235158
     },
     "resolution": "Existing feature layer",
-    "file_size_bytes": 364471,
+    "file_size_bytes": 364881,
     "license": "ODbL (Open Database License)",
     "version": "1.0",
-    "checksum": "557207bac709d4f2c005b26a136c7c3d5fd997ffd5a0b416b401054fecb63dd4",
+    "checksum": "da3613b43acd2f309bf5ca1d83d7ad07a58bac7c1c01ad01b077b56ada50d133",
     "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\vector\\vegetation.geojson",
     "status": "SUCCESS"
   },
@@ -603,7 +603,7 @@
     "dataset_name": "vector_railways",
     "source": "OpenStreetMap via OSMnx",
     "provider": "OSMnx",
-    "download_time": "2026-07-30T06:04:10.317490+00:00",
+    "download_time": "2026-08-03T06:18:08.604344+00:00",
     "projection": "EPSG:4326",
     "bounding_box": {
       "minx": 80.1401875,
@@ -612,10 +612,10 @@
       "maxy": 13.235158
     },
     "resolution": "Existing feature layer",
-    "file_size_bytes": 4651988,
+    "file_size_bytes": 4654359,
     "license": "ODbL (Open Database License)",
     "version": "1.0",
-    "checksum": "969448ebd24c63468e1f7e412449f78d1e029dd672d84405f8adcba7c69d5156",
+    "checksum": "fc7233b0eccb40bd63bd0b17b8eb11d4c4438141708a36531b3bf39e2983cc97",
     "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\vector\\railways.geojson",
     "status": "SUCCESS"
   },
@@ -623,7 +623,7 @@
     "dataset_name": "vector_landuse",
     "source": "OpenStreetMap via OSMnx",
     "provider": "OSMnx",
-    "download_time": "2026-07-30T06:04:10.352575+00:00",
+    "download_time": "2026-08-03T06:18:08.676504+00:00",
     "projection": "EPSG:4326",
     "bounding_box": {
       "minx": 80.1401875,
@@ -632,10 +632,10 @@
       "maxy": 13.235158
     },
     "resolution": "Existing feature layer",
-    "file_size_bytes": 6594728,
+    "file_size_bytes": 6597374,
     "license": "ODbL (Open Database License)",
     "version": "1.0",
-    "checksum": "5520e481925e25329111ef1df7b54f2e11329e98e1d42f1e6c851a915f84f4e3",
+    "checksum": "5242d30bdd4251a7d3412ab25ba1735ebca50f38664a503c9103509a82d54aee",
     "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\vector\\landuse.geojson",
     "status": "SUCCESS"
   },
@@ -643,7 +643,7 @@
     "dataset_name": "weather_timeseries",
     "source": "NASA POWER Daily Point API",
     "provider": "nasa_power",
-    "download_time": "2026-07-30T06:04:26.029078+00:00",
+    "download_time": "2026-08-03T06:18:29.479885+00:00",
     "projection": "N/A (CSV Tabular)",
     "bounding_box": {
       "minx": 80.1401875,
@@ -663,7 +663,7 @@
     "dataset_name": "elevation_dem",
     "source": "SRTM 30m Digital Elevation Model",
     "provider": "srtm",
-    "download_time": "2026-07-30T06:04:26.056244+00:00",
+    "download_time": "2026-08-03T06:19:02.141566+00:00",
     "projection": "EPSG:4326",
     "bounding_box": {
       "minx": 80.1401875,
@@ -672,11 +672,31 @@
       "maxy": 13.235158
     },
     "resolution": "30m spatial resolution",
-    "file_size_bytes": 24,
+    "file_size_bytes": 2354299,
     "license": "NASA / USGS Public Domain",
     "version": "1.0",
-    "checksum": "fcbe88f912f7cd3511b4d6941cf0adf2ceb1e999e9a679939776b4f753e14e36",
+    "checksum": "15d501828c0f91bd54fd80f399b923419e46ae4a643f21a0baa31dd6d8de61cb",
     "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\elevation\\dem_elevation.tif",
+    "status": "SUCCESS"
+  },
+  "esa_worldcover_10m": {
+    "dataset_name": "esa_worldcover_10m",
+    "source": "ESA WorldCover 10m v200",
+    "provider": "esa_planetary_computer",
+    "download_time": "2026-08-03T06:19:33.254699+00:00",
+    "projection": "EPSG:4326",
+    "bounding_box": {
+      "minx": 80.1401875,
+      "miny": 12.8519771,
+      "maxx": 80.3328982,
+      "maxy": 13.235158
+    },
+    "resolution": "10m Land Cover Classification",
+    "file_size_bytes": 10648286,
+    "license": "CC-BY 4.0",
+    "version": "2020/2021",
+    "checksum": "bbafae56355bc59b98ad7e011bea215a9c5ef9a21ef751d470494faf843f7576",
+    "storage_path": "D:\\Projects\\Boreas_Nexus\\data\\raw\\landcover\\landcover_worldcover.tif",
     "status": "SUCCESS"
   }
 }

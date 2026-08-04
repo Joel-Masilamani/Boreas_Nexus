@@ -37,7 +37,7 @@ class BaseElevationProvider(ABC):
 
 
 class SRTMProvider(BaseElevationProvider):
-    """Shuttle Radar Topography Mission (SRTM) 30m DEM Provider."""
+    """Shuttle Radar Topography Mission (SRTM) / Copernicus DEM 30m Provider."""
 
     def __init__(self, file_manager: FileManager):
         super().__init__("srtm", file_manager)
@@ -48,15 +48,10 @@ class SRTMProvider(BaseElevationProvider):
         resolution_m: int,
         output_path: Path
     ) -> Path:
-        bbox = extract_bounding_box(boundary_gdf)
-        logger.info(f"SRTMProvider: Preparing DEM raster for bbox={bbox} at {resolution_m}m resolution")
+        from ingestion.stac_fetcher import fetch_copernicus_dem_raster
+        logger.info(f"SRTMProvider: Ingesting real Copernicus 30m DEM raster to {output_path}")
+        return fetch_copernicus_dem_raster(boundary_gdf, output_path)
 
-        if not output_path.exists():
-            # Create synthetic DEM GeoTIFF header / placeholder structure for pipeline validation
-            logger.info(f"Writing DEM placeholder image to {output_path}")
-            self._write_dem_raster_placeholder(output_path, bbox)
-
-        return output_path
 
     def _write_dem_raster_placeholder(self, output_path: Path, bbox: Dict[str, float]) -> None:
         """Writes a valid GeoTIFF DEM raster file for dataset validation and processing."""

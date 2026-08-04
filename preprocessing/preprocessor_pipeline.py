@@ -80,13 +80,20 @@ class PreprocessorPipeline:
         # Step 4: Extract proximity features
         grid_gdf = self.feature_extractor.extract_proximity_features(grid_gdf, vector_layers)
 
-        # Step 5: Extract spectral features
+        # Step 5: Extract building density feature
+        grid_gdf = self.feature_extractor.extract_building_density(grid_gdf, vector_layers)
+
+        # Step 6: Extract spectral features
         satellite_dir = self.file_manager.satellite_dir
         grid_gdf = self.feature_extractor.extract_spectral_features(grid_gdf, satellite_dir)
 
-        # Step 6: Extract DEM terrain features
+        # Step 7: Extract DEM terrain features
         elevation_file = self.file_manager.get_elevation_path("dem_elevation.tif")
         grid_gdf = self.feature_extractor.extract_dem_features(grid_gdf, elevation_file)
+
+        # Step 8: Extract land cover features
+        grid_gdf = self.feature_extractor.extract_landcover_features(grid_gdf, self.file_manager.base_raw_dir)
+
 
         # Step 7: Export processed dataset
         processed_dir = self.config.preprocessing.output_directory

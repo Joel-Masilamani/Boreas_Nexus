@@ -56,3 +56,14 @@ def test_vector_processor_distance_calculation(sample_grid, sample_boundary):
     dist_series = VectorProcessor.compute_distance_to_features(sample_grid, sample_boundary)
     assert len(dist_series) == len(sample_grid)
     assert (dist_series >= 0).all()
+
+
+def test_feature_extractor_building_density(sample_grid):
+    extractor = FeatureExtractor(target_crs="EPSG:4326")
+    bldg_poly = Polygon([(80.21, 13.01), (80.215, 13.01), (80.215, 13.015), (80.21, 13.015)])
+    bldg_gdf = gpd.GeoDataFrame([{"geometry": bldg_poly}], crs="EPSG:4326")
+
+    res = extractor.extract_building_density(sample_grid, {"buildings": bldg_gdf})
+    assert "building_density" in res.columns
+    assert (res["building_density"] >= 0.0).all() and (res["building_density"] <= 1.0).all()
+

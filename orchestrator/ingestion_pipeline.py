@@ -20,6 +20,7 @@ from ingestion.satellite_service import SatelliteService
 from ingestion.vector_service import VectorService
 from ingestion.weather_service import WeatherService
 from ingestion.elevation_service import ElevationService
+from ingestion.landcover_service import LandCoverService
 from preprocessing.validator import DatasetValidator
 
 
@@ -43,6 +44,7 @@ class IngestionPipeline:
         self.vector_service = VectorService(self.config, self.file_manager, self.metadata_service)
         self.weather_service = WeatherService(self.config, self.file_manager, self.metadata_service)
         self.elevation_service = ElevationService(self.config, self.file_manager, self.metadata_service)
+        self.landcover_service = LandCoverService(self.config, self.file_manager, self.metadata_service)
 
         # Validator
         self.validator = DatasetValidator(self.config, self.metadata_store)
@@ -68,6 +70,7 @@ class IngestionPipeline:
             "vector_layers": {},
             "weather_file": None,
             "elevation_file": None,
+            "landcover_file": None,
             "validation_report": None,
             "errors": []
         }
@@ -126,6 +129,17 @@ class IngestionPipeline:
             err_msg = f"Elevation Service Error: {e}"
             logger.error(err_msg)
             summary["errors"].append(err_msg)
+
+        # Step 8: Download Land Cover Data
+        logger.info("Step 7: Ingesting ESA WorldCover Land Cover Dataset...")
+        try:
+            lc_path = self.landcover_service.execute_landcover_ingestion(boundary_gdf)
+            summary["landcover_file"] = str(lc_path)
+        except Exception as e:
+            err_msg = f"LandCover Service Error: {e}"
+            logger.error(err_msg)
+            summary["errors"].append(err_msg)
+
 
         # Step 8: Validate Datasets
         logger.info("Step 7: Executing Dataset Validation Suite...")
