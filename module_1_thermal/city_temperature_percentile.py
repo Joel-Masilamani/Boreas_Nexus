@@ -3,24 +3,17 @@ Boreas-Nexus Module 1 - City Temperature Percentile (Part 3 Extension)
 
 Purpose: Compute per-pixel relative thermal percentile ranking across valid land surfaces
 within the study area, ignoring water bodies and NoData values.
-
-Formula:
-percentile = ((rank - 1) / (N - 1)) * 100.0 (for N > 1 valid land pixels)
-
-Attributes:
-- city_temperature_percentile: Relative thermal ranking (0-100)
-- temperature_rank: 1-indexed temperature rank (1 = coldest, N = hottest)
-- temperature_total_pixels: Total valid land pixels evaluated (N)
 """
 
 from pathlib import Path
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Tuple, Optional
 import pandas as pd
 import geopandas as gpd
 import numpy as np
 from scipy.stats import rankdata
 
 from utils.logger import logger
+from storage.storage_manager import StorageManager
 
 
 class CityTemperaturePercentileCalculator:
@@ -30,41 +23,41 @@ class CityTemperaturePercentileCalculator:
 
     def __init__(
         self,
-        input_path: Path | str = Path("data/processed/module_1_stage5_labeled.parquet"),
-        output_dir: Path | str = Path("data/processed")
+        input_path: Path | str | None = None,
+        output_dir: Path | str | None = None
     ):
-        self.input_path = Path(input_path)
-        self.output_dir = Path(output_dir)
+        self.storage_manager = StorageManager()
+        self.input_path = Path(input_path) if input_path is not None else self.storage_manager.get_debug_filepath("module_1", "module_1_stage5_labeled.parquet")
+        self.output_dir = Path(output_dir) if output_dir is not None else self.storage_manager.get_debug_dir("module_1")
 
     def load_input_data(self) -> gpd.GeoDataFrame:
         """Loads intermediate point dataset."""
-        if self.input_path.exists():
-            logger.info(f"Loading labeled hotspot dataset from Parquet: {self.input_path}...")
-            df = pd.read_parquet(self.input_path)
+        candidates = [
+            self.input_path,
+            self.output_dir / "module_1_stage5_labeled.parquet",
+            self.storage_manager.get_debug_filepath("module_1", "module_1_stage5_labeled.parquet"),
+            self.storage_manager.get_debug_filepath("module_1", "module_1_stage5_hotspots.parquet"),
+            self.storage_manager.get_processed_filepath("feature_engineering", "features.geoparquet"),
+            Path("data/processed/features.parquet")
+        ]
+
+        target_path = None
+        for p in candidates:
+            if p.exists():
+                target_path = p
+                break
+
+        if target_path is not None:
+            logger.info(f"Loading input dataset from: {target_path}...")
+            df = pd.read_parquet(target_path)
             gdf = gpd.GeoDataFrame(
                 df,
                 geometry=gpd.points_from_xy(df["longitude"], df["latitude"]),
                 crs="EPSG:4326"
             )
-        else:
-            geojson_path = self.input_path.with_suffix(".geojson")
-            if geojson_path.exists():
-                logger.info(f"Loading labeled hotspot dataset from GeoJSON: {geojson_path}...")
-                gdf = gpd.read_file(geojson_path)
-            else:
-                # Fallback to stage 5 output if labeled parquet doesn't exist yet
-                stage5_path = self.output_dir / "module_1_stage5_hotspots.parquet"
-                if stage5_path.exists():
-                    df = pd.read_parquet(stage5_path)
-                    gdf = gpd.GeoDataFrame(
-                        df,
-                        geometry=gpd.points_from_xy(df["longitude"], df["latitude"]),
-                        crs="EPSG:4326"
-                    )
-                else:
-                    raise FileNotFoundError(f"Input dataset not found at {self.input_path}.")
+            return gdf
 
-        return gdf
+        raise FileNotFoundError(f"Input dataset not found at {self.input_path}.")
 
     def compute_percentiles(
         self,
@@ -72,17 +65,11 @@ class CityTemperaturePercentileCalculator:
         mask_water: bool = True,
         mask_non_urban: bool = False
     ) -> gpd.GeoDataFrame:
-        """
-        Computes city_temperature_percentile, temperature_rank, and temperature_total_pixels.
-        
-        Ignores NoData (NaN) and Water pixels.
-        """
+        """Computes city_temperature_percentile, temperature_rank, and temperature_total_pixels."""
         result_gdf = gdf.copy()
         logger.info("Computing City Temperature Percentiles across study area...")
 
         lst_day = result_gdf["lst_day_celsius"].values
-
-        # Build valid mask
         valid_mask = ~np.isnan(lst_day)
 
         if mask_water and "is_water" in result_gdf.columns:
@@ -100,11 +87,8 @@ class CityTemperaturePercentileCalculator:
         totals = np.full(len(result_gdf), n_valid, dtype=int)
 
         if n_valid > 0:
-            # Rank values (1 to n_valid, 1 = coldest, n_valid = hottest)
             rank_vals = rankdata(valid_lst, method="min")
-
             if n_valid > 1:
-                # Percentile formula: (rank - 1) / (N - 1) * 100.0
                 pct_vals = ((rankdata(valid_lst, method="average") - 1.0) / (n_valid - 1.0)) * 100.0
             else:
                 pct_vals = np.full(n_valid, 100.0)
@@ -119,7 +103,7 @@ class CityTemperaturePercentileCalculator:
         return result_gdf
 
     def run(self) -> Dict[str, Any]:
-        """Executes City Temperature Percentile Calculator and updates intermediate dataset."""
+        """Executes City Temperature Percentile Calculator."""
         logger.info("=================================================================")
         logger.info("MODULE 1 - EXTENSION 3: CITY TEMPERATURE PERCENTILE")
         logger.info("=================================================================")
@@ -129,8 +113,7 @@ class CityTemperaturePercentileCalculator:
 
         self.output_dir.mkdir(parents=True, exist_ok=True)
         parquet_out = self.output_dir / "module_1_stage5_pct.parquet"
-
-        logger.info(f"Saving dataset with percentiles to {parquet_out}...")
+        logger.info(f"Saving percentile dataset to {parquet_out}...")
         df_export = pd.DataFrame(gdf_pct.drop(columns=["geometry"]))
         df_export.to_parquet(parquet_out, index=False)
 

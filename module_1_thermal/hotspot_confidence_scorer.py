@@ -7,18 +7,17 @@ confidence classifications based on a configurable weighted combination of:
 2. Surface Urban Heat Island Intensity - SUHII (30%)
 3. Heat Persistence Index (15%)
 4. City Temperature Percentile (10%)
-
-Configuration: Read from config/hotspot_scoring.yaml. Never hardcode weights.
 """
 
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 import yaml
 import pandas as pd
 import geopandas as gpd
 import numpy as np
 
 from utils.logger import logger
+from storage.storage_manager import StorageManager
 
 
 class HotspotConfidenceScorer:
@@ -29,12 +28,22 @@ class HotspotConfidenceScorer:
     def __init__(
         self,
         scoring_config_path: Path | str = Path("config/hotspot_scoring.yaml"),
-        input_path: Path | str = Path("data/processed/module_1_stage5_pct.parquet"),
-        output_dir: Path | str = Path("data/processed")
+        input_path: Path | str | None = None,
+        output_dir: Path | str | None = None
     ):
         self.scoring_config_path = Path(scoring_config_path)
-        self.input_path = Path(input_path)
-        self.output_dir = Path(output_dir)
+        self.storage_manager = StorageManager()
+
+        if input_path is not None:
+            self.input_path = Path(input_path)
+        else:
+            self.input_path = self.storage_manager.get_debug_filepath("module_1", "module_1_stage5_pct.parquet")
+
+        if output_dir is not None:
+            self.output_dir = Path(output_dir)
+        else:
+            self.output_dir = self.storage_manager.get_debug_dir("module_1")
+
         self.config = self._load_scoring_config()
 
     def _load_scoring_config(self) -> Dict[str, Any]:
@@ -79,23 +88,32 @@ class HotspotConfidenceScorer:
 
     def load_input_data(self) -> gpd.GeoDataFrame:
         """Loads dataset with percentiles."""
-        if self.input_path.exists():
-            logger.info(f"Loading percentile dataset from Parquet: {self.input_path}...")
-            df = pd.read_parquet(self.input_path)
+        candidates = [
+            self.input_path,
+            self.output_dir / "module_1_stage5_pct.parquet",
+            self.storage_manager.get_debug_filepath("module_1", "module_1_stage5_pct.parquet"),
+            self.storage_manager.get_debug_filepath("module_1", "module_1_stage5_labeled.parquet"),
+            self.storage_manager.get_processed_filepath("feature_engineering", "features.geoparquet"),
+            Path("data/processed/features.parquet")
+        ]
+
+        target_path = None
+        for p in candidates:
+            if p.exists():
+                target_path = p
+                break
+
+        if target_path is not None:
+            logger.info(f"Loading dataset from: {target_path}...")
+            df = pd.read_parquet(target_path)
             gdf = gpd.GeoDataFrame(
                 df,
                 geometry=gpd.points_from_xy(df["longitude"], df["latitude"]),
                 crs="EPSG:4326"
             )
-        else:
-            geojson_path = self.input_path.with_suffix(".geojson")
-            if geojson_path.exists():
-                logger.info(f"Loading percentile dataset from GeoJSON: {geojson_path}...")
-                gdf = gpd.read_file(geojson_path)
-            else:
-                raise FileNotFoundError(f"Input dataset not found at {self.input_path}.")
+            return gdf
 
-        return gdf
+        raise FileNotFoundError(f"Input dataset not found at {self.input_path}.")
 
     def _min_max_normalize(self, arr: np.ndarray, default_val: float = 0.0) -> np.ndarray:
         """Normalizes array values to [0, 1] range using min-max scaling."""
@@ -116,9 +134,7 @@ class HotspotConfidenceScorer:
         return norm_arr
 
     def compute_confidence_scores(self, gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
-        """
-        Calculates weighted hotspot_confidence_score and assigns confidence_class.
-        """
+        """Calculates weighted hotspot_confidence_score and assigns confidence_class."""
         result_gdf = gdf.copy()
         logger.info("Computing Hotspot Confidence Scores (0-100)...")
 
@@ -128,28 +144,22 @@ class HotspotConfidenceScorer:
         w_hp = float(weights.get("heat_persistence", 0.15))
         w_pct = float(weights.get("temperature_percentile", 0.10))
 
-        # Normalize components
-        # 1. Gi* Z-score
         z_day = result_gdf.get("gi_zscore_day", pd.Series(0.0, index=result_gdf.index)).values
         z_night = result_gdf.get("gi_zscore_night", pd.Series(0.0, index=result_gdf.index)).values
         z_comp = np.maximum(z_day, z_night)
         norm_gi = self._min_max_normalize(z_comp)
 
-        # 2. SUHII
         suhii_day = result_gdf.get("suhii_day_celsius", pd.Series(0.0, index=result_gdf.index)).values
         suhii_night = result_gdf.get("suhii_night_celsius", pd.Series(0.0, index=result_gdf.index)).values
         suhii_comp = np.maximum(suhii_day, suhii_night)
         norm_suhii = self._min_max_normalize(suhii_comp)
 
-        # 3. Heat Persistence
         hp = result_gdf.get("heat_persistence_index", pd.Series(0.0, index=result_gdf.index)).values
         norm_hp = self._min_max_normalize(hp)
 
-        # 4. City Temperature Percentile
         pct = result_gdf.get("city_temperature_percentile", pd.Series(0.0, index=result_gdf.index)).values
         norm_pct = np.nan_to_num(pct / 100.0, nan=0.0)
 
-        # Calculate weighted confidence score
         raw_score = 100.0 * (
             w_gi * norm_gi +
             w_suhii * norm_suhii +
@@ -158,7 +168,6 @@ class HotspotConfidenceScorer:
         )
         scores = np.round(np.clip(raw_score, 0.0, 100.0), 2)
 
-        # Classify scores into confidence classes
         classes = []
         conf_classes_cfg = sorted(
             self.config["confidence_classes"],
@@ -182,7 +191,7 @@ class HotspotConfidenceScorer:
         return result_gdf
 
     def run(self) -> Dict[str, Any]:
-        """Executes Hotspot Confidence Scorer and updates intermediate dataset."""
+        """Executes Hotspot Confidence Scorer."""
         logger.info("=================================================================")
         logger.info("MODULE 1 - EXTENSION 2: HOTSPOT CONFIDENCE SCORE")
         logger.info("=================================================================")
@@ -192,7 +201,6 @@ class HotspotConfidenceScorer:
 
         self.output_dir.mkdir(parents=True, exist_ok=True)
         parquet_out = self.output_dir / "module_1_stage5_scored.parquet"
-
         logger.info(f"Saving scored dataset to {parquet_out}...")
         df_export = pd.DataFrame(gdf_scored.drop(columns=["geometry"]))
         df_export.to_parquet(parquet_out, index=False)

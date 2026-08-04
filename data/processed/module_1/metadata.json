@@ -1,0 +1,16 @@
+{
+  "city_name": "Chennai",
+  "module_id": "module_1_thermal",
+  "module_name": "Module 1: Physical Urban Heat & Hotspot Intelligence Engine",
+  "status": "SUCCESS",
+  "total_sample_points": 44298,
+  "urban_area_km2": 296.97,
+  "rural_baseline_area_km2": 132.16,
+  "validated_hotspot_area_km2": 195.02,
+  "total_hotspot_clusters": 158,
+  "urban_mean_day_suhii_celsius": 1.24,
+  "urban_mean_night_suhii_celsius": 4.25,
+  "primary_geoparquet_knowledge_layer": "D:\\Projects\\Boreas_Nexus\\data\\processed\\module_1\\urban_heat_hotspot_knowledge_layer.geoparquet",
+  "hotspot_registry_parquet": "D:\\Projects\\Boreas_Nexus\\data\\processed\\module_1\\hotspot_registry.parquet",
+  "consumed_by_next_module": "Module 2: Urban Heat Driver Intelligence Engine"
+}

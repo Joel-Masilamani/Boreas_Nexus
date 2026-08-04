@@ -1,8 +1,8 @@
 """
 Boreas-Nexus File Manager Module
 
-Manages directory structures, resolves dataset output file paths, prevents duplicate downloads,
-computes file checksums, and manages versioning across raw and metadata storage.
+Manages directory structures, resolves raw/processed/export dataset file paths,
+prevents duplicate downloads, computes file checksums, and integrates with StorageManager.
 """
 
 from pathlib import Path
@@ -20,11 +20,12 @@ from utils.constants import (
     RAW_SUBDIRECTORIES,
 )
 from utils.helpers import calculate_sha256, get_file_size_bytes
+from storage.storage_manager import StorageManager
 
 
 class FileManager:
     """
-    Handles directory setup, path resolution, checksum verification,
+    Handles directory setup, raw/processed path resolution, checksum verification,
     and storage organization for the Boreas-Nexus pipeline.
     """
 
@@ -32,6 +33,7 @@ class FileManager:
         self.base_raw_dir = Path(base_raw_dir).resolve()
         self.data_root = self.base_raw_dir.parent
         self.metadata_dir = self.data_root / DIR_METADATA
+        self.storage_manager = StorageManager()
         self._ensure_directory_structure()
 
     def _ensure_directory_structure(self) -> None:
@@ -63,7 +65,6 @@ class FileManager:
     @property
     def elevation_dir(self) -> Path:
         return self.base_raw_dir / DIR_ELEVATION
-
 
     def get_boundary_path(self, filename: str) -> Path:
         return self.base_raw_dir / DIR_BOUNDARY / filename

@@ -1,0 +1,7 @@
+{
+  "city": "Chennai",
+  "module": "feature_engineering",
+  "sample_count": 44298,
+  "crs": "EPSG:4326",
+  "primary_file": "features.geoparquet"
+}

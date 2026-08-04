@@ -4,10 +4,6 @@ Boreas-Nexus Module 1 - Hotspot Cluster Generator (Part 1 Extension)
 Purpose: Perform Connected Component Analysis on Getis-Ord Gi* validated hotspot pixels
 to identify contiguous spatial hotspot clusters, assign unique identifiers (e.g. HOT_0001),
 compute cluster-level morphological/thermal metadata, and generate derived GIS export polygons.
-
-Workflow:
-Getis-Ord Gi* -> Threshold Significant Pixels -> Binary Hotspot Raster ->
-Connected Component Analysis -> Hotspot Regions
 """
 
 from pathlib import Path
@@ -22,6 +18,7 @@ from shapely.ops import unary_union
 
 from utils.logger import logger
 from utils.config_loader import ConfigLoader
+from storage.storage_manager import StorageManager
 
 
 class HotspotClusterGenerator:
@@ -34,13 +31,23 @@ class HotspotClusterGenerator:
         self,
         config_path: Path | str = Path("config/city.yaml"),
         scoring_config_path: Path | str = Path("config/hotspot_scoring.yaml"),
-        input_hotspot_path: Path | str = Path("data/processed/module_1_stage5_hotspots.parquet"),
-        output_dir: Path | str = Path("data/processed")
+        input_hotspot_path: Path | str | None = None,
+        output_dir: Path | str | None = None
     ):
         self.config_path = Path(config_path)
         self.scoring_config_path = Path(scoring_config_path)
-        self.input_hotspot_path = Path(input_hotspot_path)
-        self.output_dir = Path(output_dir)
+        self.storage_manager = StorageManager()
+
+        if input_hotspot_path is not None:
+            self.input_hotspot_path = Path(input_hotspot_path)
+        else:
+            self.input_hotspot_path = self.storage_manager.get_debug_filepath("module_1", "module_1_stage5_hotspots.parquet")
+
+        if output_dir is not None:
+            self.output_dir = Path(output_dir)
+        else:
+            self.output_dir = self.storage_manager.get_debug_dir("module_1")
+
         self.connectivity = self._load_connectivity()
         self.grid_res = self._load_grid_res()
 
@@ -70,42 +77,42 @@ class HotspotClusterGenerator:
 
     def load_stage5_data(self) -> gpd.GeoDataFrame:
         """Loads Stage 5 validated hotspot dataset."""
-        if self.input_hotspot_path.exists():
-            logger.info(f"Loading Stage 5 dataset from Parquet: {self.input_hotspot_path}...")
-            df = pd.read_parquet(self.input_hotspot_path)
+        candidates = [
+            self.input_hotspot_path,
+            self.output_dir / "module_1_stage5_hotspots.parquet",
+            self.storage_manager.get_debug_filepath("module_1", "module_1_stage5_hotspots.parquet"),
+            self.storage_manager.get_processed_filepath("feature_engineering", "features.geoparquet"),
+            Path("data/processed/features.parquet")
+        ]
+
+        target_path = None
+        for p in candidates:
+            if p.exists():
+                target_path = p
+                break
+
+        if target_path is not None:
+            logger.info(f"Loading Stage 5 dataset from: {target_path}...")
+            df = pd.read_parquet(target_path)
             gdf = gpd.GeoDataFrame(
                 df,
                 geometry=gpd.points_from_xy(df["longitude"], df["latitude"]),
                 crs="EPSG:4326"
             )
-        else:
-            geojson_path = self.input_hotspot_path.with_suffix(".geojson")
-            if geojson_path.exists():
-                logger.info(f"Loading Stage 5 dataset from GeoJSON: {geojson_path}...")
-                gdf = gpd.read_file(geojson_path)
-            else:
-                raise FileNotFoundError(
-                    f"Stage 5 dataset not found at {self.input_hotspot_path}."
-                )
+            return gdf
 
-        return gdf
+        raise FileNotFoundError(f"Stage 5 dataset not found at {self.input_hotspot_path}.")
 
     def label_clusters(self, gdf: gpd.GeoDataFrame) -> Tuple[gpd.GeoDataFrame, pd.DataFrame, gpd.GeoDataFrame]:
-        """
-        Runs connected component analysis on validated hotspot pixels.
-        
-        Assigns `hotspot_id` to member points and creates normalized cluster metadata.
-        """
+        """Runs connected component analysis on validated hotspot pixels."""
         result_gdf = gdf.copy()
         logger.info(f"Running Connected Component Analysis (connectivity={self.connectivity}-neighbour)...")
 
-        # 1. Ensure UTM coordinates
         if "utm_x_m" not in result_gdf.columns or "utm_y_m" not in result_gdf.columns:
             gdf_utm = result_gdf.to_crs("EPSG:32644")
             result_gdf["utm_x_m"] = gdf_utm.geometry.x
             result_gdf["utm_y_m"] = gdf_utm.geometry.y
 
-        # Extract coordinates and hotspot mask
         xs = result_gdf["utm_x_m"].values
         ys = result_gdf["utm_y_m"].values
         is_hotspot = result_gdf.get("is_validated_hotspot", pd.Series(False, index=result_gdf.index)).values.astype(bool)
@@ -122,13 +129,11 @@ class HotspotClusterGenerator:
         nrows = row_indices.max() + 1
         ncols = col_indices.max() + 1
 
-        # Build 2D binary raster
         grid = np.zeros((nrows, ncols), dtype=bool)
         for r, c, flag in zip(row_indices, col_indices, is_hotspot):
             if flag:
                 grid[r, c] = True
 
-        # Connected component structure
         if self.connectivity == 4:
             structure = np.array([[0, 1, 0], [1, 1, 1], [0, 1, 0]], dtype=int)
         else:
@@ -137,7 +142,6 @@ class HotspotClusterGenerator:
         labeled_grid, num_clusters = label(grid, structure=structure)
         logger.info(f"Identified {num_clusters} distinct hotspot clusters.")
 
-        # Map labels back to points
         hotspot_ids: List[Optional[str]] = []
         for r, c, flag in zip(row_indices, col_indices, is_hotspot):
             if flag and labeled_grid[r, c] > 0:
@@ -147,7 +151,6 @@ class HotspotClusterGenerator:
 
         result_gdf["hotspot_id"] = hotspot_ids
 
-        # Build cluster registry and vector polygons
         cluster_records = []
         cluster_polygons = []
 
@@ -214,7 +217,7 @@ class HotspotClusterGenerator:
         return result_gdf, df_registry, gdf_clusters
 
     def run(self) -> Dict[str, Any]:
-        """Executes Cluster Generator and exports derived visualization products."""
+        """Executes Cluster Generator and exports derived visualization products into exports/."""
         logger.info("=================================================================")
         logger.info("MODULE 1 - EXTENSION 1: HOTSPOT CLUSTER GENERATOR")
         logger.info("=================================================================")
@@ -222,19 +225,23 @@ class HotspotClusterGenerator:
         gdf = self.load_stage5_data()
         gdf_labeled, df_registry, gdf_clusters = self.label_clusters(gdf)
 
-        # Save derived visualization products
         self.output_dir.mkdir(parents=True, exist_ok=True)
         geojson_out = self.output_dir / "hotspot_clusters.geojson"
         gpkg_out = self.output_dir / "hotspot_clusters.gpkg"
-        parquet_out = self.output_dir / "module_1_stage5_labeled.parquet"
 
         if len(gdf_clusters) > 0:
-            logger.info(f"Exporting derived cluster polygons GeoJSON: {geojson_out}...")
+            logger.info(f"Exporting derived cluster polygons GeoJSON to {geojson_out}...")
             gdf_clusters.to_file(geojson_out, driver="GeoJSON")
-            logger.info(f"Exporting derived cluster polygons GeoPackage: {gpkg_out}...")
+            logger.info(f"Exporting derived cluster polygons GeoPackage to {gpkg_out}...")
             gdf_clusters.to_file(gpkg_out, driver="GPKG")
 
-        logger.info(f"Updating intermediate dataset: {parquet_out}...")
+            export_geojson = self.storage_manager.get_export_filepath("geojson", "hotspot_clusters.geojson")
+            export_gpkg = self.storage_manager.get_export_filepath("gpkg", "hotspot_clusters.gpkg")
+            gdf_clusters.to_file(export_geojson, driver="GeoJSON")
+            gdf_clusters.to_file(export_gpkg, driver="GPKG")
+
+        parquet_out = self.output_dir / "module_1_stage5_labeled.parquet"
+        logger.info(f"Saving labeled dataset to {parquet_out}...")
         df_export = pd.DataFrame(gdf_labeled.drop(columns=["geometry"]))
         df_export.to_parquet(parquet_out, index=False)
 
@@ -244,7 +251,8 @@ class HotspotClusterGenerator:
             "total_hotspot_pixels": int((gdf_labeled["hotspot_id"].notnull()).sum()),
             "connectivity": self.connectivity,
             "clusters_geojson": str(geojson_out),
-            "clusters_gpkg": str(gpkg_out)
+            "clusters_gpkg": str(gpkg_out),
+            "output_parquet": str(parquet_out)
         }
 
         logger.info(f"Hotspot Cluster Generator complete! Identified {len(df_registry)} clusters.")

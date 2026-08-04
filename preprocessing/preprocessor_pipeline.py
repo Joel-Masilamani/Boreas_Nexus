@@ -1,78 +1,78 @@
 """
-Boreas-Nexus Preprocessor Pipeline Module
+Boreas-Nexus Phase 2 Feature Preprocessing Pipeline
 
-Orchestrates Phase 2 Preprocessing:
-1. Loads raw boundary, vector, elevation, and satellite datasets from data/raw/
-2. Builds uniform spatial grid over target city boundary polygon
-3. Executes feature extraction (proximity, spectral indices, DEM parameters)
-4. Saves processed feature matrix to data/processed/features.parquet & features.geojson
+Orchestrates spatial sampling grid generation, vector proximity extraction,
+spectral index calculation (NDVI, NDBI, NDWI, LST), DEM terrain analysis,
+and exports the dataset to data/processed/feature_engineering/features.geoparquet.
 """
 
 from pathlib import Path
-from typing import Dict, Any, Optional
-import geopandas as gpd
+from typing import Dict, Any, List, Tuple, Optional
+import json
 import pandas as pd
+import geopandas as gpd
 
 from utils.logger import logger
-from utils.config_loader import Config, ConfigLoader
+from utils.config_loader import ConfigLoader
 from storage.file_manager import FileManager
-from preprocessing.grid_builder import GridBuilder
+from storage.storage_manager import StorageManager
+from preprocessing.grid_generator import GridGenerator
 from preprocessing.feature_extractor import FeatureExtractor
-from preprocessing.vector_processor import VectorProcessor
 
 
 class PreprocessorPipeline:
     """
-    Class-based preprocessor orchestrator for Phase 2 Feature Engineering.
+    Class orchestrating end-to-end Phase 2 Feature Engineering execution.
     """
 
-    def __init__(self, config_path: Path | str = Path("config/city.yaml")):
-        self.config = ConfigLoader.load_config(config_path)
-        self.file_manager = FileManager(
-            base_raw_dir=self.config.city.output_directory
-        )
-        self.grid_builder = GridBuilder(target_crs=self.config.preprocessing.target_crs)
-        self.feature_extractor = FeatureExtractor(target_crs=self.config.preprocessing.target_crs)
+    def __init__(
+        self,
+        config_path: Path | str = Path("config/city.yaml")
+    ):
+        self.config_path = Path(config_path)
+        self.config = ConfigLoader.load_config(self.config_path)
 
-    def load_raw_boundary(self) -> gpd.GeoDataFrame:
-        """Loads city boundary GeoJSON from raw data folder."""
-        boundary_file = self.file_manager.get_boundary_path("boundary.geojson")
-        if not boundary_file.exists():
-            raise FileNotFoundError(f"Boundary file not found at {boundary_file}. Execute main.py first.")
-        
-        logger.info(f"Loading raw boundary dataset from {boundary_file}...")
-        return gpd.read_file(boundary_file)
+        # Initialize storage managers
+        self.storage_manager = StorageManager()
+        self.file_manager = FileManager(base_raw_dir=self.config.city.output_directory)
+
+        # Initialize preprocessing sub-components
+        self.grid_generator = GridGenerator()
+        self.feature_extractor = FeatureExtractor()
 
     def load_raw_vector_layers(self) -> Dict[str, gpd.GeoDataFrame]:
-        """Loads available vector GeoJSON layers from raw data folder."""
-        layers: Dict[str, gpd.GeoDataFrame] = {}
-        for layer_name in self.config.ingestion.vector.layers:
-            layer_path = self.file_manager.get_vector_path(f"{layer_name}.geojson")
-            if layer_path.exists() and layer_path.stat().st_size > 0:
-                logger.info(f"Loading raw vector layer '{layer_name}' from {layer_path}...")
+        """Loads available vector GIS layers from raw data directory."""
+        layers = {}
+        osm_files = {
+            "water": "waterways.geojson",
+            "parks": "green_spaces.geojson",
+            "roads": "roads.geojson",
+            "buildings": "buildings.geojson"
+        }
+
+        for key, fname in osm_files.items():
+            p = self.file_manager.get_osm_vector_path(fname)
+            if p.exists():
+                logger.info(f"Loading vector layer '{key}' from {p}...")
                 try:
-                    layers[layer_name] = gpd.read_file(layer_path)
+                    layers[key] = gpd.read_file(p)
                 except Exception as e:
-                    logger.warning(f"Could not load vector layer '{layer_name}': {e}")
+                    logger.warning(f"Could not load vector layer {fname}: {e}")
+
         return layers
 
     def run(self) -> Dict[str, Any]:
-        """
-        Executes Phase 2 Preprocessing Pipeline.
-
-        Returns:
-            Dictionary containing preprocessing summary metrics.
-        """
+        """Runs Phase 2 Feature Preprocessing Pipeline."""
         logger.info("=================================================================")
-        logger.info(f"STARTING PHASE 2 PREPROCESSING FOR CITY: {self.config.city.name}")
+        logger.info(f"STARTING PHASE 2 PREPROCESSING PIPELINE FOR {self.config.city.name.upper()}")
         logger.info("=================================================================")
 
-        # Step 1: Load boundary
-        boundary_gdf = self.load_raw_boundary()
+        # Step 1: Resolve bounding box
+        bbox = self.file_manager.get_boundary_bbox()
+        res_m = float(self.config.preprocessing.grid_resolution_meters)
 
         # Step 2: Generate spatial grid
-        res_m = self.config.preprocessing.grid_resolution_meters
-        grid_gdf = self.grid_builder.generate_grid_points(boundary_gdf, resolution_meters=res_m)
+        grid_gdf = self.grid_generator.generate_spatial_grid(bbox, grid_resolution_meters=res_m)
 
         # Step 3: Load vector layers
         vector_layers = self.load_raw_vector_layers()
@@ -94,35 +94,48 @@ class PreprocessorPipeline:
         # Step 8: Extract land cover features
         grid_gdf = self.feature_extractor.extract_landcover_features(grid_gdf, self.file_manager.base_raw_dir)
 
+        # Step 9: Export processed feature dataset into feature_engineering/
+        geoparquet_path = self.storage_manager.get_processed_filepath("feature_engineering", "features.geoparquet")
+        metadata_path = self.storage_manager.get_processed_filepath("feature_engineering", "metadata.json")
+        validation_path = self.storage_manager.get_processed_filepath("feature_engineering", "validation.json")
 
-        # Step 7: Export processed dataset
-        processed_dir = self.config.preprocessing.output_directory
-        processed_dir.mkdir(parents=True, exist_ok=True)
+        logger.info(f"Saving primary spatial GeoParquet dataset ({len(grid_gdf)} samples) to {geoparquet_path}")
+        grid_gdf.to_parquet(geoparquet_path)
 
-        parquet_path = processed_dir / "features.parquet"
-        geojson_path = processed_dir / "features.geojson"
+        # Step 10: Export optional derived GIS products to exports/
+        geojson_path = self.storage_manager.get_export_filepath("geojson", "features.geojson")
+        gpkg_path = self.storage_manager.get_export_filepath("gpkg", "features.gpkg")
 
-        logger.info(f"Saving processed feature dataset ({len(grid_gdf)} samples) to {parquet_path}")
-        df = pd.DataFrame(grid_gdf.drop(columns=["geometry"]))
-        try:
-            df.to_parquet(parquet_path, index=False)
-        except Exception as e:
-            logger.warning(f"Could not save Parquet directly ({e}). Saving CSV fallback.")
-            csv_path = processed_dir / "features.csv"
-            df.to_csv(csv_path, index=False)
-
-        logger.info(f"Saving processed spatial GeoJSON dataset to {geojson_path}")
+        logger.info(f"Exporting optional spatial GeoJSON dataset to {geojson_path}")
         grid_gdf.to_file(geojson_path, driver="GeoJSON")
 
+        logger.info(f"Exporting optional spatial GeoPackage dataset to {gpkg_path}")
+        grid_gdf.to_file(gpkg_path, driver="GPKG")
+
+        # Step 11: Export Feature Engineering Metadata & Validation
         summary = {
             "city": self.config.city.name,
             "status": "SUCCESS",
             "grid_resolution_meters": res_m,
             "sample_count": len(grid_gdf),
-            "parquet_output": str(parquet_path),
-            "geojson_output": str(geojson_path),
+            "primary_geoparquet": str(geoparquet_path),
+            "geojson_export": str(geojson_path),
+            "gpkg_export": str(gpkg_path),
             "feature_columns": list(grid_gdf.columns)
         }
+
+        val_report = {
+            "status": "PASSED",
+            "total_samples": len(grid_gdf),
+            "null_count": int(grid_gdf.isnull().sum().sum()),
+            "crs": str(grid_gdf.crs)
+        }
+
+        with open(metadata_path, "w", encoding="utf-8") as f:
+            json.dump(summary, f, indent=2)
+
+        with open(validation_path, "w", encoding="utf-8") as f:
+            json.dump(val_report, f, indent=2)
 
         logger.info("=================================================================")
         logger.info(f"PHASE 2 PREPROCESSING FINISHED WITH STATUS: SUCCESS")

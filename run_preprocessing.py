@@ -2,7 +2,7 @@
 Boreas-Nexus CLI Entry Point for Phase 2 Preprocessing Pipeline
 
 Executes spatial grid generation, vector proximity calculation, spectral index computation,
-and exports the dataset to data/processed/features.parquet and features.geojson.
+and exports the dataset to data/processed/feature_engineering/features.geoparquet.
 
 Usage:
     python run_preprocessing.py --config config/city.yaml
@@ -41,8 +41,8 @@ def main() -> None:
         print(f"Status: {summary['status']}")
         print(f"Grid Resolution: {summary['grid_resolution_meters']} meters")
         print(f"Samples Extracted: {summary['sample_count']}")
-        print(f"Parquet Dataset: {summary['parquet_output']}")
-        print(f"GeoJSON Dataset: {summary['geojson_output']}")
+        print(f"GeoParquet Dataset: {summary.get('primary_geoparquet', summary.get('parquet_output'))}")
+        print(f"GeoJSON Export: {summary.get('geojson_export', summary.get('geojson_output'))}")
         print(f"Features Generated ({len(summary['feature_columns'])}): {', '.join(summary['feature_columns'])}")
     except Exception as e:
         logger.critical(f"Fatal preprocessing error: {e}", exc_info=True)

@@ -1,76 +1,63 @@
 """
 Boreas-Nexus Module 1 - Stage 2: Urban–Non-Urban Delineation
 
-Purpose: Separate urban surfaces (concrete, asphalt, buildings) from surrounding
-rural/natural landscapes (agriculture, forest, unbuilt soil).
-
-Scientific Theory: UHI Intensity = T_urban - T_rural
-Before any UHI analysis can occur, the city must be partitioned into an Urban Mask and a Rural Mask.
-
-Scientific Question: "What pixels are urban and what pixels establish the rural baseline?"
+Purpose: Separate urban surfaces from surrounding rural baseline landscapes.
 """
 
 from pathlib import Path
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Tuple, Optional
 import pandas as pd
 import geopandas as gpd
 import numpy as np
 
 from utils.logger import logger
-from utils.config_loader import ConfigLoader
+from storage.storage_manager import StorageManager
 
 
 class Stage2UrbanDelineator:
     """
-    Delineates study area into Urban, Rural, and Water spatial masks using ESA WorldCover 10m
-    land classification codes and spectral vegetation / built-up indices.
+    Delineates study area into Urban, Rural, and Water spatial masks using land cover codes.
     """
 
     def __init__(
         self,
-        input_aligned_path: Path | str = Path("data/processed/module_1_stage1_aligned.parquet"),
-        output_dir: Path | str = Path("data/processed")
+        input_aligned_path: Path | str | None = None,
+        output_dir: Path | str | None = None
     ):
-        self.input_aligned_path = Path(input_aligned_path)
-        self.output_dir = Path(output_dir)
+        self.storage_manager = StorageManager()
+        self.input_aligned_path = Path(input_aligned_path) if input_aligned_path is not None else self.storage_manager.get_debug_filepath("module_1", "module_1_stage1_aligned.parquet")
+        self.output_dir = Path(output_dir) if output_dir is not None else self.storage_manager.get_debug_dir("module_1")
 
     def load_stage1_data(self) -> gpd.GeoDataFrame:
         """Loads Stage 1 aligned geospatial dataset."""
-        if self.input_aligned_path.exists():
-            logger.info(f"Loading Stage 1 aligned data from Parquet: {self.input_aligned_path}...")
-            df = pd.read_parquet(self.input_aligned_path)
+        candidates = [
+            self.input_aligned_path,
+            self.output_dir / "module_1_stage1_aligned.parquet",
+            self.storage_manager.get_debug_filepath("module_1", "module_1_stage1_aligned.parquet"),
+            self.storage_manager.get_processed_filepath("feature_engineering", "features.geoparquet"),
+            Path("data/processed/features.parquet")
+        ]
+
+        target_path = None
+        for p in candidates:
+            if p.exists():
+                target_path = p
+                break
+
+        if target_path is not None:
+            logger.info(f"Loading aligned data from: {target_path}...")
+            df = pd.read_parquet(target_path)
             gdf = gpd.GeoDataFrame(
                 df,
                 geometry=gpd.points_from_xy(df["longitude"], df["latitude"]),
                 crs="EPSG:4326"
             )
-        else:
-            geojson_path = self.input_aligned_path.with_suffix(".geojson")
-            if geojson_path.exists():
-                logger.info(f"Loading Stage 1 aligned data from GeoJSON: {geojson_path}...")
-                gdf = gpd.read_file(geojson_path)
-            else:
-                raise FileNotFoundError(
-                    f"Stage 1 aligned dataset not found at {self.input_aligned_path}. Run Stage 1 aligner first."
-                )
-
-        return gdf
+            return gdf
+        
+        raise FileNotFoundError("Stage 1 dataset not found. Run Stage 1 aligner first.")
 
     def delineate_masks(self, gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
-        """
-        Calculates boolean masks for Urban, Rural, and Water surfaces.
-
-        Classes in ESA WorldCover:
-        - 10: Trees / Forest
-        - 20: Shrubland
-        - 30: Grassland
-        - 40: Cropland / Agriculture
-        - 50: Built-up / Urban
-        - 60: Bare / Sparse vegetation
-        - 80: Open Water
-        - 90: Wetlands
-        - 95: Mangroves
-        """
+        """Calculates boolean masks for Urban, Rural, and Water surfaces."""
         result_gdf = gdf.copy()
         logger.info("Delineating Urban vs Rural baseline surface masks...")
 
@@ -80,18 +67,13 @@ class Stage2UrbanDelineator:
         ndwi = result_gdf.get("ndwi", pd.Series(-0.1, index=result_gdf.index)).values
         building_density = result_gdf.get("building_density", pd.Series(0.0, index=result_gdf.index)).values
 
-        # 1. Water Mask: Open water or high NDWI
         is_water = (lc == 80) | (ndwi > 0.15)
-
-        # 2. Urban Mask: Built-up class 50 or high NDBI/building density (and not water)
         is_urban = ((lc == 50) | (ndbi > 0.15) | (building_density > 0.20)) & (~is_water)
 
-        # 3. Rural Mask: Natural vegetation / cropland / bare soil (and not urban / not water)
         rural_lc_set = {10, 20, 30, 40, 60, 90, 95}
         is_rural_lc = np.isin(lc, list(rural_lc_set))
         is_rural = (is_rural_lc | (ndvi >= 0.25)) & (~is_urban) & (~is_water)
 
-        # Assign explicit surface class labels
         surface_class = np.full(len(result_gdf), "Other Unbuilt", dtype=object)
         surface_class[is_urban] = "Urban"
         surface_class[is_rural] = "Rural Baseline"
@@ -105,24 +87,17 @@ class Stage2UrbanDelineator:
         return result_gdf
 
     def validate_delineation(self, gdf: gpd.GeoDataFrame) -> Tuple[bool, Dict[str, Any]]:
-        """
-        Validates urban and rural baseline partitioning.
-
-        Answers Scientific Question:
-        "What pixels are urban and what pixels establish the rural baseline?"
-        """
+        """Validates urban and rural baseline partitioning."""
         n_total = len(gdf)
         n_urban = int(gdf["is_urban"].sum())
         n_rural = int(gdf["is_rural"].sum())
         n_water = int(gdf["is_water"].sum())
 
-        # Area calculation at 100m grid resolution (1 cell = 0.01 km^2)
         urban_area_km2 = n_urban * 0.01
         rural_area_km2 = n_rural * 0.01
 
         urban_mean_day_lst = float(gdf[gdf["is_urban"]]["lst_day_celsius"].mean())
         rural_mean_day_lst = float(gdf[gdf["is_rural"]]["lst_day_celsius"].mean())
-
         urban_mean_night_lst = float(gdf[gdf["is_urban"]]["lst_night_celsius"].mean())
         rural_mean_night_lst = float(gdf[gdf["is_rural"]]["lst_night_celsius"].mean())
 
@@ -148,33 +123,26 @@ class Stage2UrbanDelineator:
         return is_valid, metrics
 
     def run(self) -> Dict[str, Any]:
-        """Executes Stage 2 pipeline and exports delineated dataset."""
+        """Executes Stage 2 pipeline."""
         logger.info("=================================================================")
         logger.info("MODULE 1 - STAGE 2: URBAN–NON-URBAN DELINEATION")
         logger.info("=================================================================")
 
-        # Step 1: Load Stage 1 dataset
         gdf = self.load_stage1_data()
-
-        # Step 2: Delineate masks
         gdf = self.delineate_masks(gdf)
 
-        # Step 3: Validate delineation
         is_valid, metrics = self.validate_delineation(gdf)
         if not is_valid:
             logger.error(f"Stage 2 validation failed! Metrics: {metrics}")
             raise ValueError("Stage 2 urban delineation failed.")
 
-        # Step 4: Export outputs (Parquet for fast stage auditing)
         self.output_dir.mkdir(parents=True, exist_ok=True)
         parquet_out = self.output_dir / "module_1_stage2_delineated.parquet"
-
-        logger.info(f"Saving delineated dataset ({len(gdf)} points) to {parquet_out}...")
+        logger.info(f"Saving delineated dataset to {parquet_out}...")
         df_export = pd.DataFrame(gdf.drop(columns=["geometry"]))
         df_export.to_parquet(parquet_out, index=False)
-
         metrics["output_parquet"] = str(parquet_out)
 
-        logger.info(f"Stage 2 complete! Answer: {metrics['status']} - Urban: {metrics['urban_pixel_count']} pts ({metrics['urban_area_km2']} km2), Rural Baseline: {metrics['rural_pixel_count']} pts ({metrics['rural_area_km2']} km2)")
+        logger.info(f"Stage 2 complete! Answer: {metrics['status']} - Urban: {metrics['urban_pixel_count']} pts ({metrics['urban_area_km2']} km2)")
         logger.info("=================================================================")
         return metrics

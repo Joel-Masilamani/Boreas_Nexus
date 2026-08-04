@@ -1,0 +1,8 @@
+storage:
+  processed_root: "data/processed"
+  exports_root: "data/exports"
+  debug_root: "data/debug"
+  primary_spatial_format: "geoparquet"
+  export_formats:
+    - "geojson"
+    - "gpkg"
