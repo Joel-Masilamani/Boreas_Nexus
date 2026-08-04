@@ -36,11 +36,7 @@ class Stage2UrbanDelineator:
 
     def load_stage1_data(self) -> gpd.GeoDataFrame:
         """Loads Stage 1 aligned geospatial dataset."""
-        geojson_path = self.input_aligned_path.with_suffix(".geojson")
-        if geojson_path.exists():
-            logger.info(f"Loading Stage 1 aligned data from GeoJSON: {geojson_path}...")
-            gdf = gpd.read_file(geojson_path)
-        elif self.input_aligned_path.exists():
+        if self.input_aligned_path.exists():
             logger.info(f"Loading Stage 1 aligned data from Parquet: {self.input_aligned_path}...")
             df = pd.read_parquet(self.input_aligned_path)
             gdf = gpd.GeoDataFrame(
@@ -49,9 +45,14 @@ class Stage2UrbanDelineator:
                 crs="EPSG:4326"
             )
         else:
-            raise FileNotFoundError(
-                f"Stage 1 aligned dataset not found at {self.input_aligned_path}. Run Stage 1 aligner first."
-            )
+            geojson_path = self.input_aligned_path.with_suffix(".geojson")
+            if geojson_path.exists():
+                logger.info(f"Loading Stage 1 aligned data from GeoJSON: {geojson_path}...")
+                gdf = gpd.read_file(geojson_path)
+            else:
+                raise FileNotFoundError(
+                    f"Stage 1 aligned dataset not found at {self.input_aligned_path}. Run Stage 1 aligner first."
+                )
 
         return gdf
 

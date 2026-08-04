@@ -34,11 +34,7 @@ class Stage3SUHIICalculator:
 
     def load_stage2_data(self) -> gpd.GeoDataFrame:
         """Loads Stage 2 delineated geospatial dataset."""
-        geojson_path = self.input_delineated_path.with_suffix(".geojson")
-        if geojson_path.exists():
-            logger.info(f"Loading Stage 2 delineated data from GeoJSON: {geojson_path}...")
-            gdf = gpd.read_file(geojson_path)
-        elif self.input_delineated_path.exists():
+        if self.input_delineated_path.exists():
             logger.info(f"Loading Stage 2 delineated data from Parquet: {self.input_delineated_path}...")
             df = pd.read_parquet(self.input_delineated_path)
             gdf = gpd.GeoDataFrame(
@@ -47,9 +43,14 @@ class Stage3SUHIICalculator:
                 crs="EPSG:4326"
             )
         else:
-            raise FileNotFoundError(
-                f"Stage 2 dataset not found at {self.input_delineated_path}. Run Stage 2 delineator first."
-            )
+            geojson_path = self.input_delineated_path.with_suffix(".geojson")
+            if geojson_path.exists():
+                logger.info(f"Loading Stage 2 delineated data from GeoJSON: {geojson_path}...")
+                gdf = gpd.read_file(geojson_path)
+            else:
+                raise FileNotFoundError(
+                    f"Stage 2 dataset not found at {self.input_delineated_path}. Run Stage 2 delineator first."
+                )
 
         return gdf
 

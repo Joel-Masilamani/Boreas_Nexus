@@ -39,11 +39,7 @@ class Stage4NighttimeThermal:
 
     def load_stage3_data(self) -> gpd.GeoDataFrame:
         """Loads Stage 3 SUHII dataset."""
-        geojson_path = self.input_suhii_path.with_suffix(".geojson")
-        if geojson_path.exists():
-            logger.info(f"Loading Stage 3 SUHII data from GeoJSON: {geojson_path}...")
-            gdf = gpd.read_file(geojson_path)
-        elif self.input_suhii_path.exists():
+        if self.input_suhii_path.exists():
             logger.info(f"Loading Stage 3 SUHII data from Parquet: {self.input_suhii_path}...")
             df = pd.read_parquet(self.input_suhii_path)
             gdf = gpd.GeoDataFrame(
@@ -52,9 +48,14 @@ class Stage4NighttimeThermal:
                 crs="EPSG:4326"
             )
         else:
-            raise FileNotFoundError(
-                f"Stage 3 dataset not found at {self.input_suhii_path}. Run Stage 3 calculator first."
-            )
+            geojson_path = self.input_suhii_path.with_suffix(".geojson")
+            if geojson_path.exists():
+                logger.info(f"Loading Stage 3 SUHII data from GeoJSON: {geojson_path}...")
+                gdf = gpd.read_file(geojson_path)
+            else:
+                raise FileNotFoundError(
+                    f"Stage 3 dataset not found at {self.input_suhii_path}. Run Stage 3 calculator first."
+                )
 
         return gdf
 
