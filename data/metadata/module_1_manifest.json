@@ -7,10 +7,10 @@
   "urban_area_km2": 296.97,
   "rural_baseline_area_km2": 132.16,
   "validated_hotspot_area_km2": 195.02,
-  "persistent_99pct_hotspot_area_km2": 2.44,
+  "total_hotspot_clusters": 158,
   "urban_mean_day_suhii_celsius": 1.24,
   "urban_mean_night_suhii_celsius": 4.25,
-  "knowledge_layer_parquet": "data\\processed\\urban_heat_hotspot_knowledge_layer.parquet",
-  "knowledge_layer_geojson": "data\\processed\\urban_heat_hotspot_knowledge_layer.geojson",
+  "primary_geoparquet_knowledge_layer": "data\\processed\\urban_heat_hotspots.geoparquet",
+  "hotspot_registry_parquet": "data\\processed\\hotspot_registry.parquet",
   "consumed_by_next_module": "Module 2: Urban Heat Driver Intelligence Engine"
 }

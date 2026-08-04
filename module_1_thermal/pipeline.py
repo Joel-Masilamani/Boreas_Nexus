@@ -1,13 +1,16 @@
 """
 Boreas-Nexus Module 1 Pipeline Orchestrator
 
-Executes all 6 stages of Module 1: Physical Urban Heat & Hotspot Intelligence Engine:
+Executes all stages of Module 1: Physical Urban Heat & Hotspot Intelligence Engine:
 Stage 1: Data Acquisition & Preprocessing Alignment
 Stage 2: Urban–Non-Urban Delineation
 Stage 3: Surface Urban Heat Island (SUHII) Computation
 Stage 4: Night-Time Thermal Behaviour Analysis
 Stage 5: Spatial Hotspot Validation (Getis-Ord Gi*)
-Stage 6: Urban Heat Hotspot Knowledge Layer Export
+Extension 1: Hotspot Cluster Generator (Connected Component Analysis)
+Extension 2: City Temperature Percentile Calculator
+Extension 3: Hotspot Confidence Scorer (0-100 Weighted Model)
+Stage 6: Urban Heat Hotspot Knowledge Layer Export (GeoParquet & Registry)
 """
 
 from pathlib import Path
@@ -19,6 +22,9 @@ from module_1_thermal.stage2_urban_delineation import Stage2UrbanDelineator
 from module_1_thermal.stage3_suhii_calculator import Stage3SUHIICalculator
 from module_1_thermal.stage4_nighttime_thermal import Stage4NighttimeThermal
 from module_1_thermal.stage5_hotspot_validator import Stage5HotspotValidator
+from module_1_thermal.hotspot_cluster_generator import HotspotClusterGenerator
+from module_1_thermal.city_temperature_percentile import CityTemperaturePercentileCalculator
+from module_1_thermal.hotspot_confidence_scorer import HotspotConfidenceScorer
 from module_1_thermal.stage6_knowledge_export import Stage6KnowledgeExporter
 
 
@@ -27,11 +33,16 @@ class Module1ThermalPipeline:
     Class orchestrating end-to-end execution of Module 1.
     """
 
-    def __init__(self, config_path: Path | str = Path("config/city.yaml")):
+    def __init__(
+        self,
+        config_path: Path | str = Path("config/city.yaml"),
+        scoring_config_path: Path | str = Path("config/hotspot_scoring.yaml")
+    ):
         self.config_path = Path(config_path)
+        self.scoring_config_path = Path(scoring_config_path)
 
     def run(self) -> Dict[str, Any]:
-        """Runs Stage 1 through Stage 6 sequentially."""
+        """Runs Stage 1 through Stage 6 sequentially including extensions."""
         logger.info("=================================================================")
         logger.info("STARTING MODULE 1: PHYSICAL URBAN HEAT & HOTSPOT INTELLIGENCE ENGINE")
         logger.info("=================================================================")
@@ -56,7 +67,22 @@ class Module1ThermalPipeline:
         s5 = Stage5HotspotValidator()
         m5 = s5.run()
 
-        # Stage 6
+        # Extension 1: Cluster Generator
+        cluster_gen = HotspotClusterGenerator(
+            config_path=self.config_path,
+            scoring_config_path=self.scoring_config_path
+        )
+        m_cluster = cluster_gen.run()
+
+        # Extension 2: City Temperature Percentile
+        pct_calc = CityTemperaturePercentileCalculator()
+        m_pct = pct_calc.run()
+
+        # Extension 3: Hotspot Confidence Scorer
+        conf_scorer = HotspotConfidenceScorer(scoring_config_path=self.scoring_config_path)
+        m_conf = conf_scorer.run()
+
+        # Stage 6: Knowledge Layer & Registry Exporter
         s6 = Stage6KnowledgeExporter(config_path=self.config_path)
         m6 = s6.run()
 
@@ -68,6 +94,9 @@ class Module1ThermalPipeline:
             "stage3_metrics": m3,
             "stage4_metrics": m4,
             "stage5_metrics": m5,
+            "cluster_metrics": m_cluster,
+            "percentile_metrics": m_pct,
+            "confidence_metrics": m_conf,
             "stage6_manifest": m6
         }
 

@@ -1,0 +1,16 @@
+{
+  "status": "PASSED",
+  "checks": {
+    "cluster_ids_unique": true,
+    "single_cluster_membership": true,
+    "confidence_score_range_0_100": true,
+    "percentile_range_0_100": true,
+    "cluster_area_positive": true,
+    "cluster_perimeter_positive": true
+  },
+  "summary": {
+    "total_clusters": 158,
+    "total_hotspot_points": 19502,
+    "total_evaluated_points": 44298
+  }
+}
