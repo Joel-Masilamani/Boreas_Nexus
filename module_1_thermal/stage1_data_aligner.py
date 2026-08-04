@@ -189,20 +189,15 @@ class Stage1DataAligner:
             logger.error(f"Stage 1 validation failed! Metrics: {metrics}")
             raise ValueError("Stage 1 data alignment validation failed.")
 
-        # Step 6: Export outputs
+        # Step 6: Export outputs (Parquet for fast stage auditing)
         self.output_dir.mkdir(parents=True, exist_ok=True)
         parquet_out = self.output_dir / "module_1_stage1_aligned.parquet"
-        geojson_out = self.output_dir / "module_1_stage1_aligned.geojson"
 
         logger.info(f"Saving aligned dataset ({len(gdf)} points) to {parquet_out}...")
         df_export = pd.DataFrame(gdf.drop(columns=["geometry"]))
         df_export.to_parquet(parquet_out, index=False)
 
-        logger.info(f"Saving aligned GeoJSON dataset to {geojson_out}...")
-        gdf.to_file(geojson_out, driver="GeoJSON")
-
         metrics["output_parquet"] = str(parquet_out)
-        metrics["output_geojson"] = str(geojson_out)
 
         logger.info(f"Stage 1 complete! Answer: {metrics['status']} - {metrics['scientific_question']}")
         logger.info("=================================================================")

@@ -165,20 +165,15 @@ class Stage2UrbanDelineator:
             logger.error(f"Stage 2 validation failed! Metrics: {metrics}")
             raise ValueError("Stage 2 urban delineation failed.")
 
-        # Step 4: Export outputs
+        # Step 4: Export outputs (Parquet for fast stage auditing)
         self.output_dir.mkdir(parents=True, exist_ok=True)
         parquet_out = self.output_dir / "module_1_stage2_delineated.parquet"
-        geojson_out = self.output_dir / "module_1_stage2_delineated.geojson"
 
         logger.info(f"Saving delineated dataset ({len(gdf)} points) to {parquet_out}...")
         df_export = pd.DataFrame(gdf.drop(columns=["geometry"]))
         df_export.to_parquet(parquet_out, index=False)
 
-        logger.info(f"Saving delineated GeoJSON dataset to {geojson_out}...")
-        gdf.to_file(geojson_out, driver="GeoJSON")
-
         metrics["output_parquet"] = str(parquet_out)
-        metrics["output_geojson"] = str(geojson_out)
 
         logger.info(f"Stage 2 complete! Answer: {metrics['status']} - Urban: {metrics['urban_pixel_count']} pts ({metrics['urban_area_km2']} km2), Rural Baseline: {metrics['rural_pixel_count']} pts ({metrics['rural_area_km2']} km2)")
         logger.info("=================================================================")

@@ -149,20 +149,15 @@ class Stage4NighttimeThermal:
             logger.error(f"Stage 4 validation failed! Metrics: {metrics}")
             raise ValueError("Stage 4 nighttime thermal analysis failed.")
 
-        # Step 4: Export outputs
+        # Step 4: Export outputs (Parquet for fast stage auditing)
         self.output_dir.mkdir(parents=True, exist_ok=True)
         parquet_out = self.output_dir / "module_1_stage4_nighttime.parquet"
-        geojson_out = self.output_dir / "module_1_stage4_nighttime.geojson"
 
         logger.info(f"Saving nighttime thermal dataset ({len(gdf)} points) to {parquet_out}...")
         df_export = pd.DataFrame(gdf.drop(columns=["geometry"]))
         df_export.to_parquet(parquet_out, index=False)
 
-        logger.info(f"Saving nighttime thermal GeoJSON dataset to {geojson_out}...")
-        gdf.to_file(geojson_out, driver="GeoJSON")
-
         metrics["output_parquet"] = str(parquet_out)
-        metrics["output_geojson"] = str(geojson_out)
 
         logger.info(
             f"Stage 4 complete! Answer: {metrics['status']} - Urban Mean HPI: {metrics['urban_mean_hpi']} vs Rural HPI: {metrics['rural_mean_hpi']} | High Retention Area: {metrics['high_retention_area_km2']} km2 ({metrics['high_nocturnal_heat_retention_points']} pts)"

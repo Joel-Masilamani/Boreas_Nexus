@@ -214,20 +214,15 @@ class Stage5HotspotValidator:
             logger.error(f"Stage 5 validation failed! Metrics: {metrics}")
             raise ValueError("Stage 5 spatial hotspot validation failed.")
 
-        # Step 4: Export outputs
+        # Step 4: Export outputs (Parquet for fast stage auditing)
         self.output_dir.mkdir(parents=True, exist_ok=True)
         parquet_out = self.output_dir / "module_1_stage5_hotspots.parquet"
-        geojson_out = self.output_dir / "module_1_stage5_hotspots.geojson"
 
         logger.info(f"Saving hotspot dataset ({len(gdf)} points) to {parquet_out}...")
         df_export = pd.DataFrame(gdf.drop(columns=["geometry"]))
         df_export.to_parquet(parquet_out, index=False)
 
-        logger.info(f"Saving hotspot GeoJSON dataset to {geojson_out}...")
-        gdf.to_file(geojson_out, driver="GeoJSON")
-
         metrics["output_parquet"] = str(parquet_out)
-        metrics["output_geojson"] = str(geojson_out)
 
         logger.info(
             f"Stage 5 complete! Answer: {metrics['status']} - Validated Hotspots: {metrics['total_validated_hotspot_pixels']} pts ({metrics['validated_hotspot_area_km2']} km2), Persistent 99% Hotspots: {metrics['persistent_99pct_hotspot_pixels']} pts ({metrics['persistent_99pct_hotspot_area_km2']} km2)"

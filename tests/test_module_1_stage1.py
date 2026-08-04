@@ -36,7 +36,6 @@ def test_stage1_alignment_pipeline(tmp_path):
     assert metrics["status"] == "PASSED"
     assert metrics["total_samples"] == 3
     assert (tmp_path / "module_1_stage1_aligned.parquet").exists()
-    assert (tmp_path / "module_1_stage1_aligned.geojson").exists()
 
     df_out = pd.read_parquet(tmp_path / "module_1_stage1_aligned.parquet")
     assert "utm_x_m" in df_out.columns
