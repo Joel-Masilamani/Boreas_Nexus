@@ -8,6 +8,7 @@ Unit and Integration Tests for Module 1 Extensions:
 from pathlib import Path
 import geopandas as gpd
 import pandas as pd
+import numpy as np
 import pytest
 
 from module_1_thermal.hotspot_cluster_generator import HotspotClusterGenerator
@@ -83,19 +84,23 @@ def test_temperature_percentile(tmp_path):
     assert land_pcts.min() == 0.0
     assert land_pcts.max() == 100.0
 
+    water_pcts = df_pct[df_pct["is_water"] == True]["city_temperature_percentile"]
+    assert water_pcts.isnull().all()
+
 
 def test_confidence_scorer(tmp_path):
     """Tests weighted hotspot confidence scoring model."""
     data = {
-        "point_id": [1, 2],
-        "latitude": [13.08, 13.09],
-        "longitude": [80.27, 80.28],
-        "gi_zscore_day": [3.5, 0.5],
-        "gi_zscore_night": [2.8, 0.2],
-        "suhii_day_celsius": [8.0, 1.0],
-        "suhii_night_celsius": [5.0, 0.5],
-        "heat_persistence_index": [0.75, 0.52],
-        "city_temperature_percentile": [50.0, 99.0]
+        "point_id": [1, 2, 3],
+        "latitude": [13.08, 13.09, 13.10],
+        "longitude": [80.27, 80.28, 80.29],
+        "gi_zscore_day": [3.5, 2.5, 0.1],
+        "gi_zscore_night": [2.8, 2.2, 0.0],
+        "suhii_day_celsius": [8.0, 5.0, 0.0],
+        "suhii_night_celsius": [5.0, 3.0, 0.0],
+        "heat_persistence_index": [0.75, 0.65, 0.50],
+        "city_temperature_percentile": [95.0, 80.0, 30.0],
+        "hotspot_id": ["HOT_0001", "HOT_0001", None]
     }
     df = pd.DataFrame(data)
     parquet_path = tmp_path / "stage5_pct.parquet"
@@ -113,8 +118,10 @@ def test_confidence_scorer(tmp_path):
     assert "hotspot_confidence_score" in df_scored.columns
     assert "confidence_class" in df_scored.columns
 
-    scores = df_scored["hotspot_confidence_score"]
+    scores = df_scored["hotspot_confidence_score"].dropna()
     assert (scores >= 0.0).all() and (scores <= 100.0).all()
+    assert len(scores) == 2
+    assert df_scored.loc[2, "hotspot_confidence_score"] is None or np.isnan(df_scored.loc[2, "hotspot_confidence_score"])
 
 
 def test_full_extended_pipeline(tmp_path):

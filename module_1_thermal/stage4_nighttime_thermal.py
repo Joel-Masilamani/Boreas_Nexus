@@ -25,8 +25,10 @@ class Stage4NighttimeThermal:
         output_dir: Path | str | None = None
     ):
         self.storage_manager = StorageManager()
+        self.custom_output_dir = (output_dir is not None)
         self.input_suhii_path = Path(input_suhii_path) if input_suhii_path is not None else self.storage_manager.get_debug_filepath("module_1", "module_1_stage3_suhii.parquet")
         self.output_dir = Path(output_dir) if output_dir is not None else self.storage_manager.get_debug_dir("module_1")
+        self.last_gdf: Optional[gpd.GeoDataFrame] = None
 
     def load_stage3_data(self) -> gpd.GeoDataFrame:
         """Loads Stage 3 SUHII dataset."""
@@ -92,9 +94,9 @@ class Stage4NighttimeThermal:
         is_urban = gdf.get("is_urban", pd.Series(True, index=gdf.index)).values
         is_rural = gdf.get("is_rural", pd.Series(False, index=gdf.index)).values
 
-        urban_hpi_mean = float(gdf[is_urban]["heat_persistence_index"].mean())
+        urban_hpi_mean = float(gdf[is_urban]["heat_persistence_index"].mean()) if is_urban.sum() > 0 else 0.50
         rural_hpi_mean = float(gdf[is_rural]["heat_persistence_index"].mean()) if is_rural.sum() > 0 else 0.50
-        urban_diurnal_mean = float(gdf[is_urban]["delta_lst_diurnal"].mean())
+        urban_diurnal_mean = float(gdf[is_urban]["delta_lst_diurnal"].mean()) if is_urban.sum() > 0 else 10.0
         rural_diurnal_mean = float(gdf[is_rural]["delta_lst_diurnal"].mean()) if is_rural.sum() > 0 else 15.0
         high_retention_count = int((gdf["thermal_retention_class"] == "High Nocturnal Heat Retention").sum())
 
@@ -114,13 +116,13 @@ class Stage4NighttimeThermal:
 
         return is_valid, metrics
 
-    def run(self) -> Dict[str, Any]:
+    def run(self, gdf_in: Optional[gpd.GeoDataFrame] = None) -> Dict[str, Any]:
         """Executes Stage 4 pipeline."""
         logger.info("=================================================================")
         logger.info("MODULE 1 - STAGE 4: NIGHT-TIME THERMAL BEHAVIOUR ANALYSIS")
         logger.info("=================================================================")
 
-        gdf = self.load_stage3_data()
+        gdf = gdf_in.copy() if gdf_in is not None else self.load_stage3_data()
         gdf = self.compute_nighttime_metrics(gdf)
         is_valid, metrics = self.validate_nighttime_analysis(gdf)
 
@@ -128,12 +130,15 @@ class Stage4NighttimeThermal:
             logger.error(f"Stage 4 validation failed! Metrics: {metrics}")
             raise ValueError("Stage 4 nighttime thermal analysis failed.")
 
-        self.output_dir.mkdir(parents=True, exist_ok=True)
-        parquet_out = self.output_dir / "module_1_stage4_nighttime.parquet"
-        logger.info(f"Saving nighttime thermal dataset to {parquet_out}...")
-        df_export = pd.DataFrame(gdf.drop(columns=["geometry"]))
-        df_export.to_parquet(parquet_out, index=False)
-        metrics["output_parquet"] = str(parquet_out)
+        self.last_gdf = gdf
+
+        if self.custom_output_dir or self.storage_manager.should_save_intermediate():
+            self.output_dir.mkdir(parents=True, exist_ok=True)
+            parquet_out = self.output_dir / "module_1_stage4_nighttime.parquet"
+            logger.info(f"Saving intermediate nighttime thermal dataset to {parquet_out}...")
+            df_export = pd.DataFrame(gdf.drop(columns=["geometry"]))
+            df_export.to_parquet(parquet_out, index=False)
+            metrics["output_parquet"] = str(parquet_out)
 
         logger.info(
             f"Stage 4 complete! Answer: {metrics['status']} - Urban Mean HPI: {metrics['urban_mean_hpi']}"

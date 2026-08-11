@@ -9,6 +9,7 @@ import numpy as np
 import pytest
 
 from module_1_thermal.stage5_hotspot_validator import Stage5HotspotValidator
+from utils.crs_utils import transform_wgs84_to_utm
 
 
 def test_stage5_hotspot_pipeline(tmp_path):
@@ -18,6 +19,8 @@ def test_stage5_hotspot_pipeline(tmp_path):
     xs = [80.20 + (i % 10)*0.01 for i in range(100)]
     ys = [13.00 + (i // 10)*0.01 for i in range(100)]
     
+    utm_x, utm_y, _ = transform_wgs84_to_utm(xs, ys)
+
     # Hot cluster in rows 4-6, cols 4-6 (indices around 44..66)
     suhii_day = []
     suhii_night = []
@@ -38,8 +41,8 @@ def test_stage5_hotspot_pipeline(tmp_path):
         "point_id": list(range(1, 101)),
         "longitude": xs,
         "latitude": ys,
-        "utm_x_m": [x * 100000 for x in xs],
-        "utm_y_m": [y * 100000 for y in ys],
+        "utm_x_m": utm_x,
+        "utm_y_m": utm_y,
         "lst_day_celsius": [34.0 + s for s in suhii_day],
         "lst_night_celsius": [22.0 + s for s in suhii_night],
         "suhii_day_celsius": suhii_day,
@@ -63,7 +66,10 @@ def test_stage5_hotspot_pipeline(tmp_path):
     df_out = pd.read_parquet(tmp_path / "module_1_stage5_hotspots.parquet")
     assert "gi_zscore_day" in df_out.columns
     assert "gi_pvalue_day" in df_out.columns
+    assert "day_hotspot_significance" in df_out.columns
+    assert "night_hotspot_significance" in df_out.columns
     assert "is_validated_hotspot" in df_out.columns
+    assert "is_hotspot_day_95" not in df_out.columns
     
     # Check that isolated pixel at index 0 (r=0, c=0) was flagged as non-hotspot cluster due to spatial isolation
     assert df_out.loc[0, "is_validated_hotspot"] == False or df_out.loc[0, "gi_zscore_day"] < df_out.loc[45, "gi_zscore_day"]

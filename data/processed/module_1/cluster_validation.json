@@ -1,16 +1,31 @@
 {
   "status": "PASSED",
   "checks": {
-    "cluster_ids_unique": true,
-    "single_cluster_membership": true,
-    "confidence_score_range_0_100": true,
-    "percentile_range_0_100": true,
-    "cluster_area_positive": true,
-    "cluster_perimeter_positive": true
+    "required_columns_exist": true,
+    "no_forbidden_duplicate_fields": true,
+    "coordinates_valid": true,
+    "utm_coordinates_projected_valid": true,
+    "crs_valid": true,
+    "surface_masks_consistent": true,
+    "water_excluded_from_temperature_percentiles": true,
+    "temperature_percentiles_within_0_100": true,
+    "temperature_rank_valid": true,
+    "temperature_total_pixels_consistent": true,
+    "hotspot_ids_unique_in_registry": true,
+    "single_hotspot_membership_per_point": true,
+    "cluster_areas_positive": true,
+    "cluster_perimeters_positive": true,
+    "confidence_scores_within_0_100": true,
+    "confidence_classes_valid": true,
+    "no_redundant_cluster_metadata_in_points": true,
+    "geometries_valid": true,
+    "mandatory_fields_complete": true,
+    "spatial_alignment_compatible": true
   },
   "summary": {
+    "total_points": 44298,
     "total_clusters": 158,
     "total_hotspot_points": 19502,
-    "total_evaluated_points": 44298
+    "total_land_pixels": 42913
   }
 }

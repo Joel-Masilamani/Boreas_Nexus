@@ -10,6 +10,12 @@
   "total_hotspot_clusters": 158,
   "urban_mean_day_suhii_celsius": 1.24,
   "urban_mean_night_suhii_celsius": 4.25,
+  "provenance": {
+    "sensor": "Landsat-8/9 & Sentinel-2",
+    "capture_date": "2024-05-15",
+    "scene_id": "LC09_L2SP_142051_20240515",
+    "processing_version": "1.0.0"
+  },
   "primary_geoparquet_knowledge_layer": "D:\\Projects\\Boreas_Nexus\\data\\processed\\module_1\\urban_heat_hotspot_knowledge_layer.geoparquet",
   "hotspot_registry_parquet": "D:\\Projects\\Boreas_Nexus\\data\\processed\\module_1\\hotspot_registry.parquet",
   "consumed_by_next_module": "Module 2: Urban Heat Driver Intelligence Engine"

@@ -44,4 +44,4 @@ def test_stage2_delineation_pipeline(tmp_path):
     assert "is_urban" in df_out.columns
     assert "is_rural" in df_out.columns
     assert "is_water" in df_out.columns
-    assert "surface_class" in df_out.columns
+    assert "surface_class" not in df_out.columns

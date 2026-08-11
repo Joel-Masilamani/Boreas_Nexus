@@ -27,8 +27,10 @@ class CityTemperaturePercentileCalculator:
         output_dir: Path | str | None = None
     ):
         self.storage_manager = StorageManager()
+        self.custom_output_dir = (output_dir is not None)
         self.input_path = Path(input_path) if input_path is not None else self.storage_manager.get_debug_filepath("module_1", "module_1_stage5_labeled.parquet")
         self.output_dir = Path(output_dir) if output_dir is not None else self.storage_manager.get_debug_dir("module_1")
+        self.last_gdf: Optional[gpd.GeoDataFrame] = None
 
     def load_input_data(self) -> gpd.GeoDataFrame:
         """Loads intermediate point dataset."""
@@ -69,7 +71,7 @@ class CityTemperaturePercentileCalculator:
         result_gdf = gdf.copy()
         logger.info("Computing City Temperature Percentiles across study area...")
 
-        lst_day = result_gdf["lst_day_celsius"].values
+        lst_day = result_gdf["lst_day_celsius"].values.astype(np.float64)
         valid_mask = ~np.isnan(lst_day)
 
         if mask_water and "is_water" in result_gdf.columns:
@@ -79,11 +81,11 @@ class CityTemperaturePercentileCalculator:
             valid_mask = valid_mask & (result_gdf["is_urban"].values.astype(bool))
 
         valid_lst = lst_day[valid_mask]
-        n_valid = len(valid_lst)
+        n_valid = int(len(valid_lst))
         logger.info(f"Evaluated {n_valid} valid land pixels out of {len(result_gdf)} total sample points.")
 
-        percentiles = np.full(len(result_gdf), np.nan)
-        ranks = np.full(len(result_gdf), np.nan)
+        percentiles = np.full(len(result_gdf), np.nan, dtype=np.float64)
+        ranks = np.full(len(result_gdf), np.nan, dtype=np.float64)
         totals = np.full(len(result_gdf), n_valid, dtype=int)
 
         if n_valid > 0:
@@ -102,29 +104,32 @@ class CityTemperaturePercentileCalculator:
 
         return result_gdf
 
-    def run(self) -> Dict[str, Any]:
+    def run(self, gdf_in: Optional[gpd.GeoDataFrame] = None) -> Dict[str, Any]:
         """Executes City Temperature Percentile Calculator."""
         logger.info("=================================================================")
-        logger.info("MODULE 1 - EXTENSION 3: CITY TEMPERATURE PERCENTILE")
+        logger.info("MODULE 1 - EXTENSION 2: CITY TEMPERATURE PERCENTILE")
         logger.info("=================================================================")
 
-        gdf = self.load_input_data()
+        gdf = gdf_in.copy() if gdf_in is not None else self.load_input_data()
         gdf_pct = self.compute_percentiles(gdf)
 
-        self.output_dir.mkdir(parents=True, exist_ok=True)
-        parquet_out = self.output_dir / "module_1_stage5_pct.parquet"
-        logger.info(f"Saving percentile dataset to {parquet_out}...")
-        df_export = pd.DataFrame(gdf_pct.drop(columns=["geometry"]))
-        df_export.to_parquet(parquet_out, index=False)
+        self.last_gdf = gdf_pct
 
         metrics = {
             "status": "SUCCESS",
             "evaluated_land_pixels": int((gdf_pct["city_temperature_percentile"].notnull()).sum()),
             "total_pixels": len(gdf_pct),
             "max_percentile": float(np.nanmax(gdf_pct["city_temperature_percentile"])) if (gdf_pct["city_temperature_percentile"].notnull()).any() else 0.0,
-            "min_percentile": float(np.nanmin(gdf_pct["city_temperature_percentile"])) if (gdf_pct["city_temperature_percentile"].notnull()).any() else 0.0,
-            "output_parquet": str(parquet_out)
+            "min_percentile": float(np.nanmin(gdf_pct["city_temperature_percentile"])) if (gdf_pct["city_temperature_percentile"].notnull()).any() else 0.0
         }
+
+        if self.custom_output_dir or self.storage_manager.should_save_intermediate():
+            self.output_dir.mkdir(parents=True, exist_ok=True)
+            parquet_out = self.output_dir / "module_1_stage5_pct.parquet"
+            logger.info(f"Saving intermediate percentile dataset to {parquet_out}...")
+            df_export = pd.DataFrame(gdf_pct.drop(columns=["geometry"]))
+            df_export.to_parquet(parquet_out, index=False)
+            metrics["output_parquet"] = str(parquet_out)
 
         logger.info(f"City Temperature Percentile complete! Evaluated {metrics['evaluated_land_pixels']} pixels.")
         logger.info("=================================================================")

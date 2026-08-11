@@ -33,6 +33,7 @@ class HotspotConfidenceScorer:
     ):
         self.scoring_config_path = Path(scoring_config_path)
         self.storage_manager = StorageManager()
+        self.custom_output_dir = (output_dir is not None)
 
         if input_path is not None:
             self.input_path = Path(input_path)
@@ -45,6 +46,7 @@ class HotspotConfidenceScorer:
             self.output_dir = self.storage_manager.get_debug_dir("module_1")
 
         self.config = self._load_scoring_config()
+        self.last_gdf: Optional[gpd.GeoDataFrame] = None
 
     def _load_scoring_config(self) -> Dict[str, Any]:
         """Loads scoring configuration from YAML."""
@@ -56,11 +58,11 @@ class HotspotConfidenceScorer:
                 "temperature_percentile": 0.10
             },
             "confidence_classes": [
-                {"name": "Critical", "min_score": 90.0},
-                {"name": "Very High", "min_score": 75.0},
+                {"name": "Critical", "min_score": 95.0},
+                {"name": "Very High", "min_score": 80.0},
                 {"name": "High", "min_score": 60.0},
-                {"name": "Moderate", "min_score": 45.0},
-                {"name": "Low", "min_score": 30.0},
+                {"name": "Moderate", "min_score": 40.0},
+                {"name": "Low", "min_score": 20.0},
                 {"name": "Very Low", "min_score": 0.0}
             ]
         }
@@ -144,20 +146,20 @@ class HotspotConfidenceScorer:
         w_hp = float(weights.get("heat_persistence", 0.15))
         w_pct = float(weights.get("temperature_percentile", 0.10))
 
-        z_day = result_gdf.get("gi_zscore_day", pd.Series(0.0, index=result_gdf.index)).values
-        z_night = result_gdf.get("gi_zscore_night", pd.Series(0.0, index=result_gdf.index)).values
+        z_day = result_gdf.get("gi_zscore_day", pd.Series(0.0, index=result_gdf.index)).values.astype(np.float64)
+        z_night = result_gdf.get("gi_zscore_night", pd.Series(0.0, index=result_gdf.index)).values.astype(np.float64)
         z_comp = np.maximum(z_day, z_night)
         norm_gi = self._min_max_normalize(z_comp)
 
-        suhii_day = result_gdf.get("suhii_day_celsius", pd.Series(0.0, index=result_gdf.index)).values
-        suhii_night = result_gdf.get("suhii_night_celsius", pd.Series(0.0, index=result_gdf.index)).values
+        suhii_day = result_gdf.get("suhii_day_celsius", pd.Series(0.0, index=result_gdf.index)).values.astype(np.float64)
+        suhii_night = result_gdf.get("suhii_night_celsius", pd.Series(0.0, index=result_gdf.index)).values.astype(np.float64)
         suhii_comp = np.maximum(suhii_day, suhii_night)
         norm_suhii = self._min_max_normalize(suhii_comp)
 
-        hp = result_gdf.get("heat_persistence_index", pd.Series(0.0, index=result_gdf.index)).values
+        hp = result_gdf.get("heat_persistence_index", pd.Series(0.0, index=result_gdf.index)).values.astype(np.float64)
         norm_hp = self._min_max_normalize(hp)
 
-        pct = result_gdf.get("city_temperature_percentile", pd.Series(0.0, index=result_gdf.index)).values
+        pct = result_gdf.get("city_temperature_percentile", pd.Series(0.0, index=result_gdf.index)).values.astype(np.float64)
         norm_pct = np.nan_to_num(pct / 100.0, nan=0.0)
 
         raw_score = 100.0 * (
@@ -168,51 +170,69 @@ class HotspotConfidenceScorer:
         )
         scores = np.round(np.clip(raw_score, 0.0, 100.0), 2)
 
-        classes = []
         conf_classes_cfg = sorted(
             self.config["confidence_classes"],
             key=lambda x: float(x.get("min_score", x.get("min", 0))),
             reverse=True
         )
 
-        for s in scores:
-            assigned_cls = "Very Low"
-            for item in conf_classes_cfg:
-                threshold = float(item.get("min_score", item.get("min", 0)))
-                name = str(item.get("name", item.get("class", "Very Low")))
-                if s >= threshold:
-                    assigned_cls = name
-                    break
-            classes.append(assigned_cls)
+        # Identify hotspot vs non-hotspot points
+        if "hotspot_id" in result_gdf.columns:
+            hotspot_mask = result_gdf["hotspot_id"].notnull() & (result_gdf["hotspot_id"] != "")
+        elif "is_validated_hotspot" in result_gdf.columns:
+            hotspot_mask = result_gdf["is_validated_hotspot"].values.astype(bool)
+        else:
+            hotspot_mask = np.ones(len(result_gdf), dtype=bool)
 
-        result_gdf["hotspot_confidence_score"] = scores
-        result_gdf["confidence_class"] = classes
+        final_scores = np.full(len(result_gdf), np.nan, dtype=np.float64)
+        final_classes = np.full(len(result_gdf), None, dtype=object)
+
+        for i in range(len(result_gdf)):
+            if hotspot_mask.iloc[i] if hasattr(hotspot_mask, 'iloc') else hotspot_mask[i]:
+                s = scores[i]
+                final_scores[i] = s
+                assigned_cls = "Very Low"
+                for item in conf_classes_cfg:
+                    threshold = float(item.get("min_score", item.get("min", 0)))
+                    name = str(item.get("name", item.get("class", "Very Low")))
+                    if s >= threshold:
+                        assigned_cls = name
+                        break
+                final_classes[i] = assigned_cls
+
+        result_gdf["hotspot_confidence_score"] = final_scores
+        result_gdf["confidence_class"] = final_classes
 
         return result_gdf
 
-    def run(self) -> Dict[str, Any]:
+    def run(self, gdf_in: Optional[gpd.GeoDataFrame] = None) -> Dict[str, Any]:
         """Executes Hotspot Confidence Scorer."""
         logger.info("=================================================================")
-        logger.info("MODULE 1 - EXTENSION 2: HOTSPOT CONFIDENCE SCORE")
+        logger.info("MODULE 1 - EXTENSION 3: HOTSPOT CONFIDENCE SCORE")
         logger.info("=================================================================")
 
-        gdf = self.load_input_data()
+        gdf = gdf_in.copy() if gdf_in is not None else self.load_input_data()
         gdf_scored = self.compute_confidence_scores(gdf)
 
-        self.output_dir.mkdir(parents=True, exist_ok=True)
-        parquet_out = self.output_dir / "module_1_stage5_scored.parquet"
-        logger.info(f"Saving scored dataset to {parquet_out}...")
-        df_export = pd.DataFrame(gdf_scored.drop(columns=["geometry"]))
-        df_export.to_parquet(parquet_out, index=False)
+        self.last_gdf = gdf_scored
 
+        valid_scores = gdf_scored["hotspot_confidence_score"].dropna()
         metrics = {
             "status": "SUCCESS",
-            "mean_confidence_score": round(float(gdf_scored["hotspot_confidence_score"].mean()), 2),
-            "max_confidence_score": round(float(gdf_scored["hotspot_confidence_score"].max()), 2),
-            "min_confidence_score": round(float(gdf_scored["hotspot_confidence_score"].min()), 2),
-            "confidence_class_counts": gdf_scored["confidence_class"].value_counts().to_dict(),
-            "output_parquet": str(parquet_out)
+            "evaluated_hotspots": len(valid_scores),
+            "mean_confidence_score": round(float(valid_scores.mean()), 2) if len(valid_scores) > 0 else 0.0,
+            "max_confidence_score": round(float(valid_scores.max()), 2) if len(valid_scores) > 0 else 0.0,
+            "min_confidence_score": round(float(valid_scores.min()), 2) if len(valid_scores) > 0 else 0.0,
+            "confidence_class_counts": gdf_scored["confidence_class"].value_counts().to_dict()
         }
+
+        if self.custom_output_dir or self.storage_manager.should_save_intermediate():
+            self.output_dir.mkdir(parents=True, exist_ok=True)
+            parquet_out = self.output_dir / "module_1_stage5_scored.parquet"
+            logger.info(f"Saving intermediate scored dataset to {parquet_out}...")
+            df_export = pd.DataFrame(gdf_scored.drop(columns=["geometry"]))
+            df_export.to_parquet(parquet_out, index=False)
+            metrics["output_parquet"] = str(parquet_out)
 
         logger.info(f"Hotspot Confidence Scorer complete! Mean score: {metrics['mean_confidence_score']}")
         logger.info("=================================================================")

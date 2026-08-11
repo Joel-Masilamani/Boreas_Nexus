@@ -25,8 +25,10 @@ class Stage2UrbanDelineator:
         output_dir: Path | str | None = None
     ):
         self.storage_manager = StorageManager()
+        self.custom_output_dir = (output_dir is not None)
         self.input_aligned_path = Path(input_aligned_path) if input_aligned_path is not None else self.storage_manager.get_debug_filepath("module_1", "module_1_stage1_aligned.parquet")
         self.output_dir = Path(output_dir) if output_dir is not None else self.storage_manager.get_debug_dir("module_1")
+        self.last_gdf: Optional[gpd.GeoDataFrame] = None
 
     def load_stage1_data(self) -> gpd.GeoDataFrame:
         """Loads Stage 1 aligned geospatial dataset."""
@@ -74,15 +76,13 @@ class Stage2UrbanDelineator:
         is_rural_lc = np.isin(lc, list(rural_lc_set))
         is_rural = (is_rural_lc | (ndvi >= 0.25)) & (~is_urban) & (~is_water)
 
-        surface_class = np.full(len(result_gdf), "Other Unbuilt", dtype=object)
-        surface_class[is_urban] = "Urban"
-        surface_class[is_rural] = "Rural Baseline"
-        surface_class[is_water] = "Water"
+        result_gdf["is_urban"] = is_urban.astype(bool)
+        result_gdf["is_rural"] = is_rural.astype(bool)
+        result_gdf["is_water"] = is_water.astype(bool)
 
-        result_gdf["is_urban"] = is_urban
-        result_gdf["is_rural"] = is_rural
-        result_gdf["is_water"] = is_water
-        result_gdf["surface_class"] = surface_class
+        # Remove redundant surface_class if present
+        if "surface_class" in result_gdf.columns:
+            result_gdf = result_gdf.drop(columns=["surface_class"])
 
         return result_gdf
 
@@ -96,10 +96,10 @@ class Stage2UrbanDelineator:
         urban_area_km2 = n_urban * 0.01
         rural_area_km2 = n_rural * 0.01
 
-        urban_mean_day_lst = float(gdf[gdf["is_urban"]]["lst_day_celsius"].mean())
-        rural_mean_day_lst = float(gdf[gdf["is_rural"]]["lst_day_celsius"].mean())
-        urban_mean_night_lst = float(gdf[gdf["is_urban"]]["lst_night_celsius"].mean())
-        rural_mean_night_lst = float(gdf[gdf["is_rural"]]["lst_night_celsius"].mean())
+        urban_mean_day_lst = float(gdf[gdf["is_urban"]]["lst_day_celsius"].mean()) if n_urban > 0 else 0.0
+        rural_mean_day_lst = float(gdf[gdf["is_rural"]]["lst_day_celsius"].mean()) if n_rural > 0 else 0.0
+        urban_mean_night_lst = float(gdf[gdf["is_urban"]]["lst_night_celsius"].mean()) if n_urban > 0 else 0.0
+        rural_mean_night_lst = float(gdf[gdf["is_rural"]]["lst_night_celsius"].mean()) if n_rural > 0 else 0.0
 
         is_valid = (n_urban > 0) and (n_rural >= 10)
 
@@ -122,13 +122,13 @@ class Stage2UrbanDelineator:
 
         return is_valid, metrics
 
-    def run(self) -> Dict[str, Any]:
+    def run(self, gdf_in: Optional[gpd.GeoDataFrame] = None) -> Dict[str, Any]:
         """Executes Stage 2 pipeline."""
         logger.info("=================================================================")
         logger.info("MODULE 1 - STAGE 2: URBAN–NON-URBAN DELINEATION")
         logger.info("=================================================================")
 
-        gdf = self.load_stage1_data()
+        gdf = gdf_in.copy() if gdf_in is not None else self.load_stage1_data()
         gdf = self.delineate_masks(gdf)
 
         is_valid, metrics = self.validate_delineation(gdf)
@@ -136,12 +136,15 @@ class Stage2UrbanDelineator:
             logger.error(f"Stage 2 validation failed! Metrics: {metrics}")
             raise ValueError("Stage 2 urban delineation failed.")
 
-        self.output_dir.mkdir(parents=True, exist_ok=True)
-        parquet_out = self.output_dir / "module_1_stage2_delineated.parquet"
-        logger.info(f"Saving delineated dataset to {parquet_out}...")
-        df_export = pd.DataFrame(gdf.drop(columns=["geometry"]))
-        df_export.to_parquet(parquet_out, index=False)
-        metrics["output_parquet"] = str(parquet_out)
+        self.last_gdf = gdf
+
+        if self.custom_output_dir or self.storage_manager.should_save_intermediate():
+            self.output_dir.mkdir(parents=True, exist_ok=True)
+            parquet_out = self.output_dir / "module_1_stage2_delineated.parquet"
+            logger.info(f"Saving intermediate delineated dataset to {parquet_out}...")
+            df_export = pd.DataFrame(gdf.drop(columns=["geometry"]))
+            df_export.to_parquet(parquet_out, index=False)
+            metrics["output_parquet"] = str(parquet_out)
 
         logger.info(f"Stage 2 complete! Answer: {metrics['status']} - Urban: {metrics['urban_pixel_count']} pts ({metrics['urban_area_km2']} km2)")
         logger.info("=================================================================")

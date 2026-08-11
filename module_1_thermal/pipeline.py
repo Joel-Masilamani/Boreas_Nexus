@@ -47,44 +47,44 @@ class Module1ThermalPipeline:
         logger.info("STARTING MODULE 1: PHYSICAL URBAN HEAT & HOTSPOT INTELLIGENCE ENGINE")
         logger.info("=================================================================")
 
-        # Stage 1
+        # Stage 1: Data Acquisition & Preprocessing Alignment
         s1 = Stage1DataAligner(config_path=self.config_path)
         m1 = s1.run()
 
-        # Stage 2
+        # Stage 2: Urban-Rural Delineation
         s2 = Stage2UrbanDelineator()
-        m2 = s2.run()
+        m2 = s2.run(gdf_in=s1.last_gdf)
 
-        # Stage 3
+        # Stage 3: SUHII Computation
         s3 = Stage3SUHIICalculator()
-        m3 = s3.run()
+        m3 = s3.run(gdf_in=s2.last_gdf)
 
-        # Stage 4
+        # Stage 4: Night-Time Thermal Analysis
         s4 = Stage4NighttimeThermal()
-        m4 = s4.run()
+        m4 = s4.run(gdf_in=s3.last_gdf)
 
-        # Stage 5
+        # Stage 5: Spatial Hotspot Validation (Getis-Ord Gi*)
         s5 = Stage5HotspotValidator()
-        m5 = s5.run()
+        m5 = s5.run(gdf_in=s4.last_gdf)
 
-        # Extension 1: Cluster Generator
+        # Extension 1: Hotspot Cluster Generator
         cluster_gen = HotspotClusterGenerator(
             config_path=self.config_path,
             scoring_config_path=self.scoring_config_path
         )
-        m_cluster = cluster_gen.run()
+        m_cluster = cluster_gen.run(gdf_in=s5.last_gdf)
 
         # Extension 2: City Temperature Percentile
         pct_calc = CityTemperaturePercentileCalculator()
-        m_pct = pct_calc.run()
+        m_pct = pct_calc.run(gdf_in=cluster_gen.last_gdf)
 
         # Extension 3: Hotspot Confidence Scorer
         conf_scorer = HotspotConfidenceScorer(scoring_config_path=self.scoring_config_path)
-        m_conf = conf_scorer.run()
+        m_conf = conf_scorer.run(gdf_in=pct_calc.last_gdf)
 
         # Stage 6: Knowledge Layer & Registry Exporter
         s6 = Stage6KnowledgeExporter(config_path=self.config_path)
-        m6 = s6.run()
+        m6 = s6.run(gdf_in=conf_scorer.last_gdf)
 
         summary = {
             "module": "Module 1",

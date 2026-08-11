@@ -9,18 +9,21 @@ import json
 import pytest
 
 from module_1_thermal.stage6_knowledge_export import Stage6KnowledgeExporter
-from module_1_thermal.pipeline import Module1ThermalPipeline
+from utils.crs_utils import transform_wgs84_to_utm
 
 
 def test_stage6_knowledge_export_pipeline(tmp_path):
     hotspot_path = tmp_path / "module_1_stage5_hotspots.parquet"
+    lats = [13.08 + i*0.001 for i in range(50)]
+    lons = [80.27 + i*0.001 for i in range(50)]
+    utm_x, utm_y, _ = transform_wgs84_to_utm(lons, lats)
+
     dummy_df = pd.DataFrame({
         "point_id": list(range(1, 51)),
-        "latitude": [13.08 + i*0.001 for i in range(50)],
-        "longitude": [80.27 + i*0.001 for i in range(50)],
-        "utm_x_m": [80.27*100000 + i for i in range(50)],
-        "utm_y_m": [13.08*100000 + i for i in range(50)],
-        "surface_class": ["Urban" if i < 30 else "Rural Baseline" for i in range(50)],
+        "latitude": lats,
+        "longitude": lons,
+        "utm_x_m": utm_x,
+        "utm_y_m": utm_y,
         "is_urban": [True if i < 30 else False for i in range(50)],
         "is_rural": [False if i < 30 else True for i in range(50)],
         "is_water": [False for _ in range(50)],
@@ -36,12 +39,26 @@ def test_stage6_knowledge_export_pipeline(tmp_path):
         "gi_pvalue_day": [0.01 if i < 30 else 0.6 for i in range(50)],
         "gi_zscore_night": [2.8 if i < 30 else -0.4 for i in range(50)],
         "gi_pvalue_night": [0.005 if i < 30 else 0.65 for i in range(50)],
-        "is_hotspot_day_95": [True if i < 30 else False for i in range(50)],
-        "is_hotspot_day_99": [False for _ in range(50)],
-        "is_hotspot_night_95": [True if i < 30 else False for i in range(50)],
-        "is_hotspot_night_99": [True if i < 10 else False for i in range(50)],
+        "day_hotspot_significance": [95 if i < 30 else None for i in range(50)],
+        "night_hotspot_significance": [99 if i < 10 else (95 if i < 30 else None) for i in range(50)],
         "is_validated_hotspot": [True if i < 30 else False for i in range(50)],
-        "hotspot_classification": ["95% Confidence Hotspot" for _ in range(50)]
+        "hotspot_id": [f"HOT_{(i // 10) + 1:04d}" if i < 30 else None for i in range(50)],
+        "city_temperature_percentile": [90.0 if i < 30 else 20.0 for i in range(50)],
+        "temperature_rank": [40 - i if i < 30 else 10 for i in range(50)],
+        "temperature_total_pixels": [50 for _ in range(50)],
+        "hotspot_confidence_score": [85.0 if i < 30 else None for i in range(50)],
+        "confidence_class": ["Very High" if i < 30 else None for i in range(50)],
+        "hotspot_classification": ["95% Confidence Hotspot" if i < 30 else "Not Significant / Noise" for i in range(50)],
+        "ndvi": [0.2 if i < 30 else 0.6 for i in range(50)],
+        "ndbi": [0.4 if i < 30 else -0.1 for i in range(50)],
+        "ndwi": [-0.1 for _ in range(50)],
+        "building_density": [0.8 if i < 30 else 0.1 for i in range(50)],
+        "distance_to_water_m": [200.0 for _ in range(50)],
+        "distance_to_roads_m": [30.0 for _ in range(50)],
+        "distance_to_parks_m": [800.0 for _ in range(50)],
+        "elevation_m": [12.0 for _ in range(50)],
+        "slope_deg": [1.5 for _ in range(50)],
+        "aspect_deg": [90.0 for _ in range(50)]
     })
     dummy_df.to_parquet(hotspot_path, index=False)
 
@@ -55,11 +72,27 @@ def test_stage6_knowledge_export_pipeline(tmp_path):
 
     assert manifest["status"] == "SUCCESS"
     assert manifest["total_sample_points"] == 50
-    assert (tmp_path / "urban_heat_hotspot_knowledge_layer.parquet").exists()
-    assert (tmp_path / "urban_heat_hotspot_knowledge_layer.geojson").exists()
-    assert (tmp_path / "module_1_manifest.json").exists()
+    assert (tmp_path / "urban_heat_hotspot_knowledge_layer.geoparquet").exists()
+    assert (tmp_path / "hotspot_registry.parquet").exists()
+    assert (tmp_path / "cluster_validation.json").exists()
+    assert (tmp_path / "metadata.json").exists()
 
-    with open(tmp_path / "module_1_manifest.json") as f:
-        data = json.load(f)
-        assert data["module_id"] == "module_1_thermal"
-        assert data["consumed_by_next_module"] == "Module 2: Urban Heat Driver Intelligence Engine"
+    # Verify schema of knowledge layer
+    gdf_out = gpd.read_parquet(tmp_path / "urban_heat_hotspot_knowledge_layer.geoparquet")
+    assert "surface_class" not in gdf_out.columns
+    assert "lst_celsius" not in gdf_out.columns
+    assert "is_hotspot_day_95" not in gdf_out.columns
+    assert "day_hotspot_significance" in gdf_out.columns
+    assert "night_hotspot_significance" in gdf_out.columns
+    assert "sensor" in gdf_out.columns
+
+    # Verify registry
+    df_reg = pd.read_parquet(tmp_path / "hotspot_registry.parquet")
+    assert "cluster_centroid_x" in df_reg.columns
+    assert "cluster_centroid_y" in df_reg.columns
+    assert "mean_hotspot_confidence_score" in df_reg.columns
+    assert len(df_reg) == 3
+
+    with open(tmp_path / "cluster_validation.json") as f:
+        val_report = json.load(f)
+        assert val_report["status"] == "PASSED"

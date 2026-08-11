@@ -25,8 +25,10 @@ class Stage3SUHIICalculator:
         output_dir: Path | str | None = None
     ):
         self.storage_manager = StorageManager()
+        self.custom_output_dir = (output_dir is not None)
         self.input_delineated_path = Path(input_delineated_path) if input_delineated_path is not None else self.storage_manager.get_debug_filepath("module_1", "module_1_stage2_delineated.parquet")
         self.output_dir = Path(output_dir) if output_dir is not None else self.storage_manager.get_debug_dir("module_1")
+        self.last_gdf: Optional[gpd.GeoDataFrame] = None
 
     def load_stage2_data(self) -> gpd.GeoDataFrame:
         """Loads Stage 2 delineated geospatial dataset."""
@@ -66,8 +68,8 @@ class Stage3SUHIICalculator:
 
         if len(rural_sub) == 0:
             logger.warning("No rural pixels found for baseline subtraction! Using domain mean.")
-            rural_mean_day = result_gdf["lst_day_celsius"].mean()
-            rural_mean_night = result_gdf["lst_night_celsius"].mean()
+            rural_mean_day = float(result_gdf["lst_day_celsius"].mean())
+            rural_mean_night = float(result_gdf["lst_night_celsius"].mean())
         else:
             rural_mean_day = float(rural_sub["lst_day_celsius"].mean())
             rural_mean_night = float(rural_sub["lst_night_celsius"].mean())
@@ -91,10 +93,10 @@ class Stage3SUHIICalculator:
         is_urban = gdf.get("is_urban", pd.Series(True, index=gdf.index)).values
         urban_gdf = gdf[is_urban]
 
-        urban_mean_suhii_day = float(urban_gdf["suhii_day_celsius"].mean())
-        urban_max_suhii_day = float(urban_gdf["suhii_day_celsius"].max())
-        urban_mean_suhii_night = float(urban_gdf["suhii_night_celsius"].mean())
-        urban_max_suhii_night = float(urban_gdf["suhii_night_celsius"].max())
+        urban_mean_suhii_day = float(urban_gdf["suhii_day_celsius"].mean()) if len(urban_gdf) > 0 else 0.0
+        urban_max_suhii_day = float(urban_gdf["suhii_day_celsius"].max()) if len(urban_gdf) > 0 else 0.0
+        urban_mean_suhii_night = float(urban_gdf["suhii_night_celsius"].mean()) if len(urban_gdf) > 0 else 0.0
+        urban_max_suhii_night = float(urban_gdf["suhii_night_celsius"].max()) if len(urban_gdf) > 0 else 0.0
 
         has_physical_uhi = (urban_mean_suhii_day > 0) or (urban_mean_suhii_night > 0)
 
@@ -108,28 +110,31 @@ class Stage3SUHIICalculator:
             "city_max_urban_suhii_day_celsius": round(urban_max_suhii_day, 2),
             "city_baseline_urban_suhii_night_celsius": round(urban_mean_suhii_night, 2),
             "city_max_urban_suhii_night_celsius": round(urban_max_suhii_night, 2),
-            "suhii_day_p95_celsius": round(float(np.percentile(urban_gdf["suhii_day_celsius"], 95)), 2),
-            "suhii_night_p95_celsius": round(float(np.percentile(urban_gdf["suhii_night_celsius"], 95)), 2)
+            "suhii_day_p95_celsius": round(float(np.percentile(urban_gdf["suhii_day_celsius"], 95)), 2) if len(urban_gdf) > 0 else 0.0,
+            "suhii_night_p95_celsius": round(float(np.percentile(urban_gdf["suhii_night_celsius"], 95)), 2) if len(urban_gdf) > 0 else 0.0
         }
 
         return True, metrics
 
-    def run(self) -> Dict[str, Any]:
+    def run(self, gdf_in: Optional[gpd.GeoDataFrame] = None) -> Dict[str, Any]:
         """Executes Stage 3 pipeline."""
         logger.info("=================================================================")
         logger.info("MODULE 1 - STAGE 3: SURFACE URBAN HEAT ISLAND (SUHII) COMPUTATION")
         logger.info("=================================================================")
 
-        gdf = self.load_stage2_data()
+        gdf = gdf_in.copy() if gdf_in is not None else self.load_stage2_data()
         gdf, baselines = self.compute_suhii(gdf)
         _, metrics = self.validate_suhii(gdf, baselines)
 
-        self.output_dir.mkdir(parents=True, exist_ok=True)
-        parquet_out = self.output_dir / "module_1_stage3_suhii.parquet"
-        logger.info(f"Saving SUHII dataset to {parquet_out}...")
-        df_export = pd.DataFrame(gdf.drop(columns=["geometry"]))
-        df_export.to_parquet(parquet_out, index=False)
-        metrics["output_parquet"] = str(parquet_out)
+        self.last_gdf = gdf
+
+        if self.custom_output_dir or self.storage_manager.should_save_intermediate():
+            self.output_dir.mkdir(parents=True, exist_ok=True)
+            parquet_out = self.output_dir / "module_1_stage3_suhii.parquet"
+            logger.info(f"Saving intermediate SUHII dataset to {parquet_out}...")
+            df_export = pd.DataFrame(gdf.drop(columns=["geometry"]))
+            df_export.to_parquet(parquet_out, index=False)
+            metrics["output_parquet"] = str(parquet_out)
 
         logger.info(
             f"Stage 3 complete! Answer: {metrics['status']} - Day Urban SUHII: +{metrics['city_baseline_urban_suhii_day_celsius']}°C"

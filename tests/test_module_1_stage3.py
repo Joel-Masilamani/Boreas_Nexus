@@ -19,7 +19,6 @@ def test_stage3_suhii_pipeline(tmp_path):
         "is_urban": [True if i < 60 else False for i in range(100)],
         "is_rural": [False if i < 60 else True for i in range(100)],
         "is_water": [False for _ in range(100)],
-        "surface_class": ["Urban" if i < 60 else "Rural Baseline" for i in range(100)],
         "lst_day_celsius": [40.0 if i < 60 else 32.0 for i in range(100)],
         "lst_night_celsius": [28.0 if i < 60 else 22.0 for i in range(100)]
     })

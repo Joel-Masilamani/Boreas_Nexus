@@ -7,10 +7,16 @@
   "urban_area_km2": 0.3,
   "rural_baseline_area_km2": 0.2,
   "validated_hotspot_area_km2": 0.3,
-  "total_hotspot_clusters": 0,
+  "total_hotspot_clusters": 3,
   "urban_mean_day_suhii_celsius": 8.0,
   "urban_mean_night_suhii_celsius": 6.0,
-  "primary_geoparquet_knowledge_layer": "C:\\Users\\joelm\\AppData\\Local\\Temp\\pytest-of-joelm\\pytest-40\\test_stage6_knowledge_export_p0\\urban_heat_hotspot_knowledge_layer.geoparquet",
-  "hotspot_registry_parquet": "C:\\Users\\joelm\\AppData\\Local\\Temp\\pytest-of-joelm\\pytest-40\\test_stage6_knowledge_export_p0\\hotspot_registry.parquet",
+  "provenance": {
+    "sensor": "Landsat-8/9 & Sentinel-2",
+    "capture_date": "2024-05-15",
+    "scene_id": "LC09_L2SP_142051_20240515",
+    "processing_version": "1.0.0"
+  },
+  "primary_geoparquet_knowledge_layer": "C:\\Users\\joelm\\AppData\\Local\\Temp\\pytest-of-joelm\\pytest-45\\test_stage6_knowledge_export_p0\\urban_heat_hotspot_knowledge_layer.geoparquet",
+  "hotspot_registry_parquet": "C:\\Users\\joelm\\AppData\\Local\\Temp\\pytest-of-joelm\\pytest-45\\test_stage6_knowledge_export_p0\\hotspot_registry.parquet",
   "consumed_by_next_module": "Module 2: Urban Heat Driver Intelligence Engine"
 }

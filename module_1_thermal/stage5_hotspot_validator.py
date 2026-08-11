@@ -27,9 +27,11 @@ class Stage5HotspotValidator:
         knn_k: int = 8
     ):
         self.storage_manager = StorageManager()
+        self.custom_output_dir = (output_dir is not None)
         self.input_nighttime_path = Path(input_nighttime_path) if input_nighttime_path is not None else self.storage_manager.get_debug_filepath("module_1", "module_1_stage4_nighttime.parquet")
         self.output_dir = Path(output_dir) if output_dir is not None else self.storage_manager.get_debug_dir("module_1")
         self.knn_k = knn_k
+        self.last_gdf: Optional[gpd.GeoDataFrame] = None
 
     def load_stage4_data(self) -> gpd.GeoDataFrame:
         """Loads Stage 4 nighttime thermal dataset."""
@@ -70,31 +72,41 @@ class Stage5HotspotValidator:
         else:
             coords = np.column_stack([result_gdf.geometry.x, result_gdf.geometry.y])
 
-        z_day, p_day = self._compute_vectorized_gi_star(coords, result_gdf.get("suhii_day_celsius", result_gdf["lst_day_celsius"]).values)
-        z_night, p_night = self._compute_vectorized_gi_star(coords, result_gdf.get("suhii_night_celsius", result_gdf["lst_night_celsius"]).values)
+        val_day = result_gdf["suhii_day_celsius"].values if "suhii_day_celsius" in result_gdf.columns else result_gdf["lst_day_celsius"].values
+        val_night = result_gdf["suhii_night_celsius"].values if "suhii_night_celsius" in result_gdf.columns else result_gdf["lst_night_celsius"].values
+
+        z_day, p_day = self._compute_vectorized_gi_star(coords, val_day)
+        z_night, p_night = self._compute_vectorized_gi_star(coords, val_night)
 
         result_gdf["gi_zscore_day"] = z_day
         result_gdf["gi_pvalue_day"] = p_day
         result_gdf["gi_zscore_night"] = z_night
         result_gdf["gi_pvalue_night"] = p_night
 
-        is_hotspot_day_95 = (z_day > 1.96) & (p_day < 0.05)
-        is_hotspot_day_99 = (z_day > 2.58) & (p_day < 0.01)
-        is_hotspot_night_95 = (z_night > 1.96) & (p_night < 0.05)
-        is_hotspot_night_99 = (z_night > 2.58) & (p_night < 0.01)
+        # Significance assignment: 99, 95, None
+        day_sig = np.full(n_samples, None, dtype=object)
+        day_sig_95 = (z_day > 1.96) & (p_day < 0.05)
+        day_sig_99 = (z_day > 2.58) & (p_day < 0.01)
+        day_sig[day_sig_95] = 95
+        day_sig[day_sig_99] = 99
 
-        is_validated_hotspot = is_hotspot_day_95 | is_hotspot_night_95
+        night_sig = np.full(n_samples, None, dtype=object)
+        night_sig_95 = (z_night > 1.96) & (p_night < 0.05)
+        night_sig_99 = (z_night > 2.58) & (p_night < 0.01)
+        night_sig[night_sig_95] = 95
+        night_sig[night_sig_99] = 99
 
-        result_gdf["is_hotspot_day_95"] = is_hotspot_day_95
-        result_gdf["is_hotspot_day_99"] = is_hotspot_day_99
-        result_gdf["is_hotspot_night_95"] = is_hotspot_night_95
-        result_gdf["is_hotspot_night_99"] = is_hotspot_night_99
-        result_gdf["is_validated_hotspot"] = is_validated_hotspot
+        result_gdf["day_hotspot_significance"] = day_sig
+        result_gdf["night_hotspot_significance"] = night_sig
 
+        is_validated = day_sig_95 | night_sig_95
+        result_gdf["is_validated_hotspot"] = is_validated
+
+        # Classification
         conditions = [
-            is_hotspot_day_99 & is_hotspot_night_99,
-            is_hotspot_day_95 & is_hotspot_night_95,
-            is_hotspot_day_95 | is_hotspot_night_95,
+            day_sig_99 & night_sig_99,
+            day_sig_95 & night_sig_95,
+            day_sig_95 | night_sig_95,
             (z_day < -1.96) | (z_night < -1.96)
         ]
         choices = [
@@ -105,6 +117,12 @@ class Stage5HotspotValidator:
         ]
         result_gdf["hotspot_classification"] = np.select(conditions, choices, default="Not Significant / Noise")
 
+        # Clean any old boolean fields if present
+        old_flags = ["is_hotspot_day_95", "is_hotspot_day_99", "is_hotspot_night_95", "is_hotspot_night_99"]
+        for f in old_flags:
+            if f in result_gdf.columns:
+                result_gdf = result_gdf.drop(columns=[f])
+
         return result_gdf
 
     def _compute_vectorized_gi_star(self, coords: np.ndarray, values: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
@@ -112,18 +130,18 @@ class Stage5HotspotValidator:
         from sklearn.neighbors import NearestNeighbors
         vals = values.astype(np.float64)
         n = len(vals)
-        k_star = self.knn_k + 1
+        k_star = min(n, self.knn_k + 1)
 
         nbrs = NearestNeighbors(n_neighbors=k_star, algorithm="kd_tree").fit(coords)
         indices = nbrs.kneighbors(coords, return_distance=False)
 
         x_bar = vals.mean()
         s = vals.std(ddof=0)
-        if s == 0:
+        if s == 0 or np.isnan(s):
             s = 1.0
 
         local_sums = np.sum(vals[indices], axis=1)
-        denom = s * np.sqrt((n * k_star - (k_star ** 2)) / (n - 1))
+        denom = s * np.sqrt(max(1.0, (n * k_star - (k_star ** 2)) / max(1, n - 1)))
         gi_star_z = (local_sums - (k_star * x_bar)) / denom
         p_values = 1.0 - stats.norm.cdf(gi_star_z)
 
@@ -133,17 +151,17 @@ class Stage5HotspotValidator:
         """Validates spatial hotspot cluster identification and noise filtering."""
         n_total = len(gdf)
         n_validated = int(gdf["is_validated_hotspot"].sum())
-        n_day_95 = int(gdf["is_hotspot_day_95"].sum())
-        n_day_99 = int(gdf["is_hotspot_day_99"].sum())
-        n_night_95 = int(gdf["is_hotspot_night_95"].sum())
-        n_night_99 = int(gdf["is_hotspot_night_99"].sum())
-        n_persistent_99 = int((gdf["is_hotspot_day_99"] & gdf["is_hotspot_night_99"]).sum())
+        n_day_95 = int((gdf["day_hotspot_significance"] == 95).sum())
+        n_day_99 = int((gdf["day_hotspot_significance"] == 99).sum())
+        n_night_95 = int((gdf["night_hotspot_significance"] == 95).sum())
+        n_night_99 = int((gdf["night_hotspot_significance"] == 99).sum())
+        n_persistent_99 = int(((gdf["day_hotspot_significance"] == 99) & (gdf["night_hotspot_significance"] == 99)).sum())
 
         validated_area_km2 = round(n_validated * 0.01, 2)
         persistent_99_area_km2 = round(n_persistent_99 * 0.01, 2)
 
-        hotspot_mean_suhii_day = float(gdf[gdf["is_validated_hotspot"]]["suhii_day_celsius"].mean()) if n_validated > 0 else 0.0
-        hotspot_mean_suhii_night = float(gdf[gdf["is_validated_hotspot"]]["suhii_night_celsius"].mean()) if n_validated > 0 else 0.0
+        hotspot_mean_suhii_day = float(gdf[gdf["is_validated_hotspot"]]["suhii_day_celsius"].mean()) if n_validated > 0 and "suhii_day_celsius" in gdf.columns else 0.0
+        hotspot_mean_suhii_night = float(gdf[gdf["is_validated_hotspot"]]["suhii_night_celsius"].mean()) if n_validated > 0 and "suhii_night_celsius" in gdf.columns else 0.0
 
         is_valid = n_validated >= 0
 
@@ -166,13 +184,13 @@ class Stage5HotspotValidator:
 
         return is_valid, metrics
 
-    def run(self) -> Dict[str, Any]:
+    def run(self, gdf_in: Optional[gpd.GeoDataFrame] = None) -> Dict[str, Any]:
         """Executes Stage 5 pipeline."""
         logger.info("=================================================================")
         logger.info("MODULE 1 - STAGE 5: SPATIAL HOTSPOT VALIDATION (GETIS-ORD Gi*)")
         logger.info("=================================================================")
 
-        gdf = self.load_stage4_data()
+        gdf = gdf_in.copy() if gdf_in is not None else self.load_stage4_data()
         gdf = self.compute_getis_ord_gi(gdf)
         is_valid, metrics = self.validate_hotspots(gdf)
 
@@ -180,12 +198,15 @@ class Stage5HotspotValidator:
             logger.error(f"Stage 5 validation failed! Metrics: {metrics}")
             raise ValueError("Stage 5 spatial hotspot validation failed.")
 
-        self.output_dir.mkdir(parents=True, exist_ok=True)
-        parquet_out = self.output_dir / "module_1_stage5_hotspots.parquet"
-        logger.info(f"Saving hotspot dataset to {parquet_out}...")
-        df_export = pd.DataFrame(gdf.drop(columns=["geometry"]))
-        df_export.to_parquet(parquet_out, index=False)
-        metrics["output_parquet"] = str(parquet_out)
+        self.last_gdf = gdf
+
+        if self.custom_output_dir or self.storage_manager.should_save_intermediate():
+            self.output_dir.mkdir(parents=True, exist_ok=True)
+            parquet_out = self.output_dir / "module_1_stage5_hotspots.parquet"
+            logger.info(f"Saving intermediate hotspot dataset to {parquet_out}...")
+            df_export = pd.DataFrame(gdf.drop(columns=["geometry"]))
+            df_export.to_parquet(parquet_out, index=False)
+            metrics["output_parquet"] = str(parquet_out)
 
         logger.info(
             f"Stage 5 complete! Answer: {metrics['status']} - Validated Hotspots: {metrics['total_validated_hotspot_pixels']} pts"
