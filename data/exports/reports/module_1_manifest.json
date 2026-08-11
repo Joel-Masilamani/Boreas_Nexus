@@ -16,7 +16,7 @@
     "scene_id": "LC09_L2SP_142051_20240515",
     "processing_version": "1.0.0"
   },
-  "primary_geoparquet_knowledge_layer": "C:\\Users\\joelm\\AppData\\Local\\Temp\\pytest-of-joelm\\pytest-45\\test_stage6_knowledge_export_p0\\urban_heat_hotspot_knowledge_layer.geoparquet",
-  "hotspot_registry_parquet": "C:\\Users\\joelm\\AppData\\Local\\Temp\\pytest-of-joelm\\pytest-45\\test_stage6_knowledge_export_p0\\hotspot_registry.parquet",
+  "primary_geoparquet_knowledge_layer": "C:\\Users\\joelm\\AppData\\Local\\Temp\\pytest-of-joelm\\pytest-48\\test_stage6_knowledge_export_p0\\urban_heat_hotspot_knowledge_layer.geoparquet",
+  "hotspot_registry_parquet": "C:\\Users\\joelm\\AppData\\Local\\Temp\\pytest-of-joelm\\pytest-48\\test_stage6_knowledge_export_p0\\hotspot_registry.parquet",
   "consumed_by_next_module": "Module 2: Urban Heat Driver Intelligence Engine"
 }

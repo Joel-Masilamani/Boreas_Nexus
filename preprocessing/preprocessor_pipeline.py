@@ -16,7 +16,7 @@ from utils.logger import logger
 from utils.config_loader import ConfigLoader
 from storage.file_manager import FileManager
 from storage.storage_manager import StorageManager
-from preprocessing.grid_generator import GridGenerator
+from preprocessing.grid_builder import GridBuilder
 from preprocessing.feature_extractor import FeatureExtractor
 
 
@@ -37,21 +37,29 @@ class PreprocessorPipeline:
         self.file_manager = FileManager(base_raw_dir=self.config.city.output_directory)
 
         # Initialize preprocessing sub-components
-        self.grid_generator = GridGenerator()
-        self.feature_extractor = FeatureExtractor()
+        self.grid_builder = GridBuilder(target_crs=self.config.preprocessing.target_crs)
+        self.feature_extractor = FeatureExtractor(target_crs=self.config.preprocessing.target_crs)
+
+    def load_boundary_gdf(self) -> gpd.GeoDataFrame:
+        """Loads the city boundary GeoDataFrame from raw boundary GeoJSON."""
+        boundary_path = self.file_manager.get_boundary_path("boundary.geojson")
+        if not boundary_path.exists():
+            raise FileNotFoundError(f"Boundary file not found at: {boundary_path}")
+        logger.info(f"Loading city boundary from {boundary_path}...")
+        return gpd.read_file(boundary_path)
 
     def load_raw_vector_layers(self) -> Dict[str, gpd.GeoDataFrame]:
         """Loads available vector GIS layers from raw data directory."""
         layers = {}
         osm_files = {
-            "water": "waterways.geojson",
-            "parks": "green_spaces.geojson",
+            "water": "water.geojson",
+            "parks": "parks.geojson",
             "roads": "roads.geojson",
             "buildings": "buildings.geojson"
         }
 
         for key, fname in osm_files.items():
-            p = self.file_manager.get_osm_vector_path(fname)
+            p = self.file_manager.get_vector_path(fname)
             if p.exists():
                 logger.info(f"Loading vector layer '{key}' from {p}...")
                 try:
@@ -67,12 +75,12 @@ class PreprocessorPipeline:
         logger.info(f"STARTING PHASE 2 PREPROCESSING PIPELINE FOR {self.config.city.name.upper()}")
         logger.info("=================================================================")
 
-        # Step 1: Resolve bounding box
-        bbox = self.file_manager.get_boundary_bbox()
-        res_m = float(self.config.preprocessing.grid_resolution_meters)
+        # Step 1: Load city boundary
+        boundary_gdf = self.load_boundary_gdf()
+        res_m = int(self.config.preprocessing.grid_resolution_meters)
 
         # Step 2: Generate spatial grid
-        grid_gdf = self.grid_generator.generate_spatial_grid(bbox, grid_resolution_meters=res_m)
+        grid_gdf = self.grid_builder.generate_grid_points(boundary_gdf, resolution_meters=res_m)
 
         # Step 3: Load vector layers
         vector_layers = self.load_raw_vector_layers()
@@ -107,9 +115,11 @@ class PreprocessorPipeline:
         gpkg_path = self.storage_manager.get_export_filepath("gpkg", "features.gpkg")
 
         logger.info(f"Exporting optional spatial GeoJSON dataset to {geojson_path}")
-        grid_gdf.to_file(geojson_path, driver="GeoJSON")
+        with open(geojson_path, "w", encoding="utf-8") as f:
+            f.write(grid_gdf.to_json())
 
         logger.info(f"Exporting optional spatial GeoPackage dataset to {gpkg_path}")
+        gpkg_path.unlink(missing_ok=True)
         grid_gdf.to_file(gpkg_path, driver="GPKG")
 
         # Step 11: Export Feature Engineering Metadata & Validation

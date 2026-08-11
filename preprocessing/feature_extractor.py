@@ -13,6 +13,7 @@ import geopandas as gpd
 import numpy as np
 
 from utils.logger import logger
+from utils.crs_utils import get_utm_crs_for_lon_lat
 from preprocessing.vector_processor import VectorProcessor
 from preprocessing.raster_processor import RasterProcessor
 
@@ -70,20 +71,33 @@ class FeatureExtractor:
         vector_layers: Dict[str, gpd.GeoDataFrame]
     ) -> gpd.GeoDataFrame:
         """
-        Extracts building footprint density (percentage of building coverage within 100m buffer).
+        Extracts building footprint density (percentage of building coverage within 50m buffer in UTM).
         """
         result_gdf = grid_gdf.copy()
         if "buildings" in vector_layers and not vector_layers["buildings"].empty:
             logger.info("Extracting feature: building_density...")
             buildings = vector_layers["buildings"]
-            # Spatial join count or buffer intersection approximation
-            # Buffer points by ~50m (0.00045 degrees)
-            buffered = grid_gdf.geometry.buffer(0.00045)
-            buf_gdf = gpd.GeoDataFrame(geometry=buffered, crs=grid_gdf.crs)
-            joined = gpd.sjoin(buf_gdf, buildings, how="left", predicate="intersects")
-            counts = joined.groupby(joined.index).size() - 1
-            # Normalize density count to [0.0, 1.0] range
-            result_gdf["building_density"] = np.clip(counts.reindex(grid_gdf.index, fill_value=0) / 10.0, 0.0, 1.0)
+
+            # Determine UTM projection dynamically to avoid geographic CRS buffer distortion
+            lon_c = float(grid_gdf.geometry.x.mean())
+            lat_c = float(grid_gdf.geometry.y.mean())
+            utm_crs = get_utm_crs_for_lon_lat(lon_c, lat_c)
+
+            grid_utm = grid_gdf.to_crs(utm_crs)
+            buildings_utm = buildings.to_crs(utm_crs) if buildings.crs != utm_crs else buildings
+
+            # Buffer points by 50m in projected metric CRS
+            buffered_utm = grid_utm.geometry.buffer(50.0)
+
+            valid_bldg = buildings_utm[buildings_utm.geometry.notnull() & ~buildings_utm.geometry.is_empty]
+            if not valid_bldg.empty:
+                import shapely
+                tree = shapely.STRtree(valid_bldg.geometry.values)
+                query_res = tree.query(buffered_utm.values, predicate="intersects")
+                counts = np.bincount(query_res[0], minlength=len(grid_gdf))
+                result_gdf["building_density"] = np.clip(counts / 10.0, 0.0, 1.0)
+            else:
+                result_gdf["building_density"] = 0.0
         else:
             result_gdf["building_density"] = 0.0
         return result_gdf
@@ -140,7 +154,6 @@ class FeatureExtractor:
             logger.warning("Landsat-8 thermal raster not found. Using baseline LST values.")
             result_gdf["lst_celsius"] = 33.5
 
-
         return result_gdf
 
     def extract_dem_features(
@@ -149,27 +162,22 @@ class FeatureExtractor:
         elevation_path: Optional[Path]
     ) -> gpd.GeoDataFrame:
         """
-        Extracts real elevation, slope, and aspect features from DEM GeoTIFF onto grid points.
+        Extracts real elevation, 2D slope, and 2D aspect features from DEM GeoTIFF onto grid points.
         """
         result_gdf = grid_gdf.copy()
         n_points = len(result_gdf)
-        logger.info(f"Extracting DEM terrain features (elevation, slope, aspect) for {n_points} points...")
+        logger.info(f"Extracting DEM 2D terrain features (elevation, slope, aspect) for {n_points} points...")
 
         if elevation_path and elevation_path.exists():
-            logger.info(f"Sampling elevation from {elevation_path}...")
-            elev_vals = RasterProcessor.sample_points_from_raster(elevation_path, grid_gdf, band_index=1)
-            result_gdf["elevation_m"] = np.nan_to_num(np.clip(elev_vals, 0.0, 500.0), nan=12.0)
+            logger.info(f"Sampling 2D terrain metrics from {elevation_path}...")
+            elev_vals, slope_vals, aspect_vals = RasterProcessor.sample_dem_terrain(elevation_path, grid_gdf)
+            result_gdf["elevation_m"] = elev_vals
+            result_gdf["slope_deg"] = slope_vals
+            result_gdf["aspect_deg"] = aspect_vals
         else:
             result_gdf["elevation_m"] = 12.0
-
-        # Derive slope and aspect gradients
-        dx = np.gradient(result_gdf["elevation_m"].values)
-        dy = np.gradient(result_gdf["elevation_m"].values)
-        slope_rad = np.arctan(np.sqrt(dx**2 + dy**2))
-        aspect_rad = np.arctan2(-dy, dx)
-
-        result_gdf["slope_deg"] = np.clip(np.degrees(slope_rad), 0.0, 45.0)
-        result_gdf["aspect_deg"] = np.mod(np.degrees(aspect_rad) + 360.0, 360.0)
+            result_gdf["slope_deg"] = 0.0
+            result_gdf["aspect_deg"] = 0.0
 
         return result_gdf
 
@@ -193,4 +201,3 @@ class FeatureExtractor:
             result_gdf["land_cover_code"] = 50  # Default to built-up urban
 
         return result_gdf
-

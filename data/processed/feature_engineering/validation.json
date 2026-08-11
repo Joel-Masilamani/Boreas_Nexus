@@ -1,5 +1,6 @@
 {
   "status": "PASSED",
+  "total_samples": 44298,
   "null_count": 0,
-  "sample_count": 44298
+  "crs": "EPSG:4326"
 }

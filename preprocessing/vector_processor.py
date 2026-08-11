@@ -2,10 +2,13 @@
 Boreas-Nexus Vector Processor Module
 
 Provides spatial preprocessing functions for vector datasets: geometry validation/repair,
-CRS reprojection, boundary clipping, and spatial attribute cleaning.
+CRS reprojection, boundary clipping, and high-performance STRtree spatial distance calculations.
 """
 
+from typing import Any
 import geopandas as gpd
+import pandas as pd
+import shapely
 from shapely.validation import make_valid
 from utils.logger import logger
 
@@ -68,18 +71,29 @@ class VectorProcessor:
             return gdf
 
     @staticmethod
-    def compute_distance_to_features(point_gdf: gpd.GeoDataFrame, target_features_gdf: gpd.GeoDataFrame) -> gpd.GeoSeries:
+    def compute_distance_to_features(point_gdf: gpd.GeoDataFrame, target_features_gdf: gpd.GeoDataFrame) -> pd.Series:
         """
-        Computes minimum Euclidean distance (in meters or degrees) from each point in point_gdf
-        to the nearest geometry in target_features_gdf.
+        Computes minimum Euclidean distance from each point in point_gdf to the nearest geometry
+        in target_features_gdf using vectorized Shapely STRtree spatial indexing.
         """
         if point_gdf.empty or target_features_gdf.empty:
-            return point_gdf.geometry.apply(lambda _: 0.0)
+            return pd.Series(0.0, index=point_gdf.index)
 
         # Reproject target features to point CRS if needed
         if target_features_gdf.crs != point_gdf.crs:
             target_features_gdf = VectorProcessor.reproject(target_features_gdf, str(point_gdf.crs))
 
-        # Unified union geometry for fast nearest-neighbor distance calculation
-        unified_geom = target_features_gdf.geometry.union_all()
-        return point_gdf.geometry.apply(lambda pt: pt.distance(unified_geom) if pt is not None else 0.0)
+        # Filter out empty or null geometries from target
+        valid_targets = target_features_gdf[target_features_gdf.geometry.notnull() & ~target_features_gdf.geometry.is_empty]
+        if valid_targets.empty:
+            return pd.Series(0.0, index=point_gdf.index)
+
+        geoms_target = valid_targets.geometry.values
+        geoms_point = point_gdf.geometry.values
+
+        # Build high-performance STRtree spatial index
+        tree = shapely.STRtree(geoms_target)
+        nearest_indices = tree.nearest(geoms_point)
+        distances = shapely.distance(geoms_point, geoms_target[nearest_indices])
+
+        return pd.Series(distances, index=point_gdf.index)

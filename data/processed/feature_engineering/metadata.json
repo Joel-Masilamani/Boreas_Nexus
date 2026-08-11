@@ -1,7 +1,25 @@
 {
   "city": "Chennai",
-  "module": "feature_engineering",
+  "status": "SUCCESS",
+  "grid_resolution_meters": 100,
   "sample_count": 44298,
-  "crs": "EPSG:4326",
-  "primary_file": "features.geoparquet"
+  "primary_geoparquet": "D:\\Projects\\Boreas_Nexus\\data\\processed\\feature_engineering\\features.geoparquet",
+  "geojson_export": "D:\\Projects\\Boreas_Nexus\\data\\exports\\geojson\\features.geojson",
+  "gpkg_export": "D:\\Projects\\Boreas_Nexus\\data\\exports\\gpkg\\features.gpkg",
+  "feature_columns": [
+    "point_id",
+    "geometry",
+    "distance_to_water_m",
+    "distance_to_parks_m",
+    "distance_to_roads_m",
+    "building_density",
+    "ndvi",
+    "ndbi",
+    "ndwi",
+    "lst_celsius",
+    "elevation_m",
+    "slope_deg",
+    "aspect_deg",
+    "land_cover_code"
+  ]
 }
