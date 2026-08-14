@@ -17,16 +17,20 @@
 - [4. Project Objectives](#4-project-objectives)
 - [5. Scope of the Project](#5-scope-of-the-project)
 - [6. Literature Survey & Comparative Matrix](#6-literature-survey--comparative-matrix)
+  - [6.1 Core Mathematical & Physical Formulations](#61-core-mathematical--physical-formulations)
 - [7. Tools & Technologies](#7-tools--technologies)
 - [8. Software Requirements Specification (SRS)](#8-software-requirements-specification-srs)
   - [8.1 Functional Requirements (FR)](#81-functional-requirements-fr)
   - [8.2 Non-Functional Requirements (NFR)](#82-non-functional-requirements-nfr)
 - [9. UML Diagrams](#9-uml-diagrams)
-  - [9.1 Use Case Diagram](#91-use-case-diagram)
-  - [9.2 Sequence Diagram](#92-sequence-diagram)
-  - [9.3 Component Diagram](#93-component-diagram)
-  - [9.4 State Machine Diagram](#94-state-machine-diagram)
-- [10. Entity-Relationship (ER) Diagram](#10-entity-relationship-er-diagram)
+  - [9.1 Class Diagram](#91-class-diagram)
+  - [9.2 Activity Diagram](#92-activity-diagram)
+  - [9.3 Use Case Diagram](#93-use-case-diagram)
+  - [9.4 Sequence Diagram](#94-sequence-diagram)
+  - [9.5 Component Diagram](#95-component-diagram)
+  - [9.6 State Machine Diagram](#96-state-machine-diagram)
+  - [9.7 Dashboard UI & Wireframe Layout](#97-dashboard-ui--wireframe-layout)
+- [10. Enhanced Entity-Relationship (EER) Diagram](#10-enhanced-entity-relationship-eer-diagram)
 - [11. Database Design (PostgreSQL + PostGIS Schema)](#11-database-design-postgresql--postgis-schema)
 - [12. System Architecture Diagram](#12-system-architecture-diagram)
 - [13. Pipeline Execution & Empirical Validation](#13-pipeline-execution--empirical-validation)
@@ -151,6 +155,33 @@ To construct a unified, open-source, physics-guided geospatial decision-support 
 
 ---
 
+### 6.1 Core Mathematical & Physical Formulations
+
+#### 1. Surface Urban Heat Island Intensity ($\text{SUHII}$)
+$$\text{SUHII}_i = \text{LST}_i - \mu\left(\text{LST}_{\text{rural}}\right) = \text{LST}_i - \frac{1}{N_{\text{rural}}} \sum_{j \in \text{Rural}} \text{LST}_j$$
+
+#### 2. Getis-Ord $Gi^*$ Local Spatial Autocorrelation Statistic
+$$Gi^*_i = \frac{\sum_{j=1}^n w_{ij} x_j - \bar{X} \sum_{j=1}^n w_{ij}}{S \sqrt{\frac{n \sum_{j=1}^n w_{ij}^2 - \left(\sum_{j=1}^n w_{ij}\right)^2}{n - 1}}}$$
+
+where $\bar{X} = \frac{\sum_{j=1}^n x_j}{n}$ and $S = \sqrt{\frac{\sum_{j=1}^n x_j^2}{n} - (\bar{X})^2}$.
+
+#### 3. Surface Energy Balance ($\text{SEB}$) Physical Conservation Law
+$$R_n = H + LE + G + Q_a$$
+
+where $R_n$ is net surface radiation, $H$ is sensible heat flux, $LE$ is latent heat flux (evapotranspiration), $G$ is ground heat storage, and $Q_a$ is anthropogenic heat flux.
+
+#### 4. SHapley Additive exPlanations (SHAP Value Attribution)
+$$\phi_i(x) = \sum_{S \subseteq F \setminus \{i\}} \frac{|S|!(|F| - |S| - 1)!}{|F|!} \left[ f_x(S \cup \{i\}) - f_x(S) \right]$$
+
+where $F$ is the complete feature set, $S$ is a feature subset, and $f_x(S)$ is the model expectation conditioned on features in $S$.
+
+#### 5. TOPSIS Relative Closeness Coefficient ($C_i^*$)
+$$C_i^* = \frac{D_i^-}{D_i^+ + D_i^-}, \quad 0 \le C_i^* \le 1$$
+
+where $D_i^+$ is the Euclidean distance to the positive-ideal solution and $D_i^-$ is the distance to the negative-ideal solution.
+
+---
+
 ## 7. Tools & Technologies
 
 | Layer / Subsystem | Primary Technology | Purpose & Usage |
@@ -194,7 +225,150 @@ To construct a unified, open-source, physics-guided geospatial decision-support 
 
 ## 9. UML Diagrams
 
-### 9.1 Use Case Diagram
+### 9.1 Class Diagram
+
+```mermaid
+classDiagram
+    class DataIngestionEngine {
+        +Path config_path
+        +List~str~ vector_layers
+        +Polygon spatial_boundary
+        +fetch_osm_vectors() GeoDataFrame
+        +fetch_sentinel_landsat() RasterDataset
+        +fetch_weather_dem() DataArray
+    }
+
+    class GeospatialPreprocessor {
+        +int grid_resolution_meters
+        +str target_crs
+        +List~str~ feature_columns
+        +generate_100m_grid() GeoDataFrame
+        +compute_vector_proximities() GeoDataFrame
+        +calculate_spectral_indices() GeoDataFrame
+    }
+
+    class HotspotIdentificationEngine {
+        +GeoSeries urban_mask
+        +float suhii_baseline
+        +float gi_star_threshold
+        +compute_suhii_baseline() GeoDataFrame
+        +analyze_nocturnal_persistence() GeoDataFrame
+        +validate_getis_ord_gi_star() GeoDataFrame
+    }
+
+    class DriverIntelligenceEngine {
+        +LGBMRegressor booster_model
+        +TreeExplainer shap_explainer
+        +float gwr_bandwidth
+        +train_boosted_driver_model() LGBMRegressor
+        +compute_shap_attributions() DataFrame
+        +fit_gwr_spatial_coefficients() GeoDataFrame
+    }
+
+    class PhysicsDynamicsEngine {
+        +float seb_tolerance
+        +ndarray albedo_matrix
+        +float heat_capacity
+        +construct_energy_balance_features() GeoDataFrame
+        +enforce_surface_energy_balance() DataFrame
+        +predict_thermal_response() DataFrame
+    }
+
+    class ScenarioSimulationEngine {
+        +int ga_population_size
+        +int max_generations
+        +UrbanCoolingModel invest_model
+        +run_ga_scenario_search() List~Scenario~
+        +validate_invest_air_temp() float
+        +validate_solweig_radiant_comfort() float
+    }
+
+    class DecisionIntelligenceEngine {
+        +ndarray ahp_pairwise_matrix
+        +List~Scenario~ pareto_front
+        +DataFrame topsis_scores
+        +extract_pareto_front() List~Scenario~
+        +compute_ahp_weights() Dict
+        +rank_topsis_scenarios() DataFrame
+        +export_urban_action_plan() Dict
+    }
+
+    class StorageManager {
+        +Path base_dir
+        +Path processed_dir
+        +Path export_dir
+        +save_geoparquet()
+        +load_geoparquet()
+        +persist_postgis_registry()
+    }
+
+    class FastAPIGateway {
+        +FastAPI app
+        +APIRouter router
+        +str jwt_secret
+        +run_pipeline_endpoint()
+        +simulate_scenario_endpoint()
+        +export_plan_endpoint()
+    }
+
+    class DashboardInterface {
+        +MapLibreGL map_instance
+        +List~str~ active_layers
+        +Dict selected_scenario
+        +render_maplibre_layers()
+        +display_echarts_pareto()
+        +trigger_simulation()
+    }
+
+    DataIngestionEngine --> GeospatialPreprocessor
+    GeospatialPreprocessor --> HotspotIdentificationEngine
+    HotspotIdentificationEngine --> DriverIntelligenceEngine
+    DriverIntelligenceEngine --> PhysicsDynamicsEngine
+    PhysicsDynamicsEngine --> ScenarioSimulationEngine
+    ScenarioSimulationEngine --> DecisionIntelligenceEngine
+    
+    DataIngestionEngine ..> StorageManager
+    GeospatialPreprocessor ..> StorageManager
+    HotspotIdentificationEngine ..> StorageManager
+    DriverIntelligenceEngine ..> StorageManager
+    PhysicsDynamicsEngine ..> StorageManager
+    ScenarioSimulationEngine ..> StorageManager
+    DecisionIntelligenceEngine ..> StorageManager
+
+    StorageManager <--> FastAPIGateway
+    FastAPIGateway <--> DashboardInterface
+```
+
+---
+
+### 9.2 Activity Diagram
+
+```mermaid
+flowchart TD
+    Start([🚀 Start Project Workflow]) --> DataAcquisition[1. Data Ingestion: Fetch OSM, Satellite, DEM & Weather]
+    
+    DataAcquisition --> Preprocessing[2. Preprocessing: Build 100m Grid & Compute Features]
+    
+    Preprocessing --> Mod1[3. Module 1: Hotspot Detection via SUHII & Getis-Ord Gi*]
+    
+    Mod1 --> Mod2[4. Module 2: Driver Intelligence via LightGBM & SHAP Attribution]
+    
+    Mod2 --> Mod3[5. Module 3: Physics-Guided Heat Dynamics & Energy Balance]
+    
+    Mod3 --> Mod4[6. Module 4: Cooling Scenario Search & Microclimate Validation]
+    
+    Mod4 --> Mod5[7. Module 5: Decision Intelligence via Pareto Sorting & AHP-TOPSIS]
+    
+    Mod5 --> Persistence[8. Data Persistence: Store Action Plan in PostGIS]
+    
+    Persistence --> Dashboard[9. Presentation: Render Interactive Map & Analytics Dashboard]
+    
+    Dashboard --> End([🏁 Actionable Urban Action Plan Complete])
+```
+
+---
+
+### 9.3 Use Case Diagram
 
 ```mermaid
 graph TD
@@ -234,7 +408,7 @@ graph TD
 
 ---
 
-### 9.2 Sequence Diagram
+### 9.4 Sequence Diagram
 
 ```mermaid
 sequenceDiagram
@@ -279,7 +453,7 @@ sequenceDiagram
 
 ---
 
-### 9.3 Component Diagram
+### 9.5 Component Diagram
 
 ```mermaid
 graph TB
@@ -336,7 +510,7 @@ graph TB
 
 ---
 
-### 9.4 State Machine Diagram
+### 9.6 State Machine Diagram
 
 ```mermaid
 stateDiagram-v2
@@ -372,7 +546,34 @@ stateDiagram-v2
 
 ---
 
-## 10. Entity-Relationship (ER) Diagram
+### 9.7 Dashboard UI & Wireframe Layout
+
+```
++---------------------------------------------------------------------------------------------------------------+
+|  BOREAS-NEXUS | Urban Climate Decision Intelligence Platform                       [City: Chennai] [Export PDF]|
++--------------------------+---------------------------------------------------+--------------------------------+
+| LAYER CONTROLS           | INTERACTIVE MAPLIBRE GL SPATIAL CANVAS            | SCENARIO SIMULATOR & ANALYTICS |
++--------------------------+---------------------------------------------------+--------------------------------+
+| [x] 100m Centroid Grid   |                                                   | INTERVENTION SLIDERS           |
+| [x] Gi* Hotspot Clusters |    +-----------------------------------------+    | Tree Canopy Ext: [==|====] +20%|
+| [x] SHAP Driver Heatmap  |    |  [!] Hotspot Cluster #14 (Gi* Z=4.12)    |    | Cool Roof Coverage: [====|==] 45%|
+| [ ] Sentinel-2 NDVI      |    |  Mean LST: 42.8°C                        |    | Reflective Pavement: [=|===] 15%|
+| [ ] Building Footprints  |    |  Dominant Driver: Vegetation Deficit    |    +--------------------------------+
+| [ ] Water & Park Vectors |    +-----------------------------------------+    | ECHARTS PARETO FRONTIER        |
+|                          |                                                   |  Cooling (°C)                  |
+| BASEMAP SELECTOR         |                                                   |   ^   * Scenario B (Top)       |
+| (o) Dark Vector          |                                                   |   |  * Scenario A              |
+| ( ) Satellite Imagery    |                                                   |   +--------------> Cost ($)    |
+|                          |                                                   +--------------------------------+
+| LEGEND                   |                                                   | TOPSIS RANKING TABLE           |
+|  [■] Critical Hotspot    |                                                   | Rank 1: Scenario B (Score 0.89)|
+|  [■] Moderate Heat       |                                                   | Rank 2: Scenario A (Score 0.74)|
++--------------------------+---------------------------------------------------+--------------------------------+
+```
+
+---
+
+## 10. Enhanced Entity-Relationship (EER) Diagram
 
 ```mermaid
 erDiagram
@@ -582,58 +783,47 @@ CREATE TABLE action_plans (
 
 ## 12. System Architecture Diagram
 
-```
-========================================================================================================================
-                                      BOREAS-NEXUS SYSTEM ARCHITECTURE
-========================================================================================================================
+```mermaid
+flowchart TD
+    subgraph L1["Layer 1: External Data Sources Layer"]
+        direction LR
+        OSM["🗺️ OpenStreetMap (OSMnx)"]
+        SatData["🛰️ Copernicus & USGS STAC"]
+        MeteoElev["🌤️ NASA POWER & SRTM DEM"]
+    end
 
- ┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
- │                                           1. EXTERNAL DATA SOURCES LAYER                                         │
- └─────────────────────────┬───────────────────────────────┬───────────────────────────────┬────────────────────────┘
-                           │                               │                               │
-         ┌─────────────────▼────────┐             ┌────────▼─────────────────┐   ┌─────────▼────────────────┐
-         │ OpenStreetMap (OSMnx)    │             │ Sentinel-2 & Landsat-8   │   │ NASA POWER & SRTM DEM    │
-         │ - Roads, Buildings, Parks│             │ - Spectral Indices, LST  │   │ - Weather & Elevation    │
-         └─────────────────┬────────┘             └────────┬─────────────────┘   └─────────┬────────────────┘
-                           │                               │                               │
- ┌─────────────────────────▼───────────────────────────────▼───────────────────────────────▼────────────────────────┐
- │                                           2. GEOSPATIAL PIPELINE LAYER                                           │
- ├──────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
- │  [Boundary Service] ──► [Raster Align Engine] ──► [Vector Distance Engine] ──► [100m Grid GeoParquet Exporter]   │
- └─────────────────────────────────────────────────────────┬────────────────────────────────────────────────────────┘
-                                                           │
- ┌─────────────────────────────────────────────────────────▼────────────────────────────────────────────────────────┐
- │                                           3. CORE ANALYTICS ENGINE LAYER                                         │
- ├──────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
- │                                                                                                                  │
- │  ┌─────────────────────────────┐   ┌─────────────────────────────┐   ┌─────────────────────────────┐             │
- │  │    MODULE 1: HOTSPOTS       │   │    MODULE 2: DRIVERS        │   │    MODULE 3: DYNAMICS       │             │
- │  │ - SUHII Baseline            │──►│ - LightGBM + XGBoost        │──►│ - Surface Energy Balance    │             │
- │  │ - Getis-Ord Gi* Clustering  │   │ - SHAP Attribution          │   │ - Physics ML Constraints    │             │
- │  └─────────────────────────────┘   └─────────────────────────────┘   └──────────────┬──────────────┘             │
- │                                                                                     │                            │
- │                                                                                     ▼                            │
- │  ┌─────────────────────────────┐   ┌─────────────────────────────┐   ┌─────────────────────────────┐             │
- │  │ MODULE 5: DECISION ENGINE   │   │ MODULE 4: SIMULATION ENGINE │   │ MICROCLIMATE VALIDATION     │             │
- │  │ - Pareto Non-Dominated      │◄──│ - Genetic Algorithm Search  │◄──│ - InVEST (Air Temp)         │             │
- │  │ - AHP Weights + TOPSIS      │   │ - Candidate Scenarios       │   │ - SOLWEIG (Pedestrian Comfort)           │
- │  └──────────────┬──────────────┘   └─────────────────────────────┘   └─────────────────────────────┘             │
- │                 │                                                                                                │
- └─────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────┘
-                   │
- ┌─────────────────▼────────────────────────────────────────────────────────────────────────────────────────────────┐
- │                                           4. PERSISTENCE & STORAGE LAYER                                         │
- ├──────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
- │  [PostgreSQL 16 + PostGIS 3.4 Spatial DB] ◄──► [Apache GeoParquet Columnar Data] ◄──► [Redis Cache]              │
- └─────────────────────────────────────────────────────────┬────────────────────────────────────────────────────────┘
-                                                           │
- ┌─────────────────────────────────────────────────────────▼────────────────────────────────────────────────────────┐
- │                                           5. SERVICE & PRESENTATION LAYER                                        │
- ├──────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
- │  ┌────────────────────────────────────────────────┐     ┌─────────────────────────────────────────────────────┐  │
- │  │ FastAPI Asynchronous REST Gateway (ASGI)       │ ◄─► │ React 18 + MapLibre GL Interactive Dashboard UI     │  │
- │  └────────────────────────────────────────────────┘     └─────────────────────────────────────────────────────┘  │
- └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+    subgraph L2["Layer 2: Ingestion & Preprocessing Pipeline"]
+        direction LR
+        IngestService["Data Ingestion Service"] --> GridBuilder["100m Spatial Grid Builder"] --> FeatureExtractor["Feature Extraction Engine"]
+    end
+
+    subgraph L3["Layer 3: Core Analytics & AI/Physics Modules"]
+        direction LR
+        Mod1["Module 1<br>Hotspot Engine"] --> Mod2["Module 2<br>Driver Intelligence"] --> Mod3["Module 3<br>Physics Dynamics"] --> Mod4["Module 4<br>Cooling Simulator"] --> Mod5["Module 5<br>Decision Engine"]
+    end
+
+    subgraph L4["Layer 4: Persistence & Storage Layer"]
+        direction LR
+        PostGIS[("PostgreSQL + PostGIS DB")]
+        ParquetStore["Apache GeoParquet Storage"]
+        RedisCache[("Redis Cache")]
+    end
+
+    subgraph L5["Layer 5: Service & Application Gateway"]
+        FastAPI["FastAPI Asynchronous REST Gateway (ASGI)"]
+    end
+
+    subgraph L6["Layer 6: Interactive Presentation UI"]
+        direction LR
+        ReactUI["React 18 + MapLibre GL JS Map"]
+        ECharts["Apache ECharts Analytics"]
+    end
+
+    L1 --> L2
+    L2 --> L3
+    L3 --> L4
+    L4 --> L5
+    L5 --> L6
 ```
 
 ---
@@ -723,4 +913,3 @@ If you use **Boreas-Nexus** in your academic research or urban planning projects
   url = {https://github.com/Joel-Masilamani/Boreas_Nexus}
 }
 ```
-=======
