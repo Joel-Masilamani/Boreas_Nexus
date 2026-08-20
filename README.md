@@ -354,25 +354,144 @@ DashboardInterface ..> FastAPIGateway : calls API
 
 ```mermaid
 flowchart TD
-    Start([🚀 Start Project Workflow]) --> DataAcquisition[1. Data Ingestion: Fetch OSM, Satellite, DEM & Weather]
-    
-    DataAcquisition --> Preprocessing[2. Preprocessing: Build 100m Grid & Compute Features]
-    
-    Preprocessing --> Mod1[3. Module 1: Hotspot Detection via SUHII & Getis-Ord Gi*]
-    
-    Mod1 --> Mod2[4. Module 2: Driver Intelligence via LightGBM & SHAP Attribution]
-    
-    Mod2 --> Mod3[5. Module 3: Physics-Guided Heat Dynamics & Energy Balance]
-    
-    Mod3 --> Mod4[6. Module 4: Cooling Scenario Search & Microclimate Validation]
-    
-    Mod4 --> Mod5[7. Module 5: Decision Intelligence via Pareto Sorting & AHP-TOPSIS]
-    
-    Mod5 --> Persistence[8. Data Persistence: Store Action Plan in PostGIS]
-    
-    Persistence --> Dashboard[9. Presentation: Render Interactive Map & Analytics Dashboard]
-    
-    Dashboard --> End([🏁 Actionable Urban Action Plan Complete])
+
+    %% ==========================================
+    %% BOREAS-NEXUS — UML ACTIVITY DIAGRAM
+    %% ==========================================
+
+    Start((Start))
+
+    A1["Configure Urban Analysis"]
+
+    %% -------- Data Acquisition --------
+
+    A2["Acquire OSM Vector Data"]
+    A3["Acquire Satellite Data"]
+    A4["Acquire DEM Data"]
+    A5["Acquire Weather Data"]
+
+    D1{"All Required Data Available?"}
+
+    %% -------- Preprocessing --------
+
+    A6["Preprocess and Harmonize Data"]
+    A7["Generate 100 m Analysis Grid"]
+    A8["Compute Spatial and Spectral Features"]
+
+    %% -------- Module 1 --------
+
+    A9["Compute SUHII Baseline"]
+    A10["Detect Thermal Hotspots using Getis-Ord Gi*"]
+
+    D2{"Significant Hotspots Identified?"}
+
+    A11["Generate No Significant Hotspot Report"]
+
+    %% -------- Module 2 --------
+
+    A12["Train LightGBM Driver Model"]
+    A13["Compute SHAP Feature Attributions"]
+    A14["Fit Spatial Driver Relationships using GWR"]
+
+    %% -------- Module 3 --------
+
+    A15["Construct Physics-Informed Features"]
+    A16["Apply Surface Energy-Balance Constraints"]
+    A17["Predict Thermal Response"]
+
+    %% -------- Module 4 --------
+
+    A18["Generate Candidate Cooling Scenarios"]
+    A19["Search Scenario Space using Genetic Algorithm"]
+    A20["Simulate Thermal Response"]
+    A21["Validate Microclimate Response"]
+
+    D3{"Scenario Validation Successful?"}
+
+    %% -------- Module 5 --------
+
+    A22["Extract Pareto-Optimal Scenarios"]
+    A23["Compute AHP Objective Weights"]
+    A24["Rank Scenarios using TOPSIS"]
+
+    %% -------- Output --------
+
+    A25["Generate Urban Action Plan"]
+    A26["Persist Spatial Results and Action Plan"]
+    A27["Expose Results through FastAPI"]
+    A28["Render Interactive Map and Analytics Dashboard"]
+
+    End1(((Action Plan Complete)))
+    End2(((No Significant Hotspot Report Complete)))
+
+    %% ==========================================
+    %% MAIN WORKFLOW
+    %% ==========================================
+
+    Start --> A1
+
+    %% Data acquisition
+    A1 --> A2
+    A1 --> A3
+    A1 --> A4
+    A1 --> A5
+
+    A2 --> D1
+    A3 --> D1
+    A4 --> D1
+    A5 --> D1
+
+    D1 -->|Yes| A6
+    D1 -->|No| A1
+
+    %% Preprocessing
+    A6 --> A7
+    A7 --> A8
+
+    %% Module 1 — Hotspot Identification
+    A8 --> A9
+    A9 --> A10
+    A10 --> D2
+
+    %% No significant hotspots
+    D2 -->|No| A11
+    A11 --> End2
+
+    %% Significant hotspots
+    D2 -->|Yes| A12
+
+    %% Module 2 — Driver Intelligence
+    A12 --> A13
+    A13 --> A14
+
+    %% Module 3 — Physics Dynamics
+    A14 --> A15
+    A15 --> A16
+    A16 --> A17
+
+    %% Module 4 — Scenario Simulation
+    A17 --> A18
+    A18 --> A19
+    A19 --> A20
+    A20 --> A21
+
+    %% Scenario validation
+    A21 --> D3
+
+    D3 -->|No| A18
+    D3 -->|Yes| A22
+
+    %% Module 5 — Decision Intelligence
+    A22 --> A23
+    A23 --> A24
+
+    %% Final output
+    A24 --> A25
+    A25 --> A26
+    A26 --> A27
+    A27 --> A28
+
+    A28 --> End1
 ```
 
 ---
@@ -380,39 +499,56 @@ flowchart TD
 ### 9.3 Use Case Diagram
 
 ```mermaid
-graph TD
-    actorPlanner["🏙️ City Planner"]
-    actorScientist["🔬 Climate Scientist"]
-    actorAdmin["⚙️ System Admin"]
-    actorDataAPIs["🛰️ External Data APIs (OSM, Copernicus, USGS, NASA)"]
+flowchart LR
 
-    subgraph BoreasNexusSystem["Boreas-Nexus Decision Intelligence Platform"]
-        UC1["UC-1: Ingest Geospatial & Remote Sensing Data"]
-        UC2["UC-2: Generate Spatial Grid & Extract Features"]
-        UC3["UC-3: Validate Urban Heat Hotspots (Gi*)"]
-        UC4["UC-4: Analyze Heat Drivers (SHAP / GWR)"]
-        UC5["UC-5: Simulate Cooling Scenarios (GA / InVEST)"]
-        UC6["UC-6: Execute Multi-Criteria Decision Ranking (TOPSIS)"]
-        UC7["UC-7: Generate & Export Urban Action Plan"]
-        UC8["UC-8: Manage System Configuration & Pipelines"]
+    %% ==========================================
+    %% BOREAS-NEXUS — USE CASE DIAGRAM
+    %% ==========================================
+
+    Planner["🏙️ City Planner"]
+    Scientist["🔬 Climate Scientist"]
+    Admin["⚙️ System Administrator"]
+
+    OSM["🗺️ OpenStreetMap"]
+    Copernicus["🛰️ Copernicus"]
+    USGS["🌍 USGS"]
+    NASA["🛰️ NASA / Earth Observation"]
+
+    subgraph System["Boreas-Nexus Decision Intelligence Platform"]
+
+        UC1(["UC-1<br/>Prepare Spatial Analysis Dataset"])
+        UC2(["UC-2<br/>Identify & Validate Heat Hotspots"])
+        UC3(["UC-3<br/>Analyze Heat Drivers"])
+        UC4(["UC-4<br/>Simulate Cooling Scenarios"])
+        UC5(["UC-5<br/>Compare & Rank Scenarios"])
+        UC6(["UC-6<br/>Generate Urban Action Plan"])
+        UC7(["UC-7<br/>Manage System Configuration"])
+        UC8(["UC-8<br/>View Spatial & Analytical Results"])
+
     end
 
-    actorDataAPIs --> UC1
-    actorAdmin --> UC1
-    actorAdmin --> UC8
-    actorScientist --> UC2
-    actorScientist --> UC3
-    actorScientist --> UC4
-    actorPlanner --> UC5
-    actorPlanner --> UC6
-    actorPlanner --> UC7
+    %% Actor → Use Case associations
 
-    UC1 -.->|"<<includes>>"| UC2
-    UC2 -.->|"<<includes>>"| UC3
-    UC3 -.->|"<<includes>>"| UC4
-    UC4 -.->|"<<extends>>"| UC5
-    UC5 -.->|"<<includes>>"| UC6
-    UC6 -.->|"<<includes>>"| UC7
+    Scientist --- UC1
+    Scientist --- UC2
+    Scientist --- UC3
+    Scientist --- UC8
+
+    Planner --- UC2
+    Planner --- UC3
+    Planner --- UC4
+    Planner --- UC5
+    Planner --- UC6
+    Planner --- UC8
+
+    Admin --- UC7
+
+    %% External systems → Data ingestion
+
+    OSM --- UC1
+    Copernicus --- UC1
+    USGS --- UC1
+    NASA --- UC1
 ```
 
 ---
@@ -422,42 +558,60 @@ graph TD
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as City Planner / User
-    participant UI as React Frontend (MapLibre GL)
-    participant API as FastAPI Gateway
-    participant Ingest as Ingestion Pipeline
-    participant Preproc as Preprocessing Engine
-    participant Module1 as Module 1 (Hotspots)
-    participant Module2 as Module 2 (Drivers/SHAP)
-    participant Module4 as Module 4 (Simulator)
-    participant Module5 as Module 5 (MCDA Engine)
-    participant DB as PostgreSQL + PostGIS DB
 
-    User->>UI: Select City (e.g., Chennai) & Launch Pipeline
-    UI->>API: POST /api/v1/pipeline/run {city_config}
-    API->>Ingest: Trigger Ingestion (OSM, Sentinel, Landsat, Weather)
-    Ingest-->>API: Data Ingested & Saved to Raw Storage
-    API->>Preproc: Execute 100m Spatial Feature Extraction
-    Preproc-->>API: Extracted features.parquet (44,298 points)
-    
-    API->>Module1: Compute SUHII & Getis-Ord Gi* Clusters
-    Module1-->>API: Validated Hotspots Knowledge Layer
-    
-    API->>Module2: Train LightGBM + Compute SHAP Attribution
-    Module2-->>API: Driver Intelligence Layer
-    
-    API->>DB: Store Hotspots & Driver Attributions
-    API-->>UI: Display Interactive Hotspot & Driver Map
-    
-    User->>UI: Define Cooling Intervention Budget & Parameters
-    UI->>API: POST /api/v1/simulate {intervention_params}
-    API->>Module4: Run GA Search + InVEST/SOLWEIG Surrogate
-    Module4-->>API: Validated Candidate Scenarios
-    
-    API->>Module5: Run Pareto Sorting + AHP-TOPSIS Ranking
-    Module5-->>API: Policy-Ready Urban Action Plan
-    API->>DB: Persist Scenario & Action Plan Results
-    API-->>UI: Render Action Plan, Pareto Trade-off Charts & Export PDF
+    actor Planner as City Planner
+    participant UI as React Frontend
+    participant API as FastAPI Gateway
+    participant Ingest as Data Ingestion Engine
+    participant Preproc as Geospatial Preprocessor
+    participant Hotspot as Hotspot Identification Engine
+    participant Driver as Driver Intelligence Engine
+    participant Physics as Physics Dynamics Engine
+    participant Sim as Scenario Simulation Engine
+    participant Decision as Decision Intelligence Engine
+    participant Storage as Storage Manager
+
+    Planner->>UI: Select analysis area and start analysis
+    UI->>API: POST /pipeline/run
+
+    API->>Ingest: Acquire required geospatial data
+    Ingest-->>API: Data ready
+
+    API->>Preproc: Generate grid and extract features
+    Preproc-->>API: Feature dataset ready
+
+    API->>Hotspot: Identify and validate heat hotspots
+    Hotspot-->>API: Hotspot layer
+
+    alt No significant hotspots
+        API-->>UI: Return no-hotspot report
+        UI-->>Planner: Display report
+    else Significant hotspots detected
+
+        API->>Driver: Analyze heat drivers
+        Driver-->>API: Driver intelligence
+
+        API->>Physics: Apply physics-guided thermal modelling
+        Physics-->>API: Thermal response model
+
+        API-->>UI: Return analysis results
+        UI-->>Planner: Display heat and driver maps
+
+        Planner->>UI: Define cooling objectives and constraints
+        UI->>API: POST /simulate
+
+        API->>Sim: Generate and simulate cooling scenarios
+        Sim-->>API: Validated candidate scenarios
+
+        API->>Decision: Rank candidate scenarios
+        Decision-->>API: Recommended action plan
+
+        API->>Storage: Persist results
+        Storage-->>API: Persistence complete
+
+        API-->>UI: Return action plan
+        UI-->>Planner: Display recommended intervention
+    end
 ```
 
 ---
@@ -466,55 +620,90 @@ sequenceDiagram
 
 ```mermaid
 graph TB
-    subgraph ClientTier["Frontend Presentation Tier (Browser)"]
-        ReactUI["React 18 Dashboard App"]
-        MapLibreComponent["MapLibre GL Map Component"]
-        EChartsComponent["Apache ECharts Analytics"]
+
+    %% ==========================================
+    %% BOREAS-NEXUS COMPONENT DIAGRAM
+    %% ==========================================
+
+    subgraph ClientTier["Presentation Tier"]
+        ReactUI["React Frontend"]
+        MapLibre["MapLibre GL"]
+        ECharts["Apache ECharts"]
     end
 
-    subgraph APITier["Application API Tier (FastAPI Engine)"]
-        APIRouter["FastAPI Gateway Router"]
-        AuthMiddleware["JWT Authentication Middleware"]
-        TaskQueue["Background Processing Queue (Celery / AsyncIO)"]
+    subgraph ApplicationTier["Application Tier"]
+        API["FastAPI Gateway"]
+        Auth["Authentication Middleware"]
+        Queue["Background Task Queue"]
+        Orchestrator["Pipeline Orchestrator"]
     end
 
-    subgraph AnalyticsTier["Core Analytics & Processing Modules"]
-        IngestService["Ingestion Service (STAC, OSMnx, Weather)"]
-        PreprocPipeline["Preprocessing Pipeline (GeoPandas, Rasterio)"]
-        Mod1Thermal["Module 1: Hotspot Clustering (Getis-Ord Gi*)"]
-        Mod2Drivers["Module 2: Driver Attribution (LightGBM, SHAP, GWR)"]
-        Mod3Physics["Module 3: SEB Physics Dynamics Engine"]
-        Mod4Simulator["Module 4: Scenario Simulator (GA, InVEST, SOLWEIG)"]
-        Mod5Decision["Module 5: Decision Science Engine (AHP, TOPSIS)"]
+    subgraph AnalyticsTier["Analytics & Processing Tier"]
+        Ingest["Data Ingestion Engine"]
+        Preproc["Geospatial Preprocessor"]
+        Hotspot["Hotspot Identification Engine"]
+        Driver["Driver Intelligence Engine"]
+        Physics["Physics-Guided Thermal Dynamics Engine"]
+        Simulator["Scenario Simulation Engine"]
+        Decision["Decision Intelligence Engine"]
     end
 
-    subgraph StorageTier["Persistence & Data Storage Tier"]
-        PostGISDB[("PostgreSQL 16 + PostGIS 3.4")]
-        ParquetStore["Local / S3 Parquet Storage"]
-        CacheStore[("Redis Layer Cache")]
+    subgraph StorageTier["Persistence Tier"]
+        Storage["Storage Manager"]
+        PostGIS[("PostgreSQL + PostGIS")]
+        Parquet["GeoParquet / Object Storage"]
+        Redis[("Redis")]
     end
 
-    ReactUI --> MapLibreComponent
-    ReactUI --> EChartsComponent
-    ReactUI -->|HTTPS / REST| APIRouter
-    APIRouter --> AuthMiddleware
-    APIRouter --> TaskQueue
-    
-    TaskQueue --> IngestService
-    TaskQueue --> PreprocPipeline
-    TaskQueue --> Mod1Thermal
-    TaskQueue --> Mod2Drivers
-    TaskQueue --> Mod3Physics
-    TaskQueue --> Mod4Simulator
-    TaskQueue --> Mod5Decision
+    %% ==========================================
+    %% PRESENTATION
+    %% ==========================================
 
-    IngestService --> ParquetStore
-    PreprocPipeline --> ParquetStore
-    Mod1Thermal --> PostGISDB
-    Mod2Drivers --> PostGISDB
-    Mod4Simulator --> PostGISDB
-    Mod5Decision --> PostGISDB
-    APIRouter --> CacheStore
+    ReactUI --> MapLibre
+    ReactUI --> ECharts
+    ReactUI -->|HTTPS / REST| API
+
+    %% ==========================================
+    %% APPLICATION
+    %% ==========================================
+
+    API --> Auth
+    API --> Queue
+    Queue --> Orchestrator
+
+    %% ==========================================
+    %% ANALYTICS PIPELINE
+    %% ==========================================
+
+    Orchestrator --> Ingest
+    Ingest --> Preproc
+    Preproc --> Hotspot
+    Hotspot --> Driver
+    Driver --> Physics
+    Physics --> Simulator
+    Simulator --> Decision
+
+    %% ==========================================
+    %% PERSISTENCE
+    %% ==========================================
+
+    Ingest --> Storage
+    Preproc --> Storage
+    Hotspot --> Storage
+    Driver --> Storage
+    Physics --> Storage
+    Simulator --> Storage
+    Decision --> Storage
+
+    Storage --> PostGIS
+    Storage --> Parquet
+
+    %% ==========================================
+    %% CACHE / TASK INFRASTRUCTURE
+    %% ==========================================
+
+    Queue --> Redis
+    API --> Redis
 ```
 
 ---
@@ -523,34 +712,42 @@ graph TB
 
 ```mermaid
 stateDiagram-v2
-    [*] --> RawDataIngested : Ingestion Pipeline Complete
-    
-    RawDataIngested --> SpatialGridGenerated : Feature Preprocessing (100m Grid)
-    
-    SpatialGridGenerated --> BaselineSUHIIComputed : Delineate Urban/Rural Mask
-    
-    BaselineSUHIIComputed --> HotspotsValidated : Execute Getis-Ord Gi* (p < 0.05, Z > 1.96)
-    
-    HotspotsValidated --> DriversAttributed : Train LightGBM & Compute SHAP Values
-    
-    DriversAttributed --> SEBPhysicsValidated : Apply Surface Energy Balance Constraints
-    
-    state CoolingScenarioSimulation {
-        [*] --> CandidateGeneration : GA Search Optimization
-        CandidateGeneration --> SurrogateEvaluation : Fast LightGBM Response Check
-        SurrogateEvaluation --> MicroclimateValidation : InVEST (Air Temp) & SOLWEIG (Radiant)
-        MicroclimateValidation --> [*] : Scenario Validated
+    [*] --> DataIngestion
+
+    DataIngestion --> SpatialPreprocessing : Data acquisition complete
+
+    SpatialPreprocessing --> SUHIIAnalysis : Spatial dataset ready
+
+    SUHIIAnalysis --> HotspotAnalysis : SUHII baseline computed
+
+    HotspotAnalysis --> NoSignificantHotspot : No significant hotspots
+    HotspotAnalysis --> DriverAnalysis : Significant hotspots detected
+
+    NoSignificantHotspot --> [*] : Report generated
+
+    DriverAnalysis --> PhysicsModeling : Driver intelligence complete
+
+    PhysicsModeling --> ScenarioSimulation : Thermal model ready
+
+    state ScenarioSimulation {
+        [*] --> CandidateGeneration
+
+        CandidateGeneration --> SurrogateEvaluation : Candidate generated
+
+        SurrogateEvaluation --> MicroclimateValidation : Candidate passes screening
+        SurrogateEvaluation --> CandidateGeneration : Candidate rejected
+
+        MicroclimateValidation --> CandidateGeneration : Validation failed
+        MicroclimateValidation --> [*] : Scenario validated
     }
 
-    SEBPhysicsValidated --> CoolingScenarioSimulation : Trigger Scenario Exploration
-    
-    CoolingScenarioSimulation --> ParetoSortingExecuted : Extract Non-Dominated Alternatives
-    
-    ParetoSortingExecuted --> MCDARanked : Apply AHP Weights & TOPSIS Analysis
-    
-    MCDARanked --> ActionPlanExported : Generate Policy Urban Action Plan
-    
-    ActionPlanExported --> [*] : Pipeline Completed
+    ScenarioSimulation --> ParetoOptimization : Validated scenarios available
+
+    ParetoOptimization --> DecisionRanking : Pareto front extracted
+
+    DecisionRanking --> ActionPlanReady : AHP-TOPSIS ranking complete
+
+    ActionPlanReady --> [*] : Action plan exported
 ```
 
 ---
