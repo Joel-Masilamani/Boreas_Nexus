@@ -229,97 +229,100 @@ where $D_i^+$ is the Euclidean distance to the positive-ideal solution and $D_i^
 
 ```mermaid
 classDiagram
+    direction LR
+
     class DataIngestionEngine {
-        +Path config_path
-        +List~str~ vector_layers
-        +Polygon spatial_boundary
-        +fetch_osm_vectors() GeoDataFrame
-        +fetch_sentinel_landsat() RasterDataset
-        +fetch_weather_dem() DataArray
+        -config_path : Path
+        -vector_layers : List~str~
+        -spatial_boundary : Polygon
+        +fetch_osm_vectors()
+        +fetch_sentinel_landsat()
+        +fetch_weather_dem()
     }
 
     class GeospatialPreprocessor {
-        +int grid_resolution_meters
-        +str target_crs
-        +List~str~ feature_columns
-        +generate_100m_grid() GeoDataFrame
-        +compute_vector_proximities() GeoDataFrame
-        +calculate_spectral_indices() GeoDataFrame
+        -grid_resolution_meters : int
+        -target_crs : str
+        -feature_columns : List~str~
+        +generate_100m_grid()
+        +compute_vector_proximities()
+        +calculate_spectral_indices()
     }
 
     class HotspotIdentificationEngine {
-        +GeoSeries urban_mask
-        +float suhii_baseline
-        +float gi_star_threshold
-        +compute_suhii_baseline() GeoDataFrame
-        +analyze_nocturnal_persistence() GeoDataFrame
-        +validate_getis_ord_gi_star() GeoDataFrame
+        -urban_mask : GeoSeries
+        -suhii_baseline : float
+        -gi_star_threshold : float
+        +compute_suhii_baseline()
+        +analyze_nocturnal_persistence()
+        +validate_getis_ord_gi_star()
     }
 
     class DriverIntelligenceEngine {
-        +LGBMRegressor booster_model
-        +TreeExplainer shap_explainer
-        +float gwr_bandwidth
-        +train_boosted_driver_model() LGBMRegressor
-        +compute_shap_attributions() DataFrame
-        +fit_gwr_spatial_coefficients() GeoDataFrame
+        -booster_model : LGBMRegressor
+        -shap_explainer : TreeExplainer
+        -gwr_bandwidth : float
+        +train_boosted_driver_model()
+        +compute_shap_attributions()
+        +fit_gwr_spatial_coefficients()
     }
 
     class PhysicsDynamicsEngine {
-        +float seb_tolerance
-        +ndarray albedo_matrix
-        +float heat_capacity
-        +construct_energy_balance_features() GeoDataFrame
-        +enforce_surface_energy_balance() DataFrame
-        +predict_thermal_response() DataFrame
+        -seb_tolerance : float
+        -albedo_matrix : ndarray
+        -heat_capacity : float
+        +construct_energy_balance_features()
+        +enforce_surface_energy_balance()
+        +predict_thermal_response()
     }
 
     class ScenarioSimulationEngine {
-        +int ga_population_size
-        +int max_generations
-        +UrbanCoolingModel invest_model
-        +run_ga_scenario_search() List~Scenario~
-        +validate_invest_air_temp() float
-        +validate_solweig_radiant_comfort() float
+        -ga_population_size : int
+        -max_generations : int
+        -invest_model : UrbanCoolingModel
+        +run_ga_scenario_search()
+        +validate_invest_air_temp()
+        +validate_solweig_radiant_comfort()
     }
 
     class DecisionIntelligenceEngine {
-        +ndarray ahp_pairwise_matrix
-        +List~Scenario~ pareto_front
-        +DataFrame topsis_scores
-        +extract_pareto_front() List~Scenario~
-        +compute_ahp_weights() Dict
-        +rank_topsis_scenarios() DataFrame
-        +export_urban_action_plan() Dict
+        -ahp_pairwise_matrix : ndarray
+        -pareto_front : List~Scenario~
+        -topsis_scores : DataFrame
+        +extract_pareto_front()
+        +compute_ahp_weights()
+        +rank_topsis_scenarios()
+        +export_urban_action_plan()
     }
 
     class StorageManager {
-        +Path base_dir
-        +Path processed_dir
-        +Path export_dir
+        -base_dir : Path
+        -processed_dir : Path
+        -export_dir : Path
         +save_geoparquet()
         +load_geoparquet()
         +persist_postgis_registry()
     }
 
     class FastAPIGateway {
-        +FastAPI app
-        +APIRouter router
-        +str jwt_secret
+        -app : FastAPI
+        -router : APIRouter
+        -jwt_secret : str
         +run_pipeline_endpoint()
         +simulate_scenario_endpoint()
         +export_plan_endpoint()
     }
 
     class DashboardInterface {
-        +MapLibreGL map_instance
-        +List~str~ active_layers
-        +Dict selected_scenario
+        -map_instance : MapLibreGL
+        -active_layers : List~str~
+        -selected_scenario : Dict
         +render_maplibre_layers()
         +display_echarts_pareto()
         +trigger_simulation()
     }
 
+    %% System Pipeline Flow (Directed Associations)
     DataIngestionEngine --> GeospatialPreprocessor
     GeospatialPreprocessor --> HotspotIdentificationEngine
     HotspotIdentificationEngine --> DriverIntelligenceEngine
@@ -327,6 +330,7 @@ classDiagram
     PhysicsDynamicsEngine --> ScenarioSimulationEngine
     ScenarioSimulationEngine --> DecisionIntelligenceEngine
     
+    %% Storage Cross-Cutting Dependency (Dashed Dependency Arrows)
     DataIngestionEngine ..> StorageManager
     GeospatialPreprocessor ..> StorageManager
     HotspotIdentificationEngine ..> StorageManager
@@ -335,8 +339,10 @@ classDiagram
     ScenarioSimulationEngine ..> StorageManager
     DecisionIntelligenceEngine ..> StorageManager
 
-    StorageManager <--> FastAPIGateway
-    FastAPIGateway <--> DashboardInterface
+    %% Composition & Aggregation for Presentation Tier
+    FastAPIGateway *-- StorageManager : Compiles
+    DashboardInterface o-- FastAPIGateway : Leverages API
+
 ```
 
 ---
