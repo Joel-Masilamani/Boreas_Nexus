@@ -322,27 +322,30 @@ classDiagram
         +trigger_simulation()
     }
 
-    %% System Pipeline Flow (Directed Associations)
-    DataIngestionEngine --> GeospatialPreprocessor
-    GeospatialPreprocessor --> HotspotIdentificationEngine
-    HotspotIdentificationEngine --> DriverIntelligenceEngine
-    DriverIntelligenceEngine --> PhysicsDynamicsEngine
-    PhysicsDynamicsEngine --> ScenarioSimulationEngine
-    ScenarioSimulationEngine --> DecisionIntelligenceEngine
-    
-    %% Storage Cross-Cutting Dependency (Dashed Dependency Arrows)
-    DataIngestionEngine ..> StorageManager
-    GeospatialPreprocessor ..> StorageManager
-    HotspotIdentificationEngine ..> StorageManager
-    DriverIntelligenceEngine ..> StorageManager
-    PhysicsDynamicsEngine ..> StorageManager
-    ScenarioSimulationEngine ..> StorageManager
-    DecisionIntelligenceEngine ..> StorageManager
+    %% Core Processing Pipeline
+DataIngestionEngine ..> GeospatialPreprocessor : provides data
+GeospatialPreprocessor ..> HotspotIdentificationEngine : provides features
+HotspotIdentificationEngine ..> DriverIntelligenceEngine : provides hotspots
+DriverIntelligenceEngine ..> PhysicsDynamicsEngine : provides driver insights
+PhysicsDynamicsEngine ..> ScenarioSimulationEngine : provides thermal model
+ScenarioSimulationEngine ..> DecisionIntelligenceEngine : provides scenarios
 
-    %% Composition & Aggregation for Presentation Tier
-    FastAPIGateway *-- StorageManager : Compiles
-    DashboardInterface o-- FastAPIGateway : Leverages API
+%% Cross-cutting persistence
+DataIngestionEngine ..> StorageManager : persists raw data
+GeospatialPreprocessor ..> StorageManager : persists features
+HotspotIdentificationEngine ..> StorageManager : persists hotspots
+DriverIntelligenceEngine ..> StorageManager : persists explanations
+PhysicsDynamicsEngine ..> StorageManager : persists models
+ScenarioSimulationEngine ..> StorageManager : persists scenarios
+DecisionIntelligenceEngine ..> StorageManager : persists decisions
 
+%% Application layer
+FastAPIGateway ..> DecisionIntelligenceEngine : exposes results
+FastAPIGateway ..> ScenarioSimulationEngine : triggers simulations
+FastAPIGateway ..> StorageManager : accesses persisted data
+
+%% Presentation layer
+DashboardInterface ..> FastAPIGateway : calls API
 ```
 
 ---
