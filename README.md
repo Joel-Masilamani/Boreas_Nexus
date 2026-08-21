@@ -752,62 +752,50 @@ stateDiagram-v2
 
 ---
 
-### 9.7 Dashboard UI & Wireframe Layout
-
-```
-+---------------------------------------------------------------------------------------------------------------+
-|  BOREAS-NEXUS | Urban Climate Decision Intelligence Platform                       [City: Chennai] [Export PDF]|
-+--------------------------+---------------------------------------------------+--------------------------------+
-| LAYER CONTROLS           | INTERACTIVE MAPLIBRE GL SPATIAL CANVAS            | SCENARIO SIMULATOR & ANALYTICS |
-+--------------------------+---------------------------------------------------+--------------------------------+
-| [x] 100m Centroid Grid   |                                                   | INTERVENTION SLIDERS           |
-| [x] Gi* Hotspot Clusters |    +-----------------------------------------+    | Tree Canopy Ext: [==|====] +20%|
-| [x] SHAP Driver Heatmap  |    |  [!] Hotspot Cluster #14 (Gi* Z=4.12)    |    | Cool Roof Coverage: [====|==] 45%|
-| [ ] Sentinel-2 NDVI      |    |  Mean LST: 42.8°C                        |    | Reflective Pavement: [=|===] 15%|
-| [ ] Building Footprints  |    |  Dominant Driver: Vegetation Deficit    |    +--------------------------------+
-| [ ] Water & Park Vectors |    +-----------------------------------------+    | ECHARTS PARETO FRONTIER        |
-|                          |                                                   |  Cooling (°C)                  |
-| BASEMAP SELECTOR         |                                                   |   ^   * Scenario B (Top)       |
-| (o) Dark Vector          |                                                   |   |  * Scenario A              |
-| ( ) Satellite Imagery    |                                                   |   +--------------> Cost ($)    |
-|                          |                                                   +--------------------------------+
-| LEGEND                   |                                                   | TOPSIS RANKING TABLE           |
-|  [■] Critical Hotspot    |                                                   | Rank 1: Scenario B (Score 0.89)|
-|  [■] Moderate Heat       |                                                   | Rank 2: Scenario A (Score 0.74)|
-+--------------------------+---------------------------------------------------+--------------------------------+
-```
-
----
 
 ## 10. Enhanced Entity-Relationship (EER) Diagram
 
 ```mermaid
 erDiagram
-    CITIES ||--o{ SPATIAL_GRIDS : contains
-    CITIES ||--o{ VALIDATED_HOTSPOTS : identifies
-    CITIES ||--o{ COOLING_SCENARIOS : simulates
-    
-    SPATIAL_GRIDS ||--|| DRIVER_ATTRIBUTIONS : attributes
-    SPATIAL_GRIDS ||--|| PHYSICS_FEATURES : maps
-    
-    VALIDATED_HOTSPOTS ||--o{ COOLING_SCENARIOS : targets
-    
-    COOLING_SCENARIOS ||--|| MCDA_EVALUATIONS : ranks
+
+    CITIES ||--o{ ANALYSIS_RUNS : contains
+
+    ANALYSIS_RUNS ||--o{ SPATIAL_GRIDS : generates
+    ANALYSIS_RUNS ||--o{ VALIDATED_HOTSPOTS : identifies
+    ANALYSIS_RUNS ||--o{ COOLING_SCENARIOS : produces
+
+    SPATIAL_GRIDS ||--o| DRIVER_ATTRIBUTIONS : has
+    SPATIAL_GRIDS ||--o| PHYSICS_FEATURES : has
+
+    VALIDATED_HOTSPOTS ||--o{ SCENARIO_HOTSPOTS : targets
+    COOLING_SCENARIOS ||--o{ SCENARIO_HOTSPOTS : targets
+
+    COOLING_SCENARIOS ||--o{ MCDA_EVALUATIONS : evaluated_by
+
     COOLING_SCENARIOS ||--o{ ACTION_PLANS : generates
 
     CITIES {
-        uuid id PK
+        uuid city_id PK
         string name
         string state
         string country
         polygon boundary_geom
-        string target_crs
         timestamp created_at
     }
 
-    SPATIAL_GRIDS {
-        uuid point_id PK
+    ANALYSIS_RUNS {
+        uuid run_id PK
         uuid city_id FK
+        string target_crs
+        integer grid_resolution_m
+        string status
+        timestamp started_at
+        timestamp completed_at
+    }
+
+    SPATIAL_GRIDS {
+        uuid grid_id PK
+        uuid run_id FK
         point location_geom
         float distance_to_water_m
         float distance_to_parks_m
@@ -823,18 +811,18 @@ erDiagram
 
     VALIDATED_HOTSPOTS {
         uuid hotspot_id PK
-        uuid city_id FK
+        uuid run_id FK
         polygon cluster_geom
         float mean_lst_celsius
         float gi_star_zscore
         float p_value
         string confidence_level
-        timestamp detection_date
+        timestamp detected_at
     }
 
     DRIVER_ATTRIBUTIONS {
         uuid attribution_id PK
-        uuid point_id FK
+        uuid grid_id FK
         float shap_ndvi
         float shap_ndbi
         float shap_building_density
@@ -844,7 +832,7 @@ erDiagram
 
     PHYSICS_FEATURES {
         uuid feature_id PK
-        uuid point_id FK
+        uuid grid_id FK
         float albedo
         float vegetation_fraction
         float heat_storage_potential
@@ -853,13 +841,20 @@ erDiagram
 
     COOLING_SCENARIOS {
         uuid scenario_id PK
-        uuid city_id FK
+        uuid run_id FK
         string scenario_name
         jsonb intervention_parameters
         float delta_lst_celsius
         float delta_tair_celsius
         float delta_tmrt_celsius
-        float estimated_cost_usd
+        float estimated_cost
+        string currency
+    }
+
+    SCENARIO_HOTSPOTS {
+        uuid scenario_hotspot_id PK
+        uuid scenario_id FK
+        uuid hotspot_id FK
     }
 
     MCDA_EVALUATIONS {
@@ -877,6 +872,7 @@ erDiagram
         string target_neighborhood
         text intervention_summary
         float total_budget_required
+        string currency
         jsonb policy_recommendations
         timestamp exported_at
     }
@@ -889,100 +885,287 @@ erDiagram
 Production-grade SQL DDL code snippet for initializing the spatial database schema:
 
 ```sql
--- Enable PostGIS and UUID extension
-CREATE EXTENSION IF NOT EXISTS postgis;
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- ============================================================
+-- Boreas-Nexus Database Schema
+-- PostgreSQL 18 + PostGIS
+-- UUIDv7
+-- ============================================================
 
--- Table: cities
+CREATE EXTENSION IF NOT EXISTS postgis;
+
+
+-- ============================================================
+-- 1. CITIES
+-- ============================================================
+
 CREATE TABLE cities (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    city_id UUID PRIMARY KEY DEFAULT uuidv7(),
+
     name VARCHAR(100) NOT NULL,
     state VARCHAR(100) NOT NULL,
     country VARCHAR(100) NOT NULL,
+
     boundary_geom GEOMETRY(Polygon, 4326) NOT NULL,
-    target_crs VARCHAR(20) DEFAULT 'EPSG:4326',
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT uq_city_identity
+        UNIQUE (name, state, country)
 );
 
--- Table: spatial_grids
+
+-- ============================================================
+-- 2. ANALYSIS RUNS
+-- ============================================================
+
+CREATE TABLE analysis_runs (
+    run_id UUID PRIMARY KEY DEFAULT uuidv7(),
+
+    city_id UUID NOT NULL
+        REFERENCES cities(city_id)
+        ON DELETE CASCADE,
+
+    target_crs VARCHAR(20) NOT NULL DEFAULT 'EPSG:4326',
+    grid_resolution_m INTEGER NOT NULL DEFAULT 100,
+
+    status VARCHAR(30) NOT NULL
+        CHECK (
+            status IN (
+                'PENDING',
+                'RUNNING',
+                'COMPLETED',
+                'FAILED'
+            )
+        ),
+
+    started_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    completed_at TIMESTAMPTZ,
+
+    CONSTRAINT chk_grid_resolution
+        CHECK (grid_resolution_m > 0),
+
+    CONSTRAINT chk_run_dates
+        CHECK (
+            completed_at IS NULL
+            OR completed_at >= started_at
+        )
+);
+
+
+-- ============================================================
+-- 3. SPATIAL GRIDS
+-- ============================================================
+
 CREATE TABLE spatial_grids (
-    point_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    city_id UUID NOT NULL REFERENCES cities(id) ON DELETE CASCADE,
+    grid_id UUID PRIMARY KEY DEFAULT uuidv7(),
+
+    run_id UUID NOT NULL
+        REFERENCES analysis_runs(run_id)
+        ON DELETE CASCADE,
+
     location_geom GEOMETRY(Point, 4326) NOT NULL,
+
     distance_to_water_m NUMERIC(10, 2),
     distance_to_parks_m NUMERIC(10, 2),
     distance_to_roads_m NUMERIC(10, 2),
+
     ndvi NUMERIC(6, 4),
     ndbi NUMERIC(6, 4),
     ndwi NUMERIC(6, 4),
+
     lst_celsius NUMERIC(5, 2),
+
     elevation_m NUMERIC(6, 2),
     slope_deg NUMERIC(5, 2),
     aspect_deg NUMERIC(5, 2),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create Spatial Index on spatial_grids
-CREATE INDEX idx_spatial_grids_geom ON spatial_grids USING GIST (location_geom);
+CREATE INDEX idx_spatial_grids_geom
+    ON spatial_grids USING GIST (location_geom);
 
--- Table: validated_hotspots
+CREATE INDEX idx_spatial_grids_run
+    ON spatial_grids (run_id);
+
+
+-- ============================================================
+-- 4. VALIDATED HOTSPOTS
+-- ============================================================
+
 CREATE TABLE validated_hotspots (
-    hotspot_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    city_id UUID NOT NULL REFERENCES cities(id) ON DELETE CASCADE,
+    hotspot_id UUID PRIMARY KEY DEFAULT uuidv7(),
+
+    run_id UUID NOT NULL
+        REFERENCES analysis_runs(run_id)
+        ON DELETE CASCADE,
+
     cluster_geom GEOMETRY(Polygon, 4326) NOT NULL,
+
     mean_lst_celsius NUMERIC(5, 2) NOT NULL,
     gi_star_zscore NUMERIC(6, 3) NOT NULL,
     p_value NUMERIC(6, 5) NOT NULL,
-    confidence_level VARCHAR(20) CHECK (confidence_level IN ('90%', '95%', '99%')),
-    detection_date DATE DEFAULT CURRENT_DATE
+
+    confidence_level VARCHAR(20)
+        CHECK (
+            confidence_level IN ('90%', '95%', '99%')
+        ),
+
+    detected_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_validated_hotspots_geom ON validated_hotspots USING GIST (cluster_geom);
+CREATE INDEX idx_validated_hotspots_geom
+    ON validated_hotspots USING GIST (cluster_geom);
 
--- Table: driver_attributions
+CREATE INDEX idx_validated_hotspots_run
+    ON validated_hotspots (run_id);
+
+
+-- ============================================================
+-- 5. DRIVER ATTRIBUTIONS
+-- ============================================================
+
 CREATE TABLE driver_attributions (
-    attribution_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    point_id UUID NOT NULL REFERENCES spatial_grids(point_id) ON DELETE CASCADE,
+    attribution_id UUID PRIMARY KEY DEFAULT uuidv7(),
+
+    grid_id UUID NOT NULL
+        REFERENCES spatial_grids(grid_id)
+        ON DELETE CASCADE,
+
     shap_ndvi NUMERIC(6, 3),
     shap_ndbi NUMERIC(6, 3),
     shap_building_density NUMERIC(6, 3),
     shap_distance_water NUMERIC(6, 3),
-    dominant_driver VARCHAR(50) NOT NULL
+
+    dominant_driver VARCHAR(50) NOT NULL,
+
+    CONSTRAINT uq_driver_grid
+        UNIQUE (grid_id)
 );
 
--- Table: cooling_scenarios
+
+-- ============================================================
+-- 6. PHYSICS FEATURES
+-- ============================================================
+
+CREATE TABLE physics_features (
+    feature_id UUID PRIMARY KEY DEFAULT uuidv7(),
+
+    grid_id UUID NOT NULL
+        REFERENCES spatial_grids(grid_id)
+        ON DELETE CASCADE,
+
+    albedo NUMERIC(6, 4),
+    vegetation_fraction NUMERIC(6, 4),
+    heat_storage_potential NUMERIC(10, 4),
+    evapotranspiration_proxy NUMERIC(10, 4),
+
+    CONSTRAINT uq_physics_grid
+        UNIQUE (grid_id)
+);
+
+
+-- ============================================================
+-- 7. COOLING SCENARIOS
+-- ============================================================
+
 CREATE TABLE cooling_scenarios (
-    scenario_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    city_id UUID NOT NULL REFERENCES cities(id) ON DELETE CASCADE,
+    scenario_id UUID PRIMARY KEY DEFAULT uuidv7(),
+
+    run_id UUID NOT NULL
+        REFERENCES analysis_runs(run_id)
+        ON DELETE CASCADE,
+
     scenario_name VARCHAR(150) NOT NULL,
+
     intervention_parameters JSONB NOT NULL,
-    delta_lst_celsius NUMERIC(4, 2),
-    delta_tair_celsius NUMERIC(4, 2),
-    delta_tmrt_celsius NUMERIC(4, 2),
-    estimated_cost_usd NUMERIC(12, 2),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+
+    delta_lst_celsius NUMERIC(6, 2),
+    delta_tair_celsius NUMERIC(6, 2),
+    delta_tmrt_celsius NUMERIC(6, 2),
+
+    estimated_cost NUMERIC(12, 2),
+    currency_code CHAR(3) NOT NULL DEFAULT 'INR',
+
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table: mcda_evaluations
+CREATE INDEX idx_cooling_scenarios_run
+    ON cooling_scenarios (run_id);
+
+
+-- ============================================================
+-- 8. SCENARIO HOTSPOTS
+-- ============================================================
+
+CREATE TABLE scenario_hotspots (
+    scenario_hotspot_id UUID PRIMARY KEY DEFAULT uuidv7(),
+
+    scenario_id UUID NOT NULL
+        REFERENCES cooling_scenarios(scenario_id)
+        ON DELETE CASCADE,
+
+    hotspot_id UUID NOT NULL
+        REFERENCES validated_hotspots(hotspot_id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT uq_scenario_hotspot
+        UNIQUE (scenario_id, hotspot_id)
+);
+
+
+-- ============================================================
+-- 9. MCDA EVALUATIONS
+-- ============================================================
+
 CREATE TABLE mcda_evaluations (
-    evaluation_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    scenario_id UUID NOT NULL REFERENCES cooling_scenarios(scenario_id) ON DELETE CASCADE,
+    evaluation_id UUID PRIMARY KEY DEFAULT uuidv7(),
+
+    scenario_id UUID NOT NULL
+        REFERENCES cooling_scenarios(scenario_id)
+        ON DELETE CASCADE,
+
     thermal_performance_index NUMERIC(5, 4) NOT NULL,
     topsis_score NUMERIC(5, 4) NOT NULL,
     pareto_rank INTEGER NOT NULL,
-    ahp_weights_used JSONB NOT NULL
+
+    ahp_weights_used JSONB NOT NULL,
+
+    evaluation_context VARCHAR(100),
+
+    CONSTRAINT chk_pareto_rank
+        CHECK (pareto_rank >= 0)
 );
 
--- Table: action_plans
+CREATE INDEX idx_mcda_evaluations_scenario
+    ON mcda_evaluations (scenario_id);
+
+
+-- ============================================================
+-- 10. ACTION PLANS
+-- ============================================================
+
 CREATE TABLE action_plans (
-    plan_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    scenario_id UUID NOT NULL REFERENCES cooling_scenarios(scenario_id) ON DELETE CASCADE,
+    plan_id UUID PRIMARY KEY DEFAULT uuidv7(),
+
+    evaluation_id UUID NOT NULL
+        REFERENCES mcda_evaluations(evaluation_id)
+        ON DELETE CASCADE,
+
     target_neighborhood VARCHAR(150) NOT NULL,
+
     intervention_summary TEXT NOT NULL,
+
     total_budget_required NUMERIC(12, 2) NOT NULL,
+    currency_code CHAR(3) NOT NULL DEFAULT 'INR',
+
     policy_recommendations JSONB NOT NULL,
-    exported_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+
+    exported_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE INDEX idx_action_plans_evaluation
+    ON action_plans (evaluation_id);
 ```
 
 ---
@@ -990,46 +1173,105 @@ CREATE TABLE action_plans (
 ## 12. System Architecture Diagram
 
 ```mermaid
-flowchart TD
-    subgraph L1["Layer 1: External Data Sources Layer"]
-        direction LR
-        OSM["🗺️ OpenStreetMap (OSMnx)"]
-        SatData["🛰️ Copernicus & USGS STAC"]
-        MeteoElev["🌤️ NASA POWER & SRTM DEM"]
+flowchart TB
+
+    %% =========================
+    %% EXTERNAL DATA SOURCES
+    %% =========================
+    subgraph External["External Data Sources"]
+        OSM["OpenStreetMap"]
+        SAT["Copernicus / USGS Satellite Data"]
+        WEATHER["NASA POWER Weather Data"]
+        DEM["SRTM / DEM Data"]
     end
 
-    subgraph L2["Layer 2: Ingestion & Preprocessing Pipeline"]
-        direction LR
-        IngestService["Data Ingestion Service"] --> GridBuilder["100m Spatial Grid Builder"] --> FeatureExtractor["Feature Extraction Engine"]
+    %% =========================
+    %% INGESTION & PREPROCESSING
+    %% =========================
+    subgraph Processing["Ingestion & Preprocessing"]
+        INGEST["Data Ingestion Service"]
+        GRID["100m Spatial Grid Builder"]
+        FEATURES["Feature Extraction Engine"]
+
+        INGEST --> GRID
+        GRID --> FEATURES
     end
 
-    subgraph L3["Layer 3: Core Analytics & AI/Physics Modules"]
-        direction LR
-        Mod1["Module 1<br>Hotspot Engine"] --> Mod2["Module 2<br>Driver Intelligence"] --> Mod3["Module 3<br>Physics Dynamics"] --> Mod4["Module 4<br>Cooling Simulator"] --> Mod5["Module 5<br>Decision Engine"]
+    %% =========================
+    %% CORE ANALYTICS
+    %% =========================
+    subgraph Analytics["Core Analytics & Intelligence"]
+        M1["Module 1: Hotspot Detection"]
+        M2["Module 2: Driver Intelligence"]
+        M3["Module 3: Physics Dynamics"]
+        M4["Module 4: Cooling Scenario Simulator"]
+        M5["Module 5: Decision Intelligence"]
+
+        M1 --> M2
+        M2 --> M3
+        M3 --> M4
+        M4 --> M5
     end
 
-    subgraph L4["Layer 4: Persistence & Storage Layer"]
-        direction LR
-        PostGIS[("PostgreSQL + PostGIS DB")]
-        ParquetStore["Apache GeoParquet Storage"]
-        RedisCache[("Redis Cache")]
+    %% =========================
+    %% STORAGE
+    %% =========================
+    subgraph Storage["Persistence & Storage"]
+        DB[("PostgreSQL + PostGIS")]
+        PARQUET["GeoParquet Storage"]
+        REDIS[("Redis Cache")]
     end
 
-    subgraph L5["Layer 5: Service & Application Gateway"]
-        FastAPI["FastAPI Asynchronous REST Gateway (ASGI)"]
+    %% =========================
+    %% APPLICATION
+    %% =========================
+    subgraph Application["Application Layer"]
+        API["FastAPI REST Gateway"]
     end
 
-    subgraph L6["Layer 6: Interactive Presentation UI"]
-        direction LR
-        ReactUI["React 18 + MapLibre GL JS Map"]
-        ECharts["Apache ECharts Analytics"]
+    %% =========================
+    %% PRESENTATION
+    %% =========================
+    subgraph Presentation["Presentation Layer"]
+        UI["React Dashboard"]
+        MAP["MapLibre GL"]
+        CHARTS["Apache ECharts"]
+
+        UI --- MAP
+        UI --- CHARTS
     end
 
-    L1 --> L2
-    L2 --> L3
-    L3 --> L4
-    L4 --> L5
-    L5 --> L6
+    %% =========================
+    %% DATA FLOW
+    %% =========================
+    OSM --> INGEST
+    SAT --> INGEST
+    WEATHER --> INGEST
+    DEM --> INGEST
+
+    FEATURES --> M1
+
+    %% =========================
+    %% ANALYTICS STORAGE
+    %% =========================
+    INGEST --> PARQUET
+    FEATURES --> PARQUET
+
+    M1 --> DB
+    M2 --> DB
+    M4 --> DB
+    M5 --> DB
+
+    %% =========================
+    %% APPLICATION ACCESS
+    %% =========================
+    API --> REDIS
+    API --> DB
+
+    %% =========================
+    %% FRONTEND / BACKEND
+    %% =========================
+    UI -->|HTTPS / REST| API
 ```
 
 ---
