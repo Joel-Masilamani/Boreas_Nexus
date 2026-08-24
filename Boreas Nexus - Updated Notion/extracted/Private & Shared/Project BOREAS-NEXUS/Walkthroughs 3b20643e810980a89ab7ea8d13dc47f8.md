@@ -13,3 +13,5 @@
 [Module 1 Audit](Walkthroughs/Module%201%20Audit%203b90643e81098045857bdd2d3cab2185.md)
 
 [Pre-Module 2 Verification](Walkthroughs/Pre-Module%202%20Verification%203b90643e810980a8b4c3fb7f129e6846.md)
+
+[Readme Update](Walkthroughs/Readme%20Update%203bc0643e810980eab1c2e4a00776f3bd.md)

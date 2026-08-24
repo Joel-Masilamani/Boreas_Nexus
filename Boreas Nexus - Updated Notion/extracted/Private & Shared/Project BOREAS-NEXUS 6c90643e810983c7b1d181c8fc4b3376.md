@@ -68,6 +68,8 @@ Because each module answers exactly **one scientific question**:
 
 [Module 1 - H**ybrid Hotspot Identification Engine**.](Project%20BOREAS-NEXUS/Module%201%20-%20Hybrid%20Hotspot%20Identification%20Engine%204090643e810983e4a29f81247aa08735.md)
 
+[Technical Document](Project%20BOREAS-NEXUS/Technical%20Document%203c30643e810980598151e15d0a05b343.md)
+
 [Module 2 – Urban Heat Driver Intelligence Engine](Project%20BOREAS-NEXUS/Module%202%20%E2%80%93%20Urban%20Heat%20Driver%20Intelligence%20Engine%201ee0643e8109839db1d701a6ac208296.md)
 
 [Module 3 – Physics-Guided Urban Heat Dynamics Engine](Project%20BOREAS-NEXUS/Module%203%20%E2%80%93%20Physics-Guided%20Urban%20Heat%20Dynamics%20Engi%200970643e810982c3b36d818a0a1baa8f.md)

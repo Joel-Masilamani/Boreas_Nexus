@@ -1,0 +1,89 @@
+# =====================================================================
+# Boreas-Nexus Module 2: Urban Heat Driver Intelligence Engine Configuration
+# =====================================================================
+
+reproducibility:
+  random_seed: 42
+  gwr_sampling_seed: 42
+
+features:
+  # 11 Core mandatory physical drivers (aspect converted to circular sin/cos)
+  core_drivers:
+    - ndvi
+    - ndbi
+    - ndwi
+    - land_cover_code
+    - building_density
+    - distance_to_roads_m
+    - distance_to_water_m
+    - distance_to_parks_m
+    - elevation_m
+    - slope_deg
+    - aspect_sin
+    - aspect_cos
+  
+  # Optional spatial context / neighborhood feature extensions
+  enable_neighborhood_features: false
+  neighborhood_buffer_radius_m: 300
+
+targets:
+  primary: lst_day_celsius
+  secondary: lst_night_celsius
+  available:
+    - lst_day_celsius
+    - lst_night_celsius
+    - suhii_day_celsius
+    - suhii_night_celsius
+
+spatial_cv:
+  strategy: "spatial_block"
+  n_splits: 5
+  block_size_meters: 2000
+
+models:
+  baseline_random_forest:
+    n_estimators: 100
+    max_depth: 12
+    min_samples_split: 5
+    min_samples_leaf: 2
+    n_jobs: -1
+    random_state: 42
+
+  advanced_lightgbm:
+    n_estimators: 200
+    learning_rate: 0.05
+    num_leaves: 31
+    max_depth: -1
+    subsample: 0.8
+    colsample_bytree: 0.8
+    random_state: 42
+    n_jobs: -1
+
+quality_gates:
+  min_r2_threshold: 0.50
+  max_shap_reconstruction_error: 0.0001
+
+physics_audit:
+  # Expected directional sign of SHAP contributions:
+  # negative = cooling effect, positive = heating effect
+  directional_expectations:
+    ndvi: "negative"
+    ndbi: "positive"
+    building_density: "positive"
+    distance_to_water_m: "positive"   # Farther from water -> Higher heat
+    distance_to_parks_m: "positive"   # Farther from parks -> Higher heat
+  
+  minimum_passing_consistency_pct: 70.0
+
+spatial_driver_intelligence:
+  enable_gwr: true
+  gwr_max_samples: 5000
+  sampling_strategy: "spatially_balanced"
+  kernel: "bisquare"
+  fixed_bandwidth: false
+
+storage:
+  input_knowledge_layer: "data/processed/module_1/urban_heat_hotspot_knowledge_layer.geoparquet"
+  output_driver_knowledge_layer: "data/processed/module_2/urban_heat_driver_knowledge_layer.geoparquet"
+  output_registry: "data/processed/module_2/driver_attribution_registry.parquet"
+  output_physics_audit: "data/metadata/driver_physics_audit.json"
