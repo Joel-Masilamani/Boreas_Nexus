@@ -29,7 +29,6 @@
   - [9.4 Sequence Diagram](#94-sequence-diagram)
   - [9.5 Component Diagram](#95-component-diagram)
   - [9.6 State Machine Diagram](#96-state-machine-diagram)
-  - [9.7 Dashboard UI & Wireframe Layout](#97-dashboard-ui--wireframe-layout)
 - [10. Enhanced Entity-Relationship (EER) Diagram](#10-enhanced-entity-relationship-eer-diagram)
 - [11. Database Design (PostgreSQL + PostGIS Schema)](#11-database-design-postgresql--postgis-schema)
 - [12. System Architecture Diagram](#12-system-architecture-diagram)
@@ -498,58 +497,7 @@ flowchart TD
 
 ### 9.3 Use Case Diagram
 
-```mermaid
-flowchart LR
-
-    %% ==========================================
-    %% BOREAS-NEXUS — USE CASE DIAGRAM
-    %% ==========================================
-
-    Planner["🏙️ City Planner"]
-    Scientist["🔬 Climate Scientist"]
-    Admin["⚙️ System Administrator"]
-
-    OSM["🗺️ OpenStreetMap"]
-    Copernicus["🛰️ Copernicus"]
-    USGS["🌍 USGS"]
-    NASA["🛰️ NASA / Earth Observation"]
-
-    subgraph System["Boreas-Nexus Decision Intelligence Platform"]
-
-        UC1(["UC-1<br/>Prepare Spatial Analysis Dataset"])
-        UC2(["UC-2<br/>Identify & Validate Heat Hotspots"])
-        UC3(["UC-3<br/>Analyze Heat Drivers"])
-        UC4(["UC-4<br/>Simulate Cooling Scenarios"])
-        UC5(["UC-5<br/>Compare & Rank Scenarios"])
-        UC6(["UC-6<br/>Generate Urban Action Plan"])
-        UC7(["UC-7<br/>Manage System Configuration"])
-        UC8(["UC-8<br/>View Spatial & Analytical Results"])
-
-    end
-
-    %% Actor → Use Case associations
-
-    Scientist --- UC1
-    Scientist --- UC2
-    Scientist --- UC3
-    Scientist --- UC8
-
-    Planner --- UC2
-    Planner --- UC3
-    Planner --- UC4
-    Planner --- UC5
-    Planner --- UC6
-    Planner --- UC8
-
-    Admin --- UC7
-
-    %% External systems → Data ingestion
-
-    OSM --- UC1
-    Copernicus --- UC1
-    USGS --- UC1
-    NASA --- UC1
-```
+<img width="501" height="914" alt="BoreasNexus-UseCase drawio" src="https://github.com/user-attachments/assets/07213d39-1420-4032-bfed-17d39c989f05" />
 
 ---
 
