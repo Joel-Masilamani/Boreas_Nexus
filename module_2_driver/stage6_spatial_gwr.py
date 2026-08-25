@@ -99,21 +99,37 @@ class Stage6SpatialGWR:
         X_scaled = (X_sample - X_mean) / X_std
         y_scaled = (y_sample - np.mean(y_sample)) / (np.std(y_sample) + 1e-6)
 
-        # Select bandwidth
-        logger.info("Optimizing GWR spatial bandwidth...")
         try:
+            # Select bandwidth
+            logger.info("Optimizing GWR spatial bandwidth...")
             bw_selector = Sel_BW(coords_sample, y_scaled.reshape(-1, 1), X_scaled)
             optimal_bw = bw_selector.search(search_method='golden_section', criterion='AICc', max_iter=20)
-        except Exception as e:
-            logger.warning(f"GWR bandwidth search error: {e}. Using fixed adaptive bandwidth.")
-            optimal_bw = min(len(coords_sample) - 1, max(30, int(len(coords_sample) * 0.1)))
+            
+            logger.info(f"Fitting GWR model with bandwidth: {optimal_bw}...")
+            gwr_model = GWR(coords_sample, y_scaled.reshape(-1, 1), X_scaled, bw=optimal_bw)
+            gwr_results = gwr_model.fit()
 
-        logger.info(f"Fitting GWR model with bandwidth: {optimal_bw}...")
-        gwr_model = GWR(coords_sample, y_scaled.reshape(-1, 1), X_scaled, bw=optimal_bw)
-        gwr_results = gwr_model.fit()
+            sample_betas = gwr_results.params  # (n_samples, n_features + 1)
+            sample_local_r2 = gwr_results.localR2.flatten() if hasattr(gwr_results, "localR2") else np.zeros(len(coords_sample))
+        except Exception as err:
+            logger.warning(f"MGWR optimization encountered issue: {err}. Using local spatial ridge regression.")
+            # Robust local ridge regression fallback
+            from sklearn.linear_model import Ridge
+            tree_local = cKDTree(coords_sample)
+            k_neighbors = min(60, len(coords_sample) - 1)
+            sample_betas = np.zeros((len(coords_sample), X_scaled.shape[1] + 1))
+            sample_local_r2 = np.zeros(len(coords_sample))
 
-        sample_betas = gwr_results.params  # (n_samples, n_features + 1)
-        sample_local_r2 = gwr_results.localR2.flatten() if hasattr(gwr_results, "localR2") else np.zeros(len(coords_sample))
+            for i in range(len(coords_sample)):
+                dists, idxs = tree_local.query(coords_sample[i], k=k_neighbors)
+                w = np.exp(-dists / (np.mean(dists) + 1e-5))
+                ridge = Ridge(alpha=1.0)
+                ridge.fit(X_scaled[idxs], y_scaled[idxs], sample_weight=w)
+                sample_betas[i, 0] = ridge.intercept_
+                sample_betas[i, 1:] = ridge.coef_
+                sample_local_r2[i] = max(0.0, float(ridge.score(X_scaled[idxs], y_scaled[idxs], sample_weight=w)))
+
+            optimal_bw = float(k_neighbors)
 
         # Interpolate local parameters to all points using Nearest-Neighbors IDW
         tree = cKDTree(coords_sample)
@@ -156,16 +172,21 @@ class Stage6SpatialGWR:
             }
 
         # Key drivers for spatial regression
-        key_drivers = ["ndvi", "ndbi", "building_density", "distance_to_water_m"]
-        available_drivers = [d for d in key_drivers if d in gdf.columns]
+        candidate_drivers = ["ndvi", "building_density", "distance_to_water_m", "distance_to_parks_m", "elevation_m"]
+        available_drivers = []
+        for d in candidate_drivers:
+            if d in gdf.columns:
+                std_val = float(gdf[d].std())
+                if std_val > 1e-4:  # non-zero variance
+                    available_drivers.append(d)
 
         if not available_drivers or "lst_day_celsius" not in gdf.columns:
             logger.warning("Missing required drivers or LST target for GWR. Skipping.")
             self.last_gdf = gdf
             return {"stage": "Stage 6: Spatial Driver Intelligence", "status": "SKIPPED"}
 
-        # Spatially Balanced Sampling
-        max_samples = int(gwr_cfg.get("gwr_max_samples", 5000))
+        # Spatially Balanced Sampling (capped for GWR performance)
+        max_samples = min(int(gwr_cfg.get("gwr_max_samples", 1500)), len(gdf))
         seed = int(self.cfg.get("reproducibility", {}).get("gwr_sampling_seed", 42))
         sample_indices = self._spatially_balanced_sampling(gdf, max_samples=max_samples, random_seed=seed)
         logger.info(f"Selected {len(sample_indices)} spatially balanced sample points for GWR fitting.")

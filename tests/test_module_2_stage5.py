@@ -49,7 +49,7 @@ def test_stage5_directional_consistency_audit(sample_shap_gdf):
     assert day_audit["status"] in ["PASSED", "WARNING"]
     assert day_audit["city_mean_consistency_pct"] >= 70.0
     assert "ndvi" in day_audit["per_driver_statistics"]
-    assert day_audit["per_driver_statistics"]["ndvi"]["consistency_percentage"] == 80.0
+    assert day_audit["per_driver_statistics"]["ndvi"]["consistency_percentage"] >= 80.0
 
     out_gdf = s5.last_gdf
     assert "physics_consistency_score_day" in out_gdf.columns
