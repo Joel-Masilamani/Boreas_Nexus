@@ -1,11 +1,11 @@
 {
   "dataset": "urban_heat_hotspot_knowledge_layer.geoparquet",
-  "validation_run_id": "VAL-M1-988c14ee",
-  "timestamp": "2026-08-27T09:33:28.058295+00:00",
+  "validation_run_id": "VAL-M1-c350d397",
+  "timestamp": "2026-08-28T04:09:01.089744+00:00",
   "configuration_version": "1.0.0",
   "total_checks": 32,
-  "pass_count": 29,
-  "warn_count": 3,
+  "pass_count": 30,
+  "warn_count": 2,
   "fail_count": 0,
   "overall_status": "WARN",
   "configuration_gaps": [],
@@ -16,15 +16,15 @@
       "validation_type": "SPATIAL_STATISTICS",
       "metric": "hotspot_zscore_threshold_alignment",
       "expected": ">= 99.0% match with z >= 1.96",
-      "actual": "83.18% match",
+      "actual": "85.78% match",
       "status": "WARN",
-      "message": "Hotspot classification discrepancy: only 83.18% match with z >= 1.96 criterion.",
+      "message": "Hotspot classification discrepancy: only 85.78% match with z >= 1.96 criterion.",
       "point_id": null,
       "block_id": null,
       "error": null,
       "threshold": null,
       "details": {
-        "match_percentage": 83.17982753171701,
+        "match_percentage": 85.78039640615829,
         "hotspots_count": 0
       }
     },
@@ -33,35 +33,16 @@
       "validation_type": "SPATIAL_STATISTICS",
       "metric": "getis_ord_sample_correlation",
       "expected": "correlation >= 0.70",
-      "actual": 0.6785,
+      "actual": 0.6795,
       "status": "WARN",
-      "message": "Independent Getis-Ord Gi* recalculation correlation = 0.6785 below threshold.",
+      "message": "Independent Getis-Ord Gi* recalculation correlation = 0.6795 below threshold.",
       "point_id": null,
       "block_id": null,
       "error": null,
       "threshold": 0.7,
       "details": {
         "sample_size": 500,
-        "correlation": 0.6784984249017444
-      }
-    },
-    {
-      "validation_id": "M1-CLUST-MIN-SIZE",
-      "validation_type": "CLUSTER_TOPOLOGY",
-      "metric": "minimum_cluster_point_count",
-      "expected": ">= 5 points per cluster",
-      "actual": "Min size: 1, Under-sized: 66",
-      "status": "WARN",
-      "message": "Found 66 clusters with fewer than 5 points.",
-      "point_id": null,
-      "block_id": null,
-      "error": null,
-      "threshold": null,
-      "details": {
-        "total_clusters": 158,
-        "under_sized_cluster_count": 66,
-        "mean_cluster_size": 123.43037974683544,
-        "max_cluster_size": 12025
+        "correlation": 0.6794544488745164
       }
     }
   ],
@@ -74,7 +55,7 @@
       "fail_count": 0,
       "status": "PASS",
       "findings": [
-        "Rural Reference Baseline: Day = 38.40\u00b0C (valid range [25.0, 40.0]), Night = 21.51\u00b0C (valid range [20.0, 32.0]) across 13216 points.",
+        "Rural Reference Baseline: Day = 38.39\u00b0C (valid range [25.0, 40.0]), Night = 21.54\u00b0C (valid range [20.0, 32.0]) across 12563 points.",
         "SUHII Anomaly Re-calculation verified: Max Day Diff = 0.000\u00b0C (Mean: 0.000\u00b0C), Max Night Diff = 0.000\u00b0C (Mean: 0.000\u00b0C) <= 0.5\u00b0C tolerance."
       ]
     },
@@ -86,20 +67,20 @@
       "fail_count": 0,
       "status": "WARN",
       "findings": [
-        "Hotspot classification discrepancy: only 83.18% match with z >= 1.96 criterion.",
-        "Independent Getis-Ord Gi* recalculation correlation = 0.6785 below threshold."
+        "Hotspot classification discrepancy: only 85.78% match with z >= 1.96 criterion.",
+        "Independent Getis-Ord Gi* recalculation correlation = 0.6795 below threshold."
       ]
     },
     "cluster_topology": {
       "category": "Cluster Topology",
       "total_checks": 2,
-      "pass_count": 1,
-      "warn_count": 1,
+      "pass_count": 2,
+      "warn_count": 0,
       "fail_count": 0,
-      "status": "WARN",
+      "status": "PASS",
       "findings": [
-        "Found 66 clusters with fewer than 5 points.",
-        "Cluster confidence scores strictly in [0.0, 100.0] across 44298 points. Mean = 38.75%."
+        "All 85 hotspot clusters satisfy the minimum size threshold (>=5 points). Min size=5, Max size=11144.",
+        "Cluster confidence scores strictly in [0.0, 100.0] across 18118 points. Mean = 52.79%."
       ]
     },
     "diurnal_persistence": {
@@ -127,25 +108,25 @@
   },
   "validation_details": {
     "suhii_diagnostics": {
-      "rural_sample_count": 13216,
-      "recalculated_rural_base_day": 38.40207094771489,
-      "recalculated_rural_base_night": 21.513344348511566,
-      "mean_suhii_day": 0.6919800448581381,
-      "mean_suhii_night": 2.849207621780942
+      "rural_sample_count": 12563,
+      "recalculated_rural_base_day": 38.38862228393555,
+      "recalculated_rural_base_night": 21.5428884920648,
+      "mean_suhii_day": 0.7054287195205688,
+      "mean_suhii_night": 2.954131220534435
     },
     "spatial_stats_diagnostics": {
       "total_points_evaluated": 44298,
       "day_hotspot_count": 0,
-      "gi_zscore_mean": 0.005334844771357577,
-      "gi_zscore_max": 10.088998937379875,
-      "sample_recalc_correlation": 0.6784984249017444
+      "gi_zscore_mean": -0.06150872327302749,
+      "gi_zscore_max": 8.918318415776527,
+      "sample_recalc_correlation": 0.6794544488745164
     },
     "cluster_diagnostics": {
-      "total_validated_clusters": 158,
-      "total_clustered_points": 19502,
-      "mean_points_per_cluster": 123.43037974683544,
-      "largest_cluster_id": "HOT_0022",
-      "largest_cluster_size": 12025
+      "total_validated_clusters": 85,
+      "total_clustered_points": 18118,
+      "mean_points_per_cluster": 213.1529411764706,
+      "largest_cluster_id": "HOT_0011",
+      "largest_cluster_size": 11144
     },
     "persistence_diagnostics": {
       "day_hotspots": 0,
@@ -170,7 +151,7 @@
         "nullable_permitted": false
       },
       "lst_day_celsius": {
-        "datatype": "float64",
+        "datatype": "float32",
         "null_count": 0,
         "nullable_permitted": false
       },
@@ -180,7 +161,7 @@
         "nullable_permitted": false
       },
       "suhii_day_celsius": {
-        "datatype": "float64",
+        "datatype": "float32",
         "null_count": 0,
         "nullable_permitted": false
       },
@@ -195,18 +176,18 @@
         "nullable_permitted": false
       },
       "gi_pvalue_day": {
-        "datatype": "float64",
+        "datatype": "float32",
         "null_count": 0,
         "nullable_permitted": false
       },
       "day_hotspot_significance": {
-        "datatype": "object",
-        "null_count": 44298,
+        "datatype": "float64",
+        "null_count": 37999,
         "nullable_permitted": true
       },
       "night_hotspot_significance": {
-        "datatype": "object",
-        "null_count": 44298,
+        "datatype": "float64",
+        "null_count": 31407,
         "nullable_permitted": true
       },
       "heat_persistence_index": {
@@ -216,12 +197,12 @@
       },
       "hotspot_id": {
         "datatype": "object",
-        "null_count": 24796,
+        "null_count": 26180,
         "nullable_permitted": true
       },
       "hotspot_confidence_score": {
         "datatype": "float64",
-        "null_count": 0,
+        "null_count": 26180,
         "nullable_permitted": true
       }
     }

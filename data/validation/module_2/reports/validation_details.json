@@ -1,7 +1,7 @@
 {
   "dataset": "urban_heat_driver_knowledge_layer.geoparquet",
-  "validation_run_id": "VAL-M2-6561adb8",
-  "timestamp": "2026-08-27T09:33:49.034195+00:00",
+  "validation_run_id": "VAL-M2-72505a84",
+  "timestamp": "2026-08-28T04:09:41.093070+00:00",
   "configuration_version": "1.0.0",
   "total_checks": 57,
   "pass_count": 43,

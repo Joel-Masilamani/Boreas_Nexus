@@ -1,7 +1,7 @@
 {
-  "total_validated_clusters": 158,
-  "total_clustered_points": 19502,
-  "mean_points_per_cluster": 123.43037974683544,
-  "largest_cluster_id": "HOT_0022",
-  "largest_cluster_size": 12025
+  "total_validated_clusters": 85,
+  "total_clustered_points": 18118,
+  "mean_points_per_cluster": 213.1529411764706,
+  "largest_cluster_id": "HOT_0011",
+  "largest_cluster_size": 11144
 }

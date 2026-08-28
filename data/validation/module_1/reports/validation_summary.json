@@ -1,11 +1,11 @@
 {
   "dataset": "urban_heat_hotspot_knowledge_layer.geoparquet",
-  "validation_run_id": "VAL-M1-988c14ee",
-  "timestamp": "2026-08-27T09:33:28.058295+00:00",
+  "validation_run_id": "VAL-M1-c350d397",
+  "timestamp": "2026-08-28T04:09:01.089744+00:00",
   "overall_status": "WARN",
   "total_checks": 32,
-  "pass_count": 29,
-  "warn_count": 3,
+  "pass_count": 30,
+  "warn_count": 2,
   "fail_count": 0,
   "validation_summaries": {
     "suhii_baseline": {
@@ -16,7 +16,7 @@
       "fail_count": 0,
       "status": "PASS",
       "findings": [
-        "Rural Reference Baseline: Day = 38.40\u00b0C (valid range [25.0, 40.0]), Night = 21.51\u00b0C (valid range [20.0, 32.0]) across 13216 points.",
+        "Rural Reference Baseline: Day = 38.39\u00b0C (valid range [25.0, 40.0]), Night = 21.54\u00b0C (valid range [20.0, 32.0]) across 12563 points.",
         "SUHII Anomaly Re-calculation verified: Max Day Diff = 0.000\u00b0C (Mean: 0.000\u00b0C), Max Night Diff = 0.000\u00b0C (Mean: 0.000\u00b0C) <= 0.5\u00b0C tolerance."
       ]
     },
@@ -28,20 +28,20 @@
       "fail_count": 0,
       "status": "WARN",
       "findings": [
-        "Hotspot classification discrepancy: only 83.18% match with z >= 1.96 criterion.",
-        "Independent Getis-Ord Gi* recalculation correlation = 0.6785 below threshold."
+        "Hotspot classification discrepancy: only 85.78% match with z >= 1.96 criterion.",
+        "Independent Getis-Ord Gi* recalculation correlation = 0.6795 below threshold."
       ]
     },
     "cluster_topology": {
       "category": "Cluster Topology",
       "total_checks": 2,
-      "pass_count": 1,
-      "warn_count": 1,
+      "pass_count": 2,
+      "warn_count": 0,
       "fail_count": 0,
-      "status": "WARN",
+      "status": "PASS",
       "findings": [
-        "Found 66 clusters with fewer than 5 points.",
-        "Cluster confidence scores strictly in [0.0, 100.0] across 44298 points. Mean = 38.75%."
+        "All 85 hotspot clusters satisfy the minimum size threshold (>=5 points). Min size=5, Max size=11144.",
+        "Cluster confidence scores strictly in [0.0, 100.0] across 18118 points. Mean = 52.79%."
       ]
     },
     "diurnal_persistence": {

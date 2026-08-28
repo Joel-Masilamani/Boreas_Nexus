@@ -85,19 +85,24 @@ class Stage5HotspotValidator:
 
         # Significance assignment: 99, 95, None
         day_sig = np.full(n_samples, None, dtype=object)
-        day_sig_95 = (z_day > 1.96) & (p_day < 0.05)
-        day_sig_99 = (z_day > 2.58) & (p_day < 0.01)
+        day_sig_95 = (z_day >= 1.96)
+        day_sig_99 = (z_day >= 2.58)
         day_sig[day_sig_95] = 95
         day_sig[day_sig_99] = 99
 
         night_sig = np.full(n_samples, None, dtype=object)
-        night_sig_95 = (z_night > 1.96) & (p_night < 0.05)
-        night_sig_99 = (z_night > 2.58) & (p_night < 0.01)
+        night_sig_95 = (z_night >= 1.96)
+        night_sig_99 = (z_night >= 2.58)
         night_sig[night_sig_95] = 95
         night_sig[night_sig_99] = 99
 
         result_gdf["day_hotspot_significance"] = day_sig
         result_gdf["night_hotspot_significance"] = night_sig
+
+        # Explicit boolean flags
+        result_gdf["day_is_hotspot"] = day_sig_95
+        result_gdf["night_is_hotspot"] = night_sig_95
+        result_gdf["persistent_is_hotspot"] = day_sig_95 & night_sig_95
 
         is_validated = day_sig_95 | night_sig_95
         result_gdf["is_validated_hotspot"] = is_validated
@@ -107,7 +112,7 @@ class Stage5HotspotValidator:
             day_sig_99 & night_sig_99,
             day_sig_95 & night_sig_95,
             day_sig_95 | night_sig_95,
-            (z_day < -1.96) | (z_night < -1.96)
+            (z_day <= -1.96) | (z_night <= -1.96)
         ]
         choices = [
             "99% Confidence Persistent Hotspot",
@@ -126,11 +131,12 @@ class Stage5HotspotValidator:
         return result_gdf
 
     def _compute_vectorized_gi_star(self, coords: np.ndarray, values: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
-        """Computes Getis-Ord Gi* local spatial autocorrelation z-scores and p-values."""
+        """Computes exact Getis-Ord Gi* local spatial autocorrelation z-scores and p-values."""
         from sklearn.neighbors import NearestNeighbors
+
         vals = values.astype(np.float64)
         n = len(vals)
-        k_star = min(n, self.knn_k + 1)
+        k_star = min(n, self.knn_k + 1)  # 8 neighbors + 1 self = 9
 
         nbrs = NearestNeighbors(n_neighbors=k_star, algorithm="kd_tree").fit(coords)
         indices = nbrs.kneighbors(coords, return_distance=False)
@@ -141,7 +147,7 @@ class Stage5HotspotValidator:
             s = 1.0
 
         local_sums = np.sum(vals[indices], axis=1)
-        denom = s * np.sqrt(max(1.0, (n * k_star - (k_star ** 2)) / max(1, n - 1)))
+        denom = s * np.sqrt(max(1e-6, (n * k_star - (k_star ** 2)) / max(1, n - 1)))
         gi_star_z = (local_sums - (k_star * x_bar)) / denom
         p_values = 1.0 - stats.norm.cdf(gi_star_z)
 
@@ -151,9 +157,9 @@ class Stage5HotspotValidator:
         """Validates spatial hotspot cluster identification and noise filtering."""
         n_total = len(gdf)
         n_validated = int(gdf["is_validated_hotspot"].sum())
-        n_day_95 = int((gdf["day_hotspot_significance"] == 95).sum())
+        n_day_95 = int((gdf["day_hotspot_significance"].notnull()).sum())
         n_day_99 = int((gdf["day_hotspot_significance"] == 99).sum())
-        n_night_95 = int((gdf["night_hotspot_significance"] == 95).sum())
+        n_night_95 = int((gdf["night_hotspot_significance"].notnull()).sum())
         n_night_99 = int((gdf["night_hotspot_significance"] == 99).sum())
         n_persistent_99 = int(((gdf["day_hotspot_significance"] == 99) & (gdf["night_hotspot_significance"] == 99)).sum())
 
@@ -169,6 +175,10 @@ class Stage5HotspotValidator:
             "scientific_question": "Which hot areas are statistically significant neighborhood-scale clusters rather than random pixel noise?",
             "status": "PASSED" if is_valid else "FAILED",
             "total_evaluated_pixels": n_total,
+            "hotspots_count": n_validated,
+            "day_hotspot_count": n_day_95,
+            "night_hotspot_count": n_night_95,
+            "persistent_hotspots": n_persistent_99,
             "total_validated_hotspot_pixels": n_validated,
             "validated_hotspot_area_km2": validated_area_km2,
             "daytime_95pct_hotspot_pixels": n_day_95,

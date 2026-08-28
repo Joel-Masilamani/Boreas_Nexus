@@ -384,7 +384,10 @@ class Stage6KnowledgeExporter:
         n_total = len(gdf)
         n_urban = int(gdf["is_urban"].sum()) if "is_urban" in gdf.columns else 0
         n_rural = int(gdf["is_rural"].sum()) if "is_rural" in gdf.columns else 0
-        n_hotspots = int((gdf["hotspot_id"].notnull()).sum()) if "hotspot_id" in gdf.columns else 0
+        n_hotspots = int((gdf["hotspot_id"].notnull() & (gdf["hotspot_id"] != "")).sum()) if "hotspot_id" in gdf.columns else 0
+        n_day_hotspots = int((gdf["day_hotspot_significance"].notnull()).sum()) if "day_hotspot_significance" in gdf.columns else 0
+        n_night_hotspots = int((gdf["night_hotspot_significance"].notnull()).sum()) if "night_hotspot_significance" in gdf.columns else 0
+        n_persistent = int(((gdf["day_hotspot_significance"].notnull()) & (gdf["night_hotspot_significance"].notnull())).sum()) if "day_hotspot_significance" in gdf.columns and "night_hotspot_significance" in gdf.columns else 0
         n_clusters = len(df_registry)
 
         manifest = {
@@ -393,6 +396,10 @@ class Stage6KnowledgeExporter:
             "module_name": "Module 1: Physical Urban Heat & Hotspot Intelligence Engine",
             "status": "SUCCESS",
             "total_sample_points": n_total,
+            "hotspots_count": n_hotspots,
+            "day_hotspot_count": n_day_hotspots,
+            "night_hotspot_count": n_night_hotspots,
+            "persistent_hotspots": n_persistent,
             "urban_area_km2": round(n_urban * 0.01, 2),
             "rural_baseline_area_km2": round(n_rural * 0.01, 2),
             "validated_hotspot_area_km2": round(n_hotspots * 0.01, 2),

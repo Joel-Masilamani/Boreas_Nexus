@@ -4,6 +4,10 @@
   "module_name": "Module 1: Physical Urban Heat & Hotspot Intelligence Engine",
   "status": "SUCCESS",
   "total_sample_points": 50,
+  "hotspots_count": 30,
+  "day_hotspot_count": 30,
+  "night_hotspot_count": 30,
+  "persistent_hotspots": 30,
   "urban_area_km2": 0.3,
   "rural_baseline_area_km2": 0.2,
   "validated_hotspot_area_km2": 0.3,
@@ -16,7 +20,7 @@
     "scene_id": "LC09_L2SP_142051_20240515",
     "processing_version": "1.0.0"
   },
-  "primary_geoparquet_knowledge_layer": "C:\\Users\\joelm\\AppData\\Local\\Temp\\pytest-of-joelm\\pytest-22\\test_stage6_knowledge_export_p0\\urban_heat_hotspot_knowledge_layer.geoparquet",
-  "hotspot_registry_parquet": "C:\\Users\\joelm\\AppData\\Local\\Temp\\pytest-of-joelm\\pytest-22\\test_stage6_knowledge_export_p0\\hotspot_registry.parquet",
+  "primary_geoparquet_knowledge_layer": "C:\\Users\\joelm\\AppData\\Local\\Temp\\pytest-of-joelm\\pytest-23\\test_stage6_knowledge_export_p0\\urban_heat_hotspot_knowledge_layer.geoparquet",
+  "hotspot_registry_parquet": "C:\\Users\\joelm\\AppData\\Local\\Temp\\pytest-of-joelm\\pytest-23\\test_stage6_knowledge_export_p0\\hotspot_registry.parquet",
   "consumed_by_next_module": "Module 2: Urban Heat Driver Intelligence Engine"
 }

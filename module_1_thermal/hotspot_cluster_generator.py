@@ -51,6 +51,7 @@ class HotspotClusterGenerator:
             self.output_dir = self.storage_manager.get_debug_dir("module_1")
 
         self.connectivity = self._load_connectivity()
+        self.min_cluster_size = self._load_min_cluster_size()
         self.grid_res = self._load_grid_res()
         self.last_gdf: Optional[gpd.GeoDataFrame] = None
         self.df_registry: Optional[pd.DataFrame] = None
@@ -68,6 +69,19 @@ class HotspotClusterGenerator:
                 logger.warning(f"Failed to read connectivity from {p}: {e}")
                 return 8
         return 8
+
+    def _load_min_cluster_size(self) -> int:
+        """Loads minimum cluster size in pixels from scoring configuration."""
+        p = Path(self.scoring_config_path)
+        if p.exists():
+            try:
+                with open(p, "r", encoding="utf-8") as f:
+                    data = yaml.safe_load(f) or {}
+                return int(data.get("hotspot_scoring", {}).get("min_cluster_size", 5))
+            except Exception as e:
+                logger.warning(f"Failed to read min_cluster_size from {p}: {e}")
+                return 5
+        return 5
 
     def _load_grid_res(self) -> float:
         """Loads grid resolution in meters from city configuration."""
@@ -111,7 +125,7 @@ class HotspotClusterGenerator:
     def label_clusters(self, gdf: gpd.GeoDataFrame) -> Tuple[gpd.GeoDataFrame, pd.DataFrame, gpd.GeoDataFrame]:
         """Runs connected component analysis on validated hotspot pixels."""
         result_gdf = gdf.copy()
-        logger.info(f"Running Connected Component Analysis (connectivity={self.connectivity}-neighbour)...")
+        logger.info(f"Running Connected Component Analysis (connectivity={self.connectivity}-neighbour, min_size={self.min_cluster_size} px)...")
 
         if "utm_x_m" not in result_gdf.columns or "utm_y_m" not in result_gdf.columns:
             utm_x, utm_y, utm_crs = transform_wgs84_to_utm(result_gdf["longitude"].values, result_gdf["latitude"].values)
@@ -153,21 +167,31 @@ class HotspotClusterGenerator:
             structure = np.ones((3, 3), dtype=int)
 
         labeled_grid, num_clusters = label(grid, structure=structure)
-        logger.info(f"Identified {num_clusters} distinct hotspot clusters.")
+
+        # Filter out undersized clusters (< min_cluster_size pixels)
+        unique_cids, counts = np.unique(labeled_grid, return_counts=True)
+        valid_cids = set(unique_cids[(counts >= self.min_cluster_size) & (unique_cids > 0)])
+
+        logger.info(f"Identified {len(valid_cids)} valid hotspot clusters meeting min size constraint (>= {self.min_cluster_size} pixels).")
+
+        new_cid_map = {old_cid: idx + 1 for idx, old_cid in enumerate(sorted(valid_cids))}
 
         hotspot_ids: List[Optional[str]] = []
         for r, c, flag in zip(row_indices, col_indices, is_hotspot):
-            if flag and labeled_grid[r, c] > 0:
-                hotspot_ids.append(f"HOT_{labeled_grid[r, c]:04d}")
+            cid = labeled_grid[r, c]
+            if flag and cid in valid_cids:
+                hotspot_ids.append(f"HOT_{new_cid_map[cid]:04d}")
             else:
                 hotspot_ids.append(None)
 
         result_gdf["hotspot_id"] = hotspot_ids
+        result_gdf["is_validated_hotspot"] = result_gdf["hotspot_id"].notnull() & (result_gdf["hotspot_id"] != "")
 
         cluster_records = []
         cluster_polygons = []
 
-        for cid in range(1, num_clusters + 1):
+        for old_cid in sorted(valid_cids):
+            cid = new_cid_map[old_cid]
             hid = f"HOT_{cid:04d}"
             member_mask = (result_gdf["hotspot_id"] == hid)
             members = result_gdf[member_mask]
@@ -191,7 +215,7 @@ class HotspotClusterGenerator:
             area_m2 = float(cluster_geom.area)
             perimeter_m = float(cluster_geom.length)
             size_px = len(members)
-            
+
             centroid_x = float(cluster_geom.centroid.x)
             centroid_y = float(cluster_geom.centroid.y)
             bbox_str = str([round(float(b), 2) for b in cluster_geom.bounds])
@@ -267,7 +291,8 @@ class HotspotClusterGenerator:
             "status": "SUCCESS",
             "total_clusters_found": len(df_registry),
             "total_hotspot_pixels": int((gdf_labeled["hotspot_id"].notnull()).sum()),
-            "connectivity": self.connectivity
+            "connectivity": self.connectivity,
+            "min_cluster_size": self.min_cluster_size
         }
 
         if self.custom_output_dir or self.storage_manager.should_save_intermediate():
