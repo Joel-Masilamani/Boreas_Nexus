@@ -49,23 +49,37 @@ class PreprocessorPipeline:
         return gpd.read_file(boundary_path)
 
     def load_raw_vector_layers(self) -> Dict[str, gpd.GeoDataFrame]:
-        """Loads available vector GIS layers from raw data directory."""
+        """Loads available vector GIS layers prioritizing indexed FlatGeobuf / GeoParquet."""
         layers = {}
-        osm_files = {
-            "water": "water.geojson",
-            "parks": "parks.geojson",
-            "roads": "roads.geojson",
-            "buildings": "buildings.geojson"
-        }
+        layer_names = ["water", "parks", "roads", "buildings"]
+        processed_vec_dir = Path("data/processed/vector")
 
-        for key, fname in osm_files.items():
-            p = self.file_manager.get_vector_path(fname)
-            if p.exists():
-                logger.info(f"Loading vector layer '{key}' from {p}...")
+        for key in layer_names:
+            # 1. Try indexed FlatGeobuf
+            fgb_p = processed_vec_dir / f"{key}.fgb"
+            parquet_p = processed_vec_dir / f"{key}.geoparquet"
+            geojson_p = self.file_manager.get_vector_path(f"{key}.geojson")
+
+            if fgb_p.exists():
                 try:
-                    layers[key] = gpd.read_file(p)
+                    layers[key] = gpd.read_file(fgb_p)
+                    continue
+                except Exception:
+                    pass
+
+            if parquet_p.exists():
+                try:
+                    layers[key] = gpd.read_parquet(parquet_p)
+                    continue
+                except Exception:
+                    pass
+
+            if geojson_p.exists():
+                logger.info(f"Loading vector layer '{key}' from {geojson_p}...")
+                try:
+                    layers[key] = gpd.read_file(geojson_p)
                 except Exception as e:
-                    logger.warning(f"Could not load vector layer {fname}: {e}")
+                    logger.warning(f"Could not load vector layer {geojson_p}: {e}")
 
         return layers
 

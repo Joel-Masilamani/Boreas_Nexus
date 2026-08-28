@@ -1,0 +1,30 @@
+{
+  "local_r2_distribution": {
+    "min": 0.9684,
+    "max": 0.9737,
+    "mean": 0.9714,
+    "median": 0.9714,
+    "std": 0.0013,
+    "quantiles": {
+      "q_05": 0.9692,
+      "q_25": 0.9706,
+      "q_50": 0.9714,
+      "q_75": 0.9724,
+      "q_95": 0.9733
+    }
+  },
+  "bandwidth_sensitivity": {
+    "status": "WARN",
+    "max_relative_shift": 0.5092,
+    "driver_parameter_shifts": {
+      "ndvi": 0.0148,
+      "building_density": 0.0074,
+      "distance_to_water_m": 0.5092
+    },
+    "tested_bandwidths": {
+      "base": 60,
+      "low_minus_15pct": 51,
+      "high_plus_15pct": 69
+    }
+  }
+}

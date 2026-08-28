@@ -1,0 +1,138 @@
+# =====================================================================
+# Boreas-Nexus Module 1: Validation Layer Configuration
+# =====================================================================
+
+version: "1.0.0"
+dataset_path: "data/processed/module_1/urban_heat_hotspot_knowledge_layer.geoparquet"
+output_dir: "data/validation/module_1"
+
+# ---------------------------------------------------------------------
+# 1. SUHII Urban-Rural Baseline Validation
+# ---------------------------------------------------------------------
+suhii_validation:
+  rural_landcover_codes: [10, 20, 30, 40]  # Agriculture, forest, grassland, shrubland
+  urban_landcover_codes: [50]               # Built-up
+  expected_rural_baseline_range_day_celsius: [25.0, 40.0]
+  expected_rural_baseline_range_night_celsius: [20.0, 32.0]
+  tolerances:
+    baseline_max_abs_diff_celsius: 0.50
+    suhii_max_abs_diff_celsius: 0.50
+
+# ---------------------------------------------------------------------
+# 2. Spatial Statistics (Getis-Ord Gi* & Moran's I) Audit
+# ---------------------------------------------------------------------
+spatial_statistics:
+  morans_i:
+    min_expected_positive_autocorrelation: 0.20
+    significance_alpha: 0.05
+  getis_ord:
+    k_neighbors: 8
+    z_critical_95pct: 1.96
+    z_critical_99pct: 2.58
+    tolerances:
+      zscore_max_abs_diff: 0.25
+
+# ---------------------------------------------------------------------
+# 3. Hotspot Clustering Topology & Continuity
+# ---------------------------------------------------------------------
+cluster_topology:
+  min_cluster_points: 5
+  clustering_algorithm: "DBSCAN"
+  dbscan_eps_meters: 250.0
+  dbscan_min_samples: 3
+  expected_confidence_range: [0.0, 100.0]
+  cluster_confidence_weights:
+    w_gi_zscore: 0.40
+    w_suhii: 0.35
+    w_persistence: 0.25
+  tolerances:
+    confidence_score_max_diff: 0.05
+
+# ---------------------------------------------------------------------
+# 4. Day-Night Diurnal Persistence
+# ---------------------------------------------------------------------
+diurnal_persistence:
+  min_expected_cooccurrence_pct: 1.0
+  max_expected_cooccurrence_pct: 95.0
+
+# ---------------------------------------------------------------------
+# 5. Schema & Data-Contract Validation
+# ---------------------------------------------------------------------
+data_contracts:
+  fields:
+    point_id:
+      datatype: "string"
+      nullable: false
+      unit: "dimensionless"
+    latitude:
+      datatype: "float"
+      valid_min: -90.0
+      valid_max: 90.0
+      nullable: false
+      unit: "degrees_north"
+    longitude:
+      datatype: "float"
+      valid_min: -180.0
+      valid_max: 180.0
+      nullable: false
+      unit: "degrees_east"
+    lst_day_celsius:
+      datatype: "float"
+      valid_min: -50.0
+      valid_max: 80.0
+      nullable: false
+      unit: "celsius"
+    lst_night_celsius:
+      datatype: "float"
+      valid_min: -50.0
+      valid_max: 80.0
+      nullable: false
+      unit: "celsius"
+    suhii_day_celsius:
+      datatype: "float"
+      valid_min: -30.0
+      valid_max: 40.0
+      nullable: false
+      unit: "celsius"
+    suhii_night_celsius:
+      datatype: "float"
+      valid_min: -30.0
+      valid_max: 40.0
+      nullable: false
+      unit: "celsius"
+    gi_zscore_day:
+      datatype: "float"
+      valid_min: -20.0
+      valid_max: 20.0
+      nullable: false
+      unit: "z_score"
+    gi_pvalue_day:
+      datatype: "float"
+      valid_min: 0.0
+      valid_max: 1.0
+      nullable: false
+      unit: "probability"
+    day_hotspot_significance:
+      datatype: "string"
+      nullable: true
+      unit: "category"
+    night_hotspot_significance:
+      datatype: "string"
+      nullable: true
+      unit: "category"
+    heat_persistence_index:
+      datatype: "float"
+      valid_min: 0.0
+      valid_max: 1.0
+      nullable: false
+      unit: "fraction"
+    hotspot_id:
+      datatype: "string"
+      nullable: true
+      unit: "cluster_id"
+    hotspot_confidence_score:
+      datatype: "float"
+      valid_min: 0.0
+      valid_max: 100.0
+      nullable: true
+      unit: "percentage"

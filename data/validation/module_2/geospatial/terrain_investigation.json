@@ -1,0 +1,58 @@
+{
+  "range_validation": "All 120 elevation and slope values strictly within physical ranges with 0 NaNs.",
+  "overall_elev_mae_m": 19.5393,
+  "overall_slope_mae_deg": 13.7502,
+  "dem_metadata": {
+    "crs": "GEOGCS[\"WGS 84\",DATUM[\"World Geodetic System 1984\",SPHEROID[\"WGS 84\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AXIS[\"Latitude\",NORTH],AXIS[\"Longitude\",EAST]]",
+    "shape": [
+      847,
+      694
+    ],
+    "resolution_deg": [
+      0.0002777777777777712,
+      0.0002777777777777771
+    ],
+    "cell_size_meters_approx": [
+      30.13,
+      30.71
+    ],
+    "min_elevation_m": -19.155868530273438,
+    "max_elevation_m": 79.38639068603516,
+    "nodata_value": null
+  },
+  "strata": {
+    "low_slope": {
+      "slope_range_deg": [
+        0.0,
+        5.0
+      ],
+      "evaluated_points": 15,
+      "mean_elevation_error_m": 22.5437,
+      "max_elevation_error_m": 43.8272,
+      "mean_slope_error_deg": 1.4827,
+      "max_slope_error_deg": 3.4034
+    },
+    "moderate_slope": {
+      "slope_range_deg": [
+        5.0,
+        15.0
+      ],
+      "evaluated_points": 15,
+      "mean_elevation_error_m": 18.6696,
+      "max_elevation_error_m": 44.5967,
+      "mean_slope_error_deg": 9.6849,
+      "max_slope_error_deg": 13.2345
+    },
+    "high_slope": {
+      "slope_range_deg": [
+        15.0,
+        90.0
+      ],
+      "evaluated_points": 15,
+      "mean_elevation_error_m": 17.9862,
+      "max_elevation_error_m": 39.407,
+      "mean_slope_error_deg": 27.1639,
+      "max_slope_error_deg": 33.7161
+    }
+  }
+}

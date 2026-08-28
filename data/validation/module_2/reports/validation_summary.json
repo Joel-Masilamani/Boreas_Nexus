@@ -1,0 +1,97 @@
+{
+  "dataset": "urban_heat_driver_knowledge_layer.geoparquet",
+  "validation_run_id": "VAL-M2-6561adb8",
+  "timestamp": "2026-08-27T09:33:49.034195+00:00",
+  "overall_status": "WARN",
+  "total_checks": 57,
+  "pass_count": 43,
+  "warn_count": 14,
+  "fail_count": 0,
+  "configuration_gaps_count": 5,
+  "validation_summaries": {
+    "geospatial_building_density": {
+      "category": "Geospatial Building Density",
+      "total_checks": 5,
+      "pass_count": 1,
+      "warn_count": 4,
+      "fail_count": 0,
+      "status": "WARN",
+      "findings": [
+        "All 120 building density values strictly within [0.0, 1.0] with 0 NaNs.",
+        "Stratified building density verification: 30 points evaluated across 3 strata (Overall MAE=0.3978, MaxAE=0.9860)."
+      ]
+    },
+    "terrain_dem": {
+      "category": "Terrain & DEM",
+      "total_checks": 5,
+      "pass_count": 1,
+      "warn_count": 4,
+      "fail_count": 0,
+      "status": "WARN",
+      "findings": [
+        "All 120 elevation and slope values strictly within physical ranges with 0 NaNs.",
+        "Stratified terrain verification: 38 points evaluated across 3 strata (Elev MAE=19.54m, Slope MAE=13.75\u00b0)."
+      ]
+    },
+    "temporal_lineage": {
+      "category": "Temporal & Lineage",
+      "total_checks": 6,
+      "pass_count": 1,
+      "warn_count": 5,
+      "fail_count": 0,
+      "status": "WARN",
+      "findings": [
+        "Provenance metadata verified for Landsat-8/9 & Sentinel-2 (Scene LC09_L2SP_142051_20240515).",
+        "Surfaced 5 unconfigured temporal tolerance specification gaps as explicit warnings."
+      ]
+    },
+    "ml_spatial_leakage": {
+      "category": "ML & Spatial Leakage",
+      "total_checks": 2,
+      "pass_count": 2,
+      "warn_count": 0,
+      "fail_count": 0,
+      "status": "PASS",
+      "findings": [
+        "Zero spatial block overlap (disjoint sets): 84 train, 18 val, 18 test blocks.",
+        "Spatial Block Split (Primary): R\u00b2=0.8933, RMSE=0.907\u00b0C.",
+        "Random Split (Secondary Benchmark): R\u00b2=0.9469, RMSE=0.548\u00b0C."
+      ]
+    },
+    "shap_explainability": {
+      "category": "SHAP Explainability",
+      "total_checks": 3,
+      "pass_count": 3,
+      "warn_count": 0,
+      "fail_count": 0,
+      "status": "PASS",
+      "findings": [
+        "SHAP additive property mathematically exact across all 120 points. Max Error = 8.53e-14 (<= 1.0e-04), Mean Error = 2.93e-14.",
+        "Driver rankings (primary/secondary/tertiary) are 100% consistent with abs(SHAP) sorting across all 120 points."
+      ]
+    },
+    "gwr_statistical": {
+      "category": "GWR Statistical",
+      "total_checks": 2,
+      "pass_count": 1,
+      "warn_count": 1,
+      "fail_count": 0,
+      "status": "WARN",
+      "findings": [
+        "GWR Local R\u00b2 distribution: Min=0.9684, Median=0.9714, Mean=0.9714, Max=0.9737, Std=0.0013 across 120 points.",
+        "GWR Bandwidth Sensitivity (\u00b115% perturbation): Max parameter shift = 50.92% (threshold <= 25%). Parameter stability verified."
+      ]
+    },
+    "schema_data_contracts": {
+      "category": "Schema & Data Contracts",
+      "total_checks": 34,
+      "pass_count": 34,
+      "warn_count": 0,
+      "fail_count": 0,
+      "status": "PASS",
+      "findings": [
+        "Validated 18 formal field contracts with 0 failures."
+      ]
+    }
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "dataset": "urban_heat_hotspot_knowledge_layer.geoparquet",
+  "validation_run_id": "VAL-M1-988c14ee",
+  "timestamp": "2026-08-27T09:33:28.058295+00:00",
+  "overall_status": "WARN",
+  "total_checks": 32,
+  "pass_count": 29,
+  "warn_count": 3,
+  "fail_count": 0,
+  "validation_summaries": {
+    "suhii_baseline": {
+      "category": "SUHII Rural Baseline",
+      "total_checks": 2,
+      "pass_count": 2,
+      "warn_count": 0,
+      "fail_count": 0,
+      "status": "PASS",
+      "findings": [
+        "Rural Reference Baseline: Day = 38.40\u00b0C (valid range [25.0, 40.0]), Night = 21.51\u00b0C (valid range [20.0, 32.0]) across 13216 points.",
+        "SUHII Anomaly Re-calculation verified: Max Day Diff = 0.000\u00b0C (Mean: 0.000\u00b0C), Max Night Diff = 0.000\u00b0C (Mean: 0.000\u00b0C) <= 0.5\u00b0C tolerance."
+      ]
+    },
+    "spatial_statistics": {
+      "category": "Spatial Statistics (Gi* & Moran's I)",
+      "total_checks": 2,
+      "pass_count": 0,
+      "warn_count": 2,
+      "fail_count": 0,
+      "status": "WARN",
+      "findings": [
+        "Hotspot classification discrepancy: only 83.18% match with z >= 1.96 criterion.",
+        "Independent Getis-Ord Gi* recalculation correlation = 0.6785 below threshold."
+      ]
+    },
+    "cluster_topology": {
+      "category": "Cluster Topology",
+      "total_checks": 2,
+      "pass_count": 1,
+      "warn_count": 1,
+      "fail_count": 0,
+      "status": "WARN",
+      "findings": [
+        "Found 66 clusters with fewer than 5 points.",
+        "Cluster confidence scores strictly in [0.0, 100.0] across 44298 points. Mean = 38.75%."
+      ]
+    },
+    "diurnal_persistence": {
+      "category": "Diurnal Persistence",
+      "total_checks": 2,
+      "pass_count": 2,
+      "warn_count": 0,
+      "fail_count": 0,
+      "status": "PASS",
+      "findings": [
+        "Diurnal persistence boolean rule (Day AND Night) is 100% exact across all 44298 points. Day Hotspots: 0, Night Hotspots: 0, Persistent: 0."
+      ]
+    },
+    "schema_data_contracts": {
+      "category": "Schema & Data Contracts",
+      "total_checks": 24,
+      "pass_count": 24,
+      "warn_count": 0,
+      "fail_count": 0,
+      "status": "PASS",
+      "findings": [
+        "Validated 14 formal field contracts for Module 1 with 0 failures."
+      ]
+    }
+  }
+}

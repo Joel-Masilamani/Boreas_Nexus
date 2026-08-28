@@ -103,15 +103,15 @@ class Stage5PhysicsValidator:
             # Per-point consistency score (0 to 100%)
             if evaluated_rules > 0:
                 point_consistency_pct = (consistent_counts_per_point / evaluated_rules) * 100.0
-                gdf[f"physics_consistency_score_{prefix}"] = np.round(point_consistency_pct, 2)
+                gdf[f"shap_domain_consistency_score_{prefix}"] = np.round(point_consistency_pct, 2)
                 # Flag points with < 50% consistency as anomalies
-                gdf[f"physics_anomaly_flag_{prefix}"] = point_consistency_pct < 50.0
+                gdf[f"shap_domain_anomaly_flag_{prefix}"] = point_consistency_pct < 50.0
 
                 mean_city_consistency = float(np.mean(point_consistency_pct))
             else:
                 mean_city_consistency = 100.0
-                gdf[f"physics_consistency_score_{prefix}"] = 100.0
-                gdf[f"physics_anomaly_flag_{prefix}"] = False
+                gdf[f"shap_domain_consistency_score_{prefix}"] = 100.0
+                gdf[f"shap_domain_anomaly_flag_{prefix}"] = False
 
             # Determine Stage Audit Status
             if mean_city_consistency >= min_pass_pct:
@@ -126,7 +126,7 @@ class Stage5PhysicsValidator:
                 "city_mean_consistency_pct": round(mean_city_consistency, 2),
                 "evaluated_rules_count": evaluated_rules,
                 "per_driver_statistics": driver_stats,
-                "anomalous_points_count": int(np.sum(gdf[f"physics_anomaly_flag_{prefix}"]))
+                "anomalous_points_count": int(np.sum(gdf[f"shap_domain_anomaly_flag_{prefix}"]))
             }
 
             logger.info(

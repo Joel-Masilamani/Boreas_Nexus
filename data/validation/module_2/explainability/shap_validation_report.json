@@ -1,0 +1,12 @@
+{
+  "reconstruction_check": {
+    "max_absolute_error": 8.526512829121202e-14,
+    "mean_absolute_error": 2.9250675955457455e-14
+  },
+  "ranking_consistency": {
+    "primary_match_pct": 100.0,
+    "secondary_match_pct": 100.0,
+    "tertiary_match_pct": 100.0
+  },
+  "evaluated_shap_feature_count": 12
+}

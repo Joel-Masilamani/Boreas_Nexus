@@ -137,9 +137,9 @@ class Stage7DriverKnowledgeExporter:
                 mode_sec = group["secondary_driver_day"].mode()
                 record["secondary_cluster_driver_day"] = str(mode_sec.iloc[0]) if len(mode_sec) > 0 else "unknown"
 
-            # Physics score
-            if "physics_consistency_score_day" in group.columns:
-                record["mean_physics_consistency_score_day"] = float(group["physics_consistency_score_day"].mean())
+            # Physics / Domain consistency score
+            if "shap_domain_consistency_score_day" in group.columns:
+                record["mean_shap_domain_consistency_score_day"] = float(group["shap_domain_consistency_score_day"].mean())
 
             registry_records.append(record)
 
@@ -176,8 +176,8 @@ class Stage7DriverKnowledgeExporter:
         registry_df.to_parquet(registry_path, index=False)
         logger.info(f"Saved Driver Attribution Registry ({len(registry_df)} clusters) to: {registry_path}")
 
-        # 4. Export Physics Audit Report
-        audit_path = self.metadata_dir / "driver_physics_audit.json"
+        # 4. Export SHAP Domain Audit Report
+        audit_path = self.metadata_dir / "driver_shap_domain_audit.json"
         audit_payload = {
             "module": "Module 2: Urban Heat Driver Intelligence Engine",
             "total_points": total_points,
@@ -186,7 +186,7 @@ class Stage7DriverKnowledgeExporter:
         }
         with open(audit_path, "w", encoding="utf-8") as f:
             json.dump(audit_payload, f, indent=2, default=str)
-        logger.info(f"Saved Driver Physics Audit report to: {audit_path}")
+        logger.info(f"Saved Driver SHAP Domain Audit report to: {audit_path}")
 
         manifest = {
             "status": "SUCCESS",
@@ -196,7 +196,7 @@ class Stage7DriverKnowledgeExporter:
             "outputs": {
                 "knowledge_layer_geoparquet": str(knowledge_layer_path),
                 "attribution_registry_parquet": str(registry_path),
-                "physics_audit_json": str(audit_path)
+                "shap_domain_audit_json": str(audit_path)
             },
             "nullability_report": null_report
         }

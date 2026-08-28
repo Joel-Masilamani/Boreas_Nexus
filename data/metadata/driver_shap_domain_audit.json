@@ -1,0 +1,254 @@
+{
+  "module": "Module 2: Urban Heat Driver Intelligence Engine",
+  "total_points": 120,
+  "nullability_validation": {
+    "mandatory_columns_checked": 20,
+    "violations_found": 0,
+    "violations": {},
+    "status": "PASSED"
+  },
+  "stage_metrics": {
+    "stage1": {
+      "stage": "Stage 1: Multi-Source Feature Engineering",
+      "status": "SUCCESS",
+      "total_points": 120,
+      "core_driver_count": 12,
+      "core_drivers": [
+        "ndvi",
+        "ndbi",
+        "ndwi",
+        "land_cover_code",
+        "building_density",
+        "distance_to_roads_m",
+        "distance_to_water_m",
+        "distance_to_parks_m",
+        "elevation_m",
+        "slope_deg",
+        "aspect_sin",
+        "aspect_cos"
+      ],
+      "aspect_sin_mean": -0.13263887703269173,
+      "aspect_cos_mean": 0.07029781870178538,
+      "neighborhood_features_enabled": false
+    },
+    "stage2": {
+      "stage": "Stage 2: Baseline Driver Modeling (Random Forest)",
+      "status": "SUCCESS",
+      "feature_count": 12,
+      "features": [
+        "ndvi",
+        "ndbi",
+        "ndwi",
+        "land_cover_code",
+        "building_density",
+        "distance_to_roads_m",
+        "distance_to_water_m",
+        "distance_to_parks_m",
+        "elevation_m",
+        "slope_deg",
+        "aspect_sin",
+        "aspect_cos"
+      ],
+      "unique_spatial_blocks": 120,
+      "cv_metrics": {
+        "lst_day_celsius": {
+          "r2_mean": 0.9283855222951305,
+          "r2_std": 0.013944170650334544,
+          "rmse_mean": 0.7441526997929403,
+          "rmse_std": 0.05667126321184829,
+          "mae_mean": 0.606643316357778,
+          "mae_std": 0.04175395312031748,
+          "n_splits_used": 5
+        },
+        "lst_night_celsius": {
+          "r2_mean": 0.8946759249539195,
+          "r2_std": 0.0260979373016608,
+          "rmse_mean": 0.4494665893894518,
+          "rmse_std": 0.06208455784043843,
+          "mae_mean": 0.3620749146759023,
+          "mae_std": 0.05441544819040934,
+          "n_splits_used": 5
+        }
+      },
+      "feature_importances": {
+        "lst_day_celsius": {
+          "building_density": 0.90002916572775,
+          "ndvi": 0.07054916286474111,
+          "aspect_cos": 0.004629178651135529,
+          "distance_to_water_m": 0.003965624121274457,
+          "distance_to_roads_m": 0.0035461049589011417,
+          "ndbi": 0.0033166200960766676,
+          "slope_deg": 0.003283563130238187,
+          "aspect_sin": 0.002693987030344345,
+          "elevation_m": 0.0024457637144414093,
+          "ndwi": 0.002420819102601395,
+          "distance_to_parks_m": 0.0018812764673305758,
+          "land_cover_code": 0.0012387341351652282
+        },
+        "lst_night_celsius": {
+          "building_density": 0.8581436118862433,
+          "ndvi": 0.09651433127915894,
+          "elevation_m": 0.009469816586351657,
+          "aspect_cos": 0.006997690707067538,
+          "ndbi": 0.004855749284418309,
+          "slope_deg": 0.004785328757962127,
+          "distance_to_parks_m": 0.0041678433975742115,
+          "ndwi": 0.0041511266291739705,
+          "aspect_sin": 0.00405045609344276,
+          "distance_to_water_m": 0.0032704579443976903,
+          "distance_to_roads_m": 0.002588908536732661,
+          "land_cover_code": 0.0010046788974767077
+        }
+      },
+      "targets_evaluated": [
+        "lst_day_celsius",
+        "lst_night_celsius"
+      ]
+    },
+    "stage3": {
+      "stage": "Stage 3: Advanced Driver Modeling (LightGBM)",
+      "status": "SUCCESS",
+      "feature_count": 12,
+      "cv_metrics": {
+        "lst_day_celsius": {
+          "r2_mean": 0.9346939497105305,
+          "r2_std": 0.01252119596938054,
+          "rmse_mean": 0.7154004892896334,
+          "rmse_std": 0.0924271147843612,
+          "mae_mean": 0.5751882356291242,
+          "mae_std": 0.0708854546873153,
+          "n_splits_used": 5
+        },
+        "lst_night_celsius": {
+          "r2_mean": 0.9158670765385786,
+          "r2_std": 0.030321966607044205,
+          "rmse_mean": 0.40310137181918043,
+          "rmse_std": 0.08763900032118804,
+          "mae_mean": 0.3120803334977037,
+          "mae_std": 0.06544223445096971,
+          "n_splits_used": 5
+        }
+      },
+      "gate_statuses": {
+        "lst_day_celsius": "PASSED",
+        "lst_night_celsius": "PASSED"
+      },
+      "targets_trained": [
+        "lst_day_celsius",
+        "lst_night_celsius"
+      ]
+    },
+    "stage4": {
+      "stage": "Stage 4: Explainable AI Driver Attribution (SHAP)",
+      "status": "SUCCESS",
+      "feature_count": 12,
+      "expected_values": {
+        "lst_day_celsius": 37.67559706388616,
+        "lst_night_celsius": 26.15474883699388
+      },
+      "reconstruction_errors": {
+        "lst_day_celsius": {
+          "max_absolute_error": 8.526512829121202e-14,
+          "mean_absolute_error": 2.919146406081078e-14,
+          "validation_passed": true
+        },
+        "lst_night_celsius": {
+          "max_absolute_error": 3.907985046680551e-14,
+          "mean_absolute_error": 1.5957605607278915e-14,
+          "validation_passed": true
+        }
+      },
+      "targets_explained": [
+        "lst_day_celsius",
+        "lst_night_celsius"
+      ]
+    },
+    "stage5": {
+      "stage": "Stage 5: XAI Attribution Plausibility Audit",
+      "status": "SUCCESS",
+      "audit_results": {
+        "day": {
+          "status": "PASSED",
+          "city_mean_consistency_pct": 71.17,
+          "evaluated_rules_count": 5,
+          "per_driver_statistics": {
+            "ndvi": {
+              "expected_direction": "negative",
+              "consistent_point_count": 63,
+              "consistency_percentage": 52.5
+            },
+            "ndbi": {
+              "expected_direction": "positive",
+              "consistent_point_count": 106,
+              "consistency_percentage": 88.33
+            },
+            "building_density": {
+              "expected_direction": "positive",
+              "consistent_point_count": 66,
+              "consistency_percentage": 55.0
+            },
+            "distance_to_water_m": {
+              "expected_direction": "positive",
+              "consistent_point_count": 94,
+              "consistency_percentage": 78.33
+            },
+            "distance_to_parks_m": {
+              "expected_direction": "positive",
+              "consistent_point_count": 98,
+              "consistency_percentage": 81.67
+            }
+          },
+          "anomalous_points_count": 17
+        },
+        "night": {
+          "status": "PASSED",
+          "city_mean_consistency_pct": 80.0,
+          "evaluated_rules_count": 5,
+          "per_driver_statistics": {
+            "ndvi": {
+              "expected_direction": "negative",
+              "consistent_point_count": 66,
+              "consistency_percentage": 55.0
+            },
+            "ndbi": {
+              "expected_direction": "positive",
+              "consistent_point_count": 108,
+              "consistency_percentage": 90.0
+            },
+            "building_density": {
+              "expected_direction": "positive",
+              "consistent_point_count": 66,
+              "consistency_percentage": 55.0
+            },
+            "distance_to_water_m": {
+              "expected_direction": "positive",
+              "consistent_point_count": 120,
+              "consistency_percentage": 100.0
+            },
+            "distance_to_parks_m": {
+              "expected_direction": "positive",
+              "consistent_point_count": 120,
+              "consistency_percentage": 100.0
+            }
+          },
+          "anomalous_points_count": 3
+        }
+      },
+      "overall_audit_status": "PASSED"
+    },
+    "stage6": {
+      "stage": "Stage 6: Spatial Driver Intelligence (GWR)",
+      "status": "SUCCESS",
+      "sample_points_used": 120,
+      "drivers_modeled": [
+        "ndvi",
+        "building_density",
+        "distance_to_water_m",
+        "distance_to_parks_m",
+        "elevation_m"
+      ],
+      "optimal_bandwidth": 118.0,
+      "mean_local_r2": 0.9714014324305934
+    }
+  }
+}

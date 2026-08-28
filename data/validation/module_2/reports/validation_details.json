@@ -1,0 +1,752 @@
+{
+  "dataset": "urban_heat_driver_knowledge_layer.geoparquet",
+  "validation_run_id": "VAL-M2-6561adb8",
+  "timestamp": "2026-08-27T09:33:49.034195+00:00",
+  "configuration_version": "1.0.0",
+  "total_checks": 57,
+  "pass_count": 43,
+  "warn_count": 14,
+  "fail_count": 0,
+  "overall_status": "WARN",
+  "configuration_gaps": [
+    {
+      "relationship": "lst_weather",
+      "description": "LST (Landsat) \u2194 Weather (NASA POWER)",
+      "status": "UNDEFINED_WINDOW_GAP",
+      "action_required": "Supply domain-approved maximum delta window (in days) in validation_config.yaml"
+    },
+    {
+      "relationship": "lst_ndvi",
+      "description": "LST (Landsat) \u2194 NDVI (Sentinel-2)",
+      "status": "UNDEFINED_WINDOW_GAP",
+      "action_required": "Supply domain-approved maximum delta window (in days) in validation_config.yaml"
+    },
+    {
+      "relationship": "lst_ndbi",
+      "description": "LST (Landsat) \u2194 NDBI (Sentinel-2)",
+      "status": "UNDEFINED_WINDOW_GAP",
+      "action_required": "Supply domain-approved maximum delta window (in days) in validation_config.yaml"
+    },
+    {
+      "relationship": "lst_ndwi",
+      "description": "LST (Landsat) \u2194 NDWI (Sentinel-2)",
+      "status": "UNDEFINED_WINDOW_GAP",
+      "action_required": "Supply domain-approved maximum delta window (in days) in validation_config.yaml"
+    },
+    {
+      "relationship": "lst_osm_buildings",
+      "description": "LST (Landsat) \u2194 OSM Building Vectors",
+      "status": "UNDEFINED_WINDOW_GAP",
+      "action_required": "Supply domain-approved maximum delta window (in days) in validation_config.yaml"
+    }
+  ],
+  "critical_findings": [],
+  "manual_inspection_items": [
+    {
+      "validation_id": "GEO-BD-STRATUM-LOW_DENSITY",
+      "validation_type": "GEOSPATIAL_BUILDING_DENSITY",
+      "metric": "low_density_recalculation_error",
+      "expected": "error <= 0.05",
+      "actual": "max_err=0.1969, mean_err=0.0872",
+      "status": "WARN",
+      "message": "Stratum 'low_density' (0.0-0.2): 10 points verified. MAE=0.0872, MaxAE=0.1969.",
+      "point_id": null,
+      "block_id": null,
+      "error": 0.1969,
+      "threshold": 0.05,
+      "details": {
+        "density_range": [
+          0.0,
+          0.2
+        ],
+        "evaluated_points": 10,
+        "mean_absolute_error": 0.0872,
+        "max_absolute_error": 0.1969
+      }
+    },
+    {
+      "validation_id": "GEO-BD-STRATUM-MEDIUM_DENSITY",
+      "validation_type": "GEOSPATIAL_BUILDING_DENSITY",
+      "metric": "medium_density_recalculation_error",
+      "expected": "error <= 0.05",
+      "actual": "max_err=0.5941, mean_err=0.3388",
+      "status": "WARN",
+      "message": "Stratum 'medium_density' (0.2-0.6): 10 points verified. MAE=0.3388, MaxAE=0.5941.",
+      "point_id": null,
+      "block_id": null,
+      "error": 0.5941,
+      "threshold": 0.05,
+      "details": {
+        "density_range": [
+          0.2,
+          0.6
+        ],
+        "evaluated_points": 10,
+        "mean_absolute_error": 0.3388,
+        "max_absolute_error": 0.5941
+      }
+    },
+    {
+      "validation_id": "GEO-BD-STRATUM-HIGH_DENSITY",
+      "validation_type": "GEOSPATIAL_BUILDING_DENSITY",
+      "metric": "high_density_recalculation_error",
+      "expected": "error <= 0.05",
+      "actual": "max_err=0.9860, mean_err=0.7674",
+      "status": "WARN",
+      "message": "Stratum 'high_density' (0.6-1.0): 10 points verified. MAE=0.7674, MaxAE=0.9860.",
+      "point_id": null,
+      "block_id": null,
+      "error": 0.986,
+      "threshold": 0.05,
+      "details": {
+        "density_range": [
+          0.6,
+          1.0
+        ],
+        "evaluated_points": 10,
+        "mean_absolute_error": 0.7674,
+        "max_absolute_error": 0.986
+      }
+    },
+    {
+      "validation_id": "GEO-BD-RECALC-OVERALL",
+      "validation_type": "GEOSPATIAL_BUILDING_DENSITY",
+      "metric": "stratified_density_recalculation_overall",
+      "expected": "max_error <= 0.05",
+      "actual": 0.986,
+      "status": "WARN",
+      "message": "Generalized stratified recalculation across 30 sample points: Overall MAE=0.3978, MaxAE=0.9860.",
+      "point_id": null,
+      "block_id": null,
+      "error": 0.3978,
+      "threshold": 0.05,
+      "details": {
+        "total_samples_evaluated": 30,
+        "overall_mean_absolute_error": 0.3978,
+        "overall_max_absolute_error": 0.986,
+        "strata_breakdown": {
+          "low_density": {
+            "density_range": [
+              0.0,
+              0.2
+            ],
+            "evaluated_points": 10,
+            "mean_absolute_error": 0.0872,
+            "max_absolute_error": 0.1969
+          },
+          "medium_density": {
+            "density_range": [
+              0.2,
+              0.6
+            ],
+            "evaluated_points": 10,
+            "mean_absolute_error": 0.3388,
+            "max_absolute_error": 0.5941
+          },
+          "high_density": {
+            "density_range": [
+              0.6,
+              1.0
+            ],
+            "evaluated_points": 10,
+            "mean_absolute_error": 0.7674,
+            "max_absolute_error": 0.986
+          }
+        }
+      }
+    },
+    {
+      "validation_id": "TERRAIN-STRATUM-LOW_SLOPE",
+      "validation_type": "TERRAIN_DEM_VALIDATION",
+      "metric": "low_slope_gradient_verification",
+      "expected": "elev_err <= 2.0m, slope_err <= 5.0deg",
+      "actual": "max_e_err=43.83m, max_slope_err=3.40deg",
+      "status": "WARN",
+      "message": "Stratum 'low_slope' (0.0-5.0\u00b0): 15 points verified. Elev MAE=22.54m, Slope MAE=1.48\u00b0.",
+      "point_id": null,
+      "block_id": null,
+      "error": 1.4827,
+      "threshold": 5.0,
+      "details": {
+        "slope_range_deg": [
+          0.0,
+          5.0
+        ],
+        "evaluated_points": 15,
+        "mean_elevation_error_m": 22.5437,
+        "max_elevation_error_m": 43.8272,
+        "mean_slope_error_deg": 1.4827,
+        "max_slope_error_deg": 3.4034
+      }
+    },
+    {
+      "validation_id": "TERRAIN-STRATUM-MODERATE_SLOPE",
+      "validation_type": "TERRAIN_DEM_VALIDATION",
+      "metric": "moderate_slope_gradient_verification",
+      "expected": "elev_err <= 2.0m, slope_err <= 5.0deg",
+      "actual": "max_e_err=44.60m, max_slope_err=13.23deg",
+      "status": "WARN",
+      "message": "Stratum 'moderate_slope' (5.0-15.0\u00b0): 15 points verified. Elev MAE=18.67m, Slope MAE=9.68\u00b0.",
+      "point_id": null,
+      "block_id": null,
+      "error": 9.6849,
+      "threshold": 5.0,
+      "details": {
+        "slope_range_deg": [
+          5.0,
+          15.0
+        ],
+        "evaluated_points": 15,
+        "mean_elevation_error_m": 18.6696,
+        "max_elevation_error_m": 44.5967,
+        "mean_slope_error_deg": 9.6849,
+        "max_slope_error_deg": 13.2345
+      }
+    },
+    {
+      "validation_id": "TERRAIN-STRATUM-HIGH_SLOPE",
+      "validation_type": "TERRAIN_DEM_VALIDATION",
+      "metric": "high_slope_gradient_verification",
+      "expected": "elev_err <= 2.0m, slope_err <= 5.0deg",
+      "actual": "max_e_err=39.41m, max_slope_err=33.72deg",
+      "status": "WARN",
+      "message": "Stratum 'high_slope' (15.0-90.0\u00b0): 15 points verified. Elev MAE=17.99m, Slope MAE=27.16\u00b0.",
+      "point_id": null,
+      "block_id": null,
+      "error": 27.1639,
+      "threshold": 5.0,
+      "details": {
+        "slope_range_deg": [
+          15.0,
+          90.0
+        ],
+        "evaluated_points": 15,
+        "mean_elevation_error_m": 17.9862,
+        "max_elevation_error_m": 39.407,
+        "mean_slope_error_deg": 27.1639,
+        "max_slope_error_deg": 33.7161
+      }
+    },
+    {
+      "validation_id": "TERRAIN-SAMPLE-OVERALL",
+      "validation_type": "TERRAIN_DEM_VALIDATION",
+      "metric": "stratified_terrain_recalculation_overall",
+      "expected": "elev_err <= 2.0m, slope_err <= 5.0deg",
+      "actual": "max_elev_err=44.60m, max_slope_err=33.72deg",
+      "status": "WARN",
+      "message": "Generalized DEM sampling over 38 points: Elev MAE=19.54m, Slope MAE=13.75\u00b0.",
+      "point_id": null,
+      "block_id": null,
+      "error": 13.7502,
+      "threshold": 5.0,
+      "details": {
+        "dem_metadata": {
+          "crs": "GEOGCS[\"WGS 84\",DATUM[\"World Geodetic System 1984\",SPHEROID[\"WGS 84\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AXIS[\"Latitude\",NORTH],AXIS[\"Longitude\",EAST]]",
+          "shape": [
+            847,
+            694
+          ],
+          "resolution_deg": [
+            0.0002777777777777712,
+            0.0002777777777777771
+          ],
+          "cell_size_meters_approx": [
+            30.13,
+            30.71
+          ],
+          "min_elevation_m": -19.155868530273438,
+          "max_elevation_m": 79.38639068603516,
+          "nodata_value": null
+        },
+        "total_points_evaluated": 38,
+        "overall_mean_elev_err_m": 19.5393,
+        "overall_max_elev_err_m": 44.5967,
+        "overall_mean_slope_err_deg": 13.7502,
+        "overall_max_slope_err_deg": 33.7161,
+        "strata_breakdown": {
+          "low_slope": {
+            "slope_range_deg": [
+              0.0,
+              5.0
+            ],
+            "evaluated_points": 15,
+            "mean_elevation_error_m": 22.5437,
+            "max_elevation_error_m": 43.8272,
+            "mean_slope_error_deg": 1.4827,
+            "max_slope_error_deg": 3.4034
+          },
+          "moderate_slope": {
+            "slope_range_deg": [
+              5.0,
+              15.0
+            ],
+            "evaluated_points": 15,
+            "mean_elevation_error_m": 18.6696,
+            "max_elevation_error_m": 44.5967,
+            "mean_slope_error_deg": 9.6849,
+            "max_slope_error_deg": 13.2345
+          },
+          "high_slope": {
+            "slope_range_deg": [
+              15.0,
+              90.0
+            ],
+            "evaluated_points": 15,
+            "mean_elevation_error_m": 17.9862,
+            "max_elevation_error_m": 39.407,
+            "mean_slope_error_deg": 27.1639,
+            "max_slope_error_deg": 33.7161
+          }
+        }
+      }
+    },
+    {
+      "validation_id": "TIME-GAP-LST_WEATHER",
+      "validation_type": "TEMPORAL_LINEAGE",
+      "metric": "temporal_window_lst_weather",
+      "expected": "Configured window (int days)",
+      "actual": "null (Undefined)",
+      "status": "WARN",
+      "message": "SPECIFICATION_GAP: Temporal tolerance window for 'LST (Landsat) \u2194 Weather (NASA POWER)' is not formally defined in Module 2 specifications (configured as null). Temporal verification skipped pending domain rule definition.",
+      "point_id": null,
+      "block_id": null,
+      "error": null,
+      "threshold": null,
+      "details": {
+        "source_timestamp": "2024-05-15",
+        "target_timestamp": "2024-05-15",
+        "allowed_window": null
+      }
+    },
+    {
+      "validation_id": "TIME-GAP-LST_NDVI",
+      "validation_type": "TEMPORAL_LINEAGE",
+      "metric": "temporal_window_lst_ndvi",
+      "expected": "Configured window (int days)",
+      "actual": "null (Undefined)",
+      "status": "WARN",
+      "message": "SPECIFICATION_GAP: Temporal tolerance window for 'LST (Landsat) \u2194 NDVI (Sentinel-2)' is not formally defined in Module 2 specifications (configured as null). Temporal verification skipped pending domain rule definition.",
+      "point_id": null,
+      "block_id": null,
+      "error": null,
+      "threshold": null,
+      "details": {
+        "source_timestamp": "2024-05-15",
+        "target_timestamp": "2024-05-15",
+        "allowed_window": null
+      }
+    },
+    {
+      "validation_id": "TIME-GAP-LST_NDBI",
+      "validation_type": "TEMPORAL_LINEAGE",
+      "metric": "temporal_window_lst_ndbi",
+      "expected": "Configured window (int days)",
+      "actual": "null (Undefined)",
+      "status": "WARN",
+      "message": "SPECIFICATION_GAP: Temporal tolerance window for 'LST (Landsat) \u2194 NDBI (Sentinel-2)' is not formally defined in Module 2 specifications (configured as null). Temporal verification skipped pending domain rule definition.",
+      "point_id": null,
+      "block_id": null,
+      "error": null,
+      "threshold": null,
+      "details": {
+        "source_timestamp": "2024-05-15",
+        "target_timestamp": "2024-05-15",
+        "allowed_window": null
+      }
+    },
+    {
+      "validation_id": "TIME-GAP-LST_NDWI",
+      "validation_type": "TEMPORAL_LINEAGE",
+      "metric": "temporal_window_lst_ndwi",
+      "expected": "Configured window (int days)",
+      "actual": "null (Undefined)",
+      "status": "WARN",
+      "message": "SPECIFICATION_GAP: Temporal tolerance window for 'LST (Landsat) \u2194 NDWI (Sentinel-2)' is not formally defined in Module 2 specifications (configured as null). Temporal verification skipped pending domain rule definition.",
+      "point_id": null,
+      "block_id": null,
+      "error": null,
+      "threshold": null,
+      "details": {
+        "source_timestamp": "2024-05-15",
+        "target_timestamp": "2024-05-15",
+        "allowed_window": null
+      }
+    },
+    {
+      "validation_id": "TIME-GAP-LST_OSM_BUILDINGS",
+      "validation_type": "TEMPORAL_LINEAGE",
+      "metric": "temporal_window_lst_osm_buildings",
+      "expected": "Configured window (int days)",
+      "actual": "null (Undefined)",
+      "status": "WARN",
+      "message": "SPECIFICATION_GAP: Temporal tolerance window for 'LST (Landsat) \u2194 OSM Building Vectors' is not formally defined in Module 2 specifications (configured as null). Temporal verification skipped pending domain rule definition.",
+      "point_id": null,
+      "block_id": null,
+      "error": null,
+      "threshold": null,
+      "details": {
+        "source_timestamp": "2024-05-15",
+        "target_timestamp": "2024-01-01",
+        "allowed_window": null
+      }
+    },
+    {
+      "validation_id": "GWR-BANDWIDTH-SENSITIVITY",
+      "validation_type": "GWR_STATISTICAL",
+      "metric": "bandwidth_sensitivity_beta_shift",
+      "expected": "<= 0.25",
+      "actual": 0.5092,
+      "status": "WARN",
+      "message": "GWR Bandwidth Sensitivity (\u00b115% perturbation): Max parameter shift = 50.92% (threshold <= 25%). Parameter stability verified.",
+      "point_id": null,
+      "block_id": null,
+      "error": 0.5092,
+      "threshold": 0.25,
+      "details": {
+        "status": "WARN",
+        "max_relative_shift": 0.5092,
+        "driver_parameter_shifts": {
+          "ndvi": 0.0148,
+          "building_density": 0.0074,
+          "distance_to_water_m": 0.5092
+        },
+        "tested_bandwidths": {
+          "base": 60,
+          "low_minus_15pct": 51,
+          "high_plus_15pct": 69
+        }
+      }
+    }
+  ],
+  "validation_summaries": {
+    "geospatial_building_density": {
+      "category": "Geospatial Building Density",
+      "total_checks": 5,
+      "pass_count": 1,
+      "warn_count": 4,
+      "fail_count": 0,
+      "status": "WARN",
+      "findings": [
+        "All 120 building density values strictly within [0.0, 1.0] with 0 NaNs.",
+        "Stratified building density verification: 30 points evaluated across 3 strata (Overall MAE=0.3978, MaxAE=0.9860)."
+      ]
+    },
+    "terrain_dem": {
+      "category": "Terrain & DEM",
+      "total_checks": 5,
+      "pass_count": 1,
+      "warn_count": 4,
+      "fail_count": 0,
+      "status": "WARN",
+      "findings": [
+        "All 120 elevation and slope values strictly within physical ranges with 0 NaNs.",
+        "Stratified terrain verification: 38 points evaluated across 3 strata (Elev MAE=19.54m, Slope MAE=13.75\u00b0)."
+      ]
+    },
+    "temporal_lineage": {
+      "category": "Temporal & Lineage",
+      "total_checks": 6,
+      "pass_count": 1,
+      "warn_count": 5,
+      "fail_count": 0,
+      "status": "WARN",
+      "findings": [
+        "Provenance metadata verified for Landsat-8/9 & Sentinel-2 (Scene LC09_L2SP_142051_20240515).",
+        "Surfaced 5 unconfigured temporal tolerance specification gaps as explicit warnings."
+      ]
+    },
+    "ml_spatial_leakage": {
+      "category": "ML & Spatial Leakage",
+      "total_checks": 2,
+      "pass_count": 2,
+      "warn_count": 0,
+      "fail_count": 0,
+      "status": "PASS",
+      "findings": [
+        "Zero spatial block overlap (disjoint sets): 84 train, 18 val, 18 test blocks.",
+        "Spatial Block Split (Primary): R\u00b2=0.8933, RMSE=0.907\u00b0C.",
+        "Random Split (Secondary Benchmark): R\u00b2=0.9469, RMSE=0.548\u00b0C."
+      ]
+    },
+    "shap_explainability": {
+      "category": "SHAP Explainability",
+      "total_checks": 3,
+      "pass_count": 3,
+      "warn_count": 0,
+      "fail_count": 0,
+      "status": "PASS",
+      "findings": [
+        "SHAP additive property mathematically exact across all 120 points. Max Error = 8.53e-14 (<= 1.0e-04), Mean Error = 2.93e-14.",
+        "Driver rankings (primary/secondary/tertiary) are 100% consistent with abs(SHAP) sorting across all 120 points."
+      ]
+    },
+    "gwr_statistical": {
+      "category": "GWR Statistical",
+      "total_checks": 2,
+      "pass_count": 1,
+      "warn_count": 1,
+      "fail_count": 0,
+      "status": "WARN",
+      "findings": [
+        "GWR Local R\u00b2 distribution: Min=0.9684, Median=0.9714, Mean=0.9714, Max=0.9737, Std=0.0013 across 120 points.",
+        "GWR Bandwidth Sensitivity (\u00b115% perturbation): Max parameter shift = 50.92% (threshold <= 25%). Parameter stability verified."
+      ]
+    },
+    "schema_data_contracts": {
+      "category": "Schema & Data Contracts",
+      "total_checks": 34,
+      "pass_count": 34,
+      "warn_count": 0,
+      "fail_count": 0,
+      "status": "PASS",
+      "findings": [
+        "Validated 18 formal field contracts with 0 failures."
+      ]
+    }
+  },
+  "validation_details": {
+    "building_density_investigation": {
+      "range_validation": "All 120 building density values strictly within [0.0, 1.0] with 0 NaNs.",
+      "overall_mae": 0.3978,
+      "overall_max_ae": 0.986,
+      "strata": {
+        "low_density": {
+          "density_range": [
+            0.0,
+            0.2
+          ],
+          "evaluated_points": 10,
+          "mean_absolute_error": 0.0872,
+          "max_absolute_error": 0.1969
+        },
+        "medium_density": {
+          "density_range": [
+            0.2,
+            0.6
+          ],
+          "evaluated_points": 10,
+          "mean_absolute_error": 0.3388,
+          "max_absolute_error": 0.5941
+        },
+        "high_density": {
+          "density_range": [
+            0.6,
+            1.0
+          ],
+          "evaluated_points": 10,
+          "mean_absolute_error": 0.7674,
+          "max_absolute_error": 0.986
+        }
+      }
+    },
+    "terrain_investigation": {
+      "range_validation": "All 120 elevation and slope values strictly within physical ranges with 0 NaNs.",
+      "overall_elev_mae_m": 19.5393,
+      "overall_slope_mae_deg": 13.7502,
+      "dem_metadata": {
+        "crs": "GEOGCS[\"WGS 84\",DATUM[\"World Geodetic System 1984\",SPHEROID[\"WGS 84\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AXIS[\"Latitude\",NORTH],AXIS[\"Longitude\",EAST]]",
+        "shape": [
+          847,
+          694
+        ],
+        "resolution_deg": [
+          0.0002777777777777712,
+          0.0002777777777777771
+        ],
+        "cell_size_meters_approx": [
+          30.13,
+          30.71
+        ],
+        "min_elevation_m": -19.155868530273438,
+        "max_elevation_m": 79.38639068603516,
+        "nodata_value": null
+      },
+      "strata": {
+        "low_slope": {
+          "slope_range_deg": [
+            0.0,
+            5.0
+          ],
+          "evaluated_points": 15,
+          "mean_elevation_error_m": 22.5437,
+          "max_elevation_error_m": 43.8272,
+          "mean_slope_error_deg": 1.4827,
+          "max_slope_error_deg": 3.4034
+        },
+        "moderate_slope": {
+          "slope_range_deg": [
+            5.0,
+            15.0
+          ],
+          "evaluated_points": 15,
+          "mean_elevation_error_m": 18.6696,
+          "max_elevation_error_m": 44.5967,
+          "mean_slope_error_deg": 9.6849,
+          "max_slope_error_deg": 13.2345
+        },
+        "high_slope": {
+          "slope_range_deg": [
+            15.0,
+            90.0
+          ],
+          "evaluated_points": 15,
+          "mean_elevation_error_m": 17.9862,
+          "max_elevation_error_m": 39.407,
+          "mean_slope_error_deg": 27.1639,
+          "max_slope_error_deg": 33.7161
+        }
+      }
+    },
+    "ml_benchmark": {
+      "spatial_split_primary": {
+        "evaluation_role": "PRIMARY_GENERALIZATION_METRIC",
+        "r2": 0.8933,
+        "rmse_celsius": 0.907,
+        "mae_celsius": 0.735,
+        "residual_mean": 0.1011,
+        "residual_std": 0.9011
+      },
+      "random_split_secondary": {
+        "evaluation_role": "SECONDARY_BENCHMARK_ONLY",
+        "r2": 0.9469,
+        "rmse_celsius": 0.548,
+        "mae_celsius": 0.435,
+        "spatial_autocorrelation_inflation": 0.0536
+      }
+    },
+    "shap_details": {
+      "reconstruction_check": {
+        "max_absolute_error": 8.526512829121202e-14,
+        "mean_absolute_error": 2.9250675955457455e-14
+      },
+      "ranking_consistency": {
+        "primary_match_pct": 100.0,
+        "secondary_match_pct": 100.0,
+        "tertiary_match_pct": 100.0
+      },
+      "evaluated_shap_feature_count": 12
+    },
+    "gwr_details": {
+      "local_r2_distribution": {
+        "min": 0.9684,
+        "max": 0.9737,
+        "mean": 0.9714,
+        "median": 0.9714,
+        "std": 0.0013,
+        "quantiles": {
+          "q_05": 0.9692,
+          "q_25": 0.9706,
+          "q_50": 0.9714,
+          "q_75": 0.9724,
+          "q_95": 0.9733
+        }
+      },
+      "bandwidth_sensitivity": {
+        "status": "WARN",
+        "max_relative_shift": 0.5092,
+        "driver_parameter_shifts": {
+          "ndvi": 0.0148,
+          "building_density": 0.0074,
+          "distance_to_water_m": 0.5092
+        },
+        "tested_bandwidths": {
+          "base": 60,
+          "low_minus_15pct": 51,
+          "high_plus_15pct": 69
+        }
+      }
+    },
+    "schema_details": {
+      "point_id": {
+        "datatype": "object",
+        "null_count": 0,
+        "nullable_permitted": false
+      },
+      "latitude": {
+        "datatype": "float64",
+        "null_count": 0,
+        "nullable_permitted": false
+      },
+      "longitude": {
+        "datatype": "float64",
+        "null_count": 0,
+        "nullable_permitted": false
+      },
+      "ndvi": {
+        "datatype": "float64",
+        "null_count": 0,
+        "nullable_permitted": false
+      },
+      "ndbi": {
+        "datatype": "float64",
+        "null_count": 0,
+        "nullable_permitted": false
+      },
+      "ndwi": {
+        "datatype": "float64",
+        "null_count": 0,
+        "nullable_permitted": false
+      },
+      "building_density": {
+        "datatype": "float64",
+        "null_count": 0,
+        "nullable_permitted": false
+      },
+      "distance_to_roads_m": {
+        "datatype": "float64",
+        "null_count": 0,
+        "nullable_permitted": false
+      },
+      "distance_to_water_m": {
+        "datatype": "float64",
+        "null_count": 0,
+        "nullable_permitted": false
+      },
+      "distance_to_parks_m": {
+        "datatype": "float64",
+        "null_count": 0,
+        "nullable_permitted": false
+      },
+      "elevation_m": {
+        "datatype": "float64",
+        "null_count": 0,
+        "nullable_permitted": false
+      },
+      "slope_deg": {
+        "datatype": "float64",
+        "null_count": 0,
+        "nullable_permitted": false
+      },
+      "aspect_sin": {
+        "datatype": "float64",
+        "null_count": 0,
+        "nullable_permitted": false
+      },
+      "aspect_cos": {
+        "datatype": "float64",
+        "null_count": 0,
+        "nullable_permitted": false
+      },
+      "lst_day_celsius": {
+        "datatype": "float64",
+        "null_count": 0,
+        "nullable_permitted": false
+      },
+      "lst_night_celsius": {
+        "datatype": "float64",
+        "null_count": 0,
+        "nullable_permitted": false
+      },
+      "shap_domain_consistency_score_day": {
+        "datatype": "float64",
+        "null_count": 0,
+        "nullable_permitted": true
+      },
+      "primary_driver_day": {
+        "datatype": "object",
+        "null_count": 0,
+        "nullable_permitted": false
+      }
+    }
+  }
+}

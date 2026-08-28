@@ -1,0 +1,219 @@
+# =====================================================================
+# Boreas-Nexus Module 2: Validation Layer Configuration
+# =====================================================================
+
+version: "1.0.0"
+dataset_path: "data/processed/module_2/urban_heat_driver_knowledge_layer.geoparquet"
+registry_path: "data/processed/module_2/driver_attribution_registry.parquet"
+output_dir: "data/validation/module_2"
+
+# ---------------------------------------------------------------------
+# 1. Geospatial Validation Tolerances & Thresholds
+# ---------------------------------------------------------------------
+geospatial:
+  building_density:
+    source_buildings_path: "data/processed/vector/buildings.geoparquet"
+    source_buildings_geojson: "data/raw/vector/buildings.geojson"
+    grid_cell_size_m: 100.0
+    crs: "EPSG:4326"
+    projected_crs: "EPSG:32644"  # Dynamic or regional UTM for Chennai
+    valid_range: [0.0, 1.0]
+    tolerances:
+      pass_max_absolute_error: 0.05
+      warn_max_absolute_error: 0.15
+    sampling_strategy:
+      strata:
+        low_density: [0.0, 0.2]
+        medium_density: [0.2, 0.6]
+        high_density: [0.6, 1.0]
+      sample_size_per_stratum: 10
+
+  terrain_dem:
+    source_dem_path: "data/raw/elevation/dem_elevation.tif"
+    elevation_units: "meters"
+    slope_units: "degrees"
+    valid_elevation_range: [-50.0, 9000.0]
+    valid_slope_range_deg: [0.0, 90.0]
+    tolerances:
+      elevation_max_abs_diff_m: 2.0
+      slope_max_abs_diff_deg: 5.0
+    sampling_strategy:
+      strata:
+        low_slope: [0.0, 5.0]
+        moderate_slope: [5.0, 15.0]
+        high_slope: [15.0, 90.0]
+      sample_size_per_stratum: 15
+
+# ---------------------------------------------------------------------
+# 2. Temporal & Feature Lineage Validation
+# ---------------------------------------------------------------------
+temporal_lineage:
+  # Formally defined temporal alignment windows (in days)
+  # null indicates an unconfigured/undefined specification gap (triggers WARN)
+  temporal_windows:
+    lst_weather: null   # Specification gap: allowable delta between Landsat thermal scene & NASA POWER daily weather
+    lst_ndvi: null      # Specification gap: allowable delta between Landsat thermal & Sentinel-2 optical scene
+    lst_ndbi: null      # Specification gap: allowable delta between Landsat thermal & Sentinel-2 SWIR scene
+    lst_ndwi: null      # Specification gap: allowable delta between Landsat thermal & Sentinel-2 water scene
+    lst_osm_buildings: null # Specification gap: allowable delta between satellite observation and OSM snapshot
+
+  provenance_metadata:
+    sensor: "Landsat-8/9 & Sentinel-2"
+    processing_version: "1.0.0"
+
+# ---------------------------------------------------------------------
+# 3. Machine Learning & Spatial Leakage Validation
+# ---------------------------------------------------------------------
+ml_validation:
+  spatial_split:
+    block_col: "spatial_block_id"
+    train_ratio: 0.70
+    val_ratio: 0.15
+    test_ratio: 0.15
+    random_seed: 42
+  performance_thresholds:
+    primary_metric: "spatial_block_cv"  # Must be primary
+    min_spatial_r2: 0.35
+    max_spatial_rmse_celsius: 2.50
+    max_leakage_overlap_count: 0
+
+# ---------------------------------------------------------------------
+# 4. Explainability & SHAP Validation
+# ---------------------------------------------------------------------
+explainability:
+  shap_reconstruction:
+    tolerance_max_error: 1.0e-4
+    tolerance_mean_error: 1.0e-5
+  shap_ranking:
+    mandatory_ranks:
+      - primary_driver_day
+      - secondary_driver_day
+      - tertiary_driver_day
+    magnitude_sorting_rule: "abs_descending"
+  shap_sign_semantics:
+    positive_meaning: "pushes_prediction_upward"
+    negative_meaning: "pushes_prediction_downward"
+  reproducibility:
+    explainer_type: "TreeExplainer"
+    tolerance_regeneration_error: 1.0e-4
+
+# ---------------------------------------------------------------------
+# 5. GWR Statistical Validation
+# ---------------------------------------------------------------------
+spatial_gwr:
+  bandwidth_perturbation_pct: 0.15  # +/- 15% bandwidth test
+  stability_criteria:
+    pass_max_beta_relative_shift: 0.25
+    warn_max_beta_relative_shift: 0.60
+  local_r2_quantiles: [0.05, 0.25, 0.50, 0.75, 0.95]
+
+# ---------------------------------------------------------------------
+# 6. Schema & Data-Contract Validation
+# ---------------------------------------------------------------------
+data_contracts:
+  fields:
+    point_id:
+      datatype: "string"
+      nullable: false
+      unit: "dimensionless"
+    latitude:
+      datatype: "float"
+      valid_min: -90.0
+      valid_max: 90.0
+      nullable: false
+      unit: "degrees_north"
+    longitude:
+      datatype: "float"
+      valid_min: -180.0
+      valid_max: 180.0
+      nullable: false
+      unit: "degrees_east"
+    ndvi:
+      datatype: "float"
+      valid_min: -1.0
+      valid_max: 1.0
+      nullable: false
+      unit: "dimensionless"
+    ndbi:
+      datatype: "float"
+      valid_min: -1.0
+      valid_max: 1.0
+      nullable: false
+      unit: "dimensionless"
+    ndwi:
+      datatype: "float"
+      valid_min: -1.0
+      valid_max: 1.0
+      nullable: false
+      unit: "dimensionless"
+    building_density:
+      datatype: "float"
+      valid_min: 0.0
+      valid_max: 1.0
+      nullable: false
+      unit: "fraction"
+    distance_to_roads_m:
+      datatype: "float"
+      valid_min: 0.0
+      valid_max: 50000.0
+      nullable: false
+      unit: "meters"
+    distance_to_water_m:
+      datatype: "float"
+      valid_min: 0.0
+      valid_max: 50000.0
+      nullable: false
+      unit: "meters"
+    distance_to_parks_m:
+      datatype: "float"
+      valid_min: 0.0
+      valid_max: 50000.0
+      nullable: false
+      unit: "meters"
+    elevation_m:
+      datatype: "float"
+      valid_min: -50.0
+      valid_max: 9000.0
+      nullable: false
+      unit: "meters"
+    slope_deg:
+      datatype: "float"
+      valid_min: 0.0
+      valid_max: 90.0
+      nullable: false
+      unit: "degrees"
+    aspect_sin:
+      datatype: "float"
+      valid_min: -1.0
+      valid_max: 1.0
+      nullable: false
+      unit: "dimensionless"
+    aspect_cos:
+      datatype: "float"
+      valid_min: -1.0
+      valid_max: 1.0
+      nullable: false
+      unit: "dimensionless"
+    lst_day_celsius:
+      datatype: "float"
+      valid_min: -50.0
+      valid_max: 80.0
+      nullable: false
+      unit: "celsius"
+    lst_night_celsius:
+      datatype: "float"
+      valid_min: -50.0
+      valid_max: 80.0
+      nullable: false
+      unit: "celsius"
+    shap_domain_consistency_score_day:
+      datatype: "float"
+      valid_min: 0.0
+      valid_max: 100.0
+      nullable: true
+      unit: "percentage"
+      description: "XAI directional consistency sanity score (Module 2 explainability check)"
+    primary_driver_day:
+      datatype: "string"
+      nullable: false
+      unit: "category"

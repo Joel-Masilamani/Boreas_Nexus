@@ -53,7 +53,12 @@ def transform_wgs84_to_utm(
         target_utm_crs = get_utm_crs_for_lon_lat(med_lon, med_lat)
 
     transformer = pyproj.Transformer.from_crs("EPSG:4326", target_utm_crs, always_xy=True)
-    utm_x, utm_y = transformer.transform(lons_arr, lats_arr)
+    if lons_arr.size == 1:
+        tx, ty = transformer.transform(float(lons_arr[0]), float(lats_arr[0]))
+        utm_x, utm_y = np.array([tx], dtype=np.float64), np.array([ty], dtype=np.float64)
+    else:
+        utm_x, utm_y = transformer.transform(lons_arr, lats_arr)
+        utm_x, utm_y = np.asarray(utm_x, dtype=np.float64), np.asarray(utm_y, dtype=np.float64)
 
     return utm_x, utm_y, target_utm_crs
 

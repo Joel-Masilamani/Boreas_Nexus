@@ -1,0 +1,17 @@
+{
+  "spatial_split_primary": {
+    "evaluation_role": "PRIMARY_GENERALIZATION_METRIC",
+    "r2": 0.8933,
+    "rmse_celsius": 0.907,
+    "mae_celsius": 0.735,
+    "residual_mean": 0.1011,
+    "residual_std": 0.9011
+  },
+  "random_split_secondary": {
+    "evaluation_role": "SECONDARY_BENCHMARK_ONLY",
+    "r2": 0.9469,
+    "rmse_celsius": 0.548,
+    "mae_celsius": 0.435,
+    "spatial_autocorrelation_inflation": 0.0536
+  }
+}

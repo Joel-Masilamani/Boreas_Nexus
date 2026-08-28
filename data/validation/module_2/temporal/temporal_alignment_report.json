@@ -1,0 +1,46 @@
+{
+  "summary": {
+    "category": "Temporal & Lineage",
+    "total_checks": 6,
+    "pass_count": 1,
+    "warn_count": 5,
+    "fail_count": 0,
+    "status": "WARN",
+    "findings": [
+      "Provenance metadata verified for Landsat-8/9 & Sentinel-2 (Scene LC09_L2SP_142051_20240515).",
+      "Surfaced 5 unconfigured temporal tolerance specification gaps as explicit warnings."
+    ]
+  },
+  "specification_gaps": [
+    {
+      "relationship": "lst_weather",
+      "description": "LST (Landsat) \u2194 Weather (NASA POWER)",
+      "status": "UNDEFINED_WINDOW_GAP",
+      "action_required": "Supply domain-approved maximum delta window (in days) in validation_config.yaml"
+    },
+    {
+      "relationship": "lst_ndvi",
+      "description": "LST (Landsat) \u2194 NDVI (Sentinel-2)",
+      "status": "UNDEFINED_WINDOW_GAP",
+      "action_required": "Supply domain-approved maximum delta window (in days) in validation_config.yaml"
+    },
+    {
+      "relationship": "lst_ndbi",
+      "description": "LST (Landsat) \u2194 NDBI (Sentinel-2)",
+      "status": "UNDEFINED_WINDOW_GAP",
+      "action_required": "Supply domain-approved maximum delta window (in days) in validation_config.yaml"
+    },
+    {
+      "relationship": "lst_ndwi",
+      "description": "LST (Landsat) \u2194 NDWI (Sentinel-2)",
+      "status": "UNDEFINED_WINDOW_GAP",
+      "action_required": "Supply domain-approved maximum delta window (in days) in validation_config.yaml"
+    },
+    {
+      "relationship": "lst_osm_buildings",
+      "description": "LST (Landsat) \u2194 OSM Building Vectors",
+      "status": "UNDEFINED_WINDOW_GAP",
+      "action_required": "Supply domain-approved maximum delta window (in days) in validation_config.yaml"
+    }
+  ]
+}
