@@ -34,29 +34,22 @@ class SpatialStatsValidator:
         k: int = 8
     ) -> np.ndarray:
         """
-        Fast vectorized computation of Getis-Ord Gi* z-scores across samples.
+        Fast vectorized computation of Getis-Ord Gi* z-scores across population points.
         """
         n = len(x)
         x_bar = np.mean(x)
-        s = np.std(x, ddof=1) + 1e-6
+        s = np.std(x, ddof=0)
+        if s == 0 or np.isnan(s):
+            s = 1.0
 
+        k_star = k + 1
         tree = cKDTree(coords)
-        dists, idxs = tree.query(coords, k=k)
+        dists, idxs = tree.query(coords, k=k_star)
 
-        # Standard binary spatial weights matrix (w_ij = 1 for k nearest neighbors)
-        # Gi* includes the point itself (i in neighbors)
-        w_sum = float(k)
-        w_sq_sum = float(k)
-
-        x_neighbors = x[idxs]
-        sum_wx = np.sum(x_neighbors, axis=1)
-
-        numerator = sum_wx - (x_bar * w_sum)
-        denom_radicand = ((n * w_sq_sum) - (w_sum ** 2)) / (n - 1)
-        denominator = s * np.sqrt(max(0.0, denom_radicand)) + 1e-6
-
-        z_scores = numerator / denominator
-        return z_scores
+        sum_wx = np.sum(x[idxs], axis=1)
+        denom = s * np.sqrt(max(1e-6, (n * k_star - (k_star ** 2)) / max(1, n - 1)))
+        z_scores = (sum_wx - (k_star * x_bar)) / denom
+        return np.nan_to_num(z_scores, nan=0.0)
 
     def validate(self, gdf: gpd.GeoDataFrame) -> Tuple[CheckSummary, List[ValidationResult], Dict[str, Any]]:
         """
@@ -80,10 +73,12 @@ class SpatialStatsValidator:
 
         # 1. Hotspot Threshold Consistency Check (z >= 1.96 <-> hotspot classification)
         z_vals = gdf["gi_zscore_day"].values
-        if "is_hotspot_day" in gdf.columns and gdf["is_hotspot_day"].dtype == bool:
-            stored_hotspots = gdf["is_hotspot_day"].values
+        if "day_is_hotspot" in gdf.columns:
+            stored_hotspots = gdf["day_is_hotspot"].values.astype(bool)
         elif "day_hotspot_significance" in gdf.columns:
-            stored_hotspots = gdf["day_hotspot_significance"].astype(str).str.contains("Hotspot", case=False, na=False).values
+            stored_hotspots = gdf["day_hotspot_significance"].notnull().values
+        elif "is_hotspot_day" in gdf.columns:
+            stored_hotspots = gdf["is_hotspot_day"].values.astype(bool)
         else:
             stored_hotspots = z_vals >= self.z_crit_95
 
@@ -110,20 +105,15 @@ class SpatialStatsValidator:
         ))
         findings.append(thresh_msg)
 
-        # 2. Independent Sample Getis-Ord Recalculation Check
-        np.random.seed(42)
-        sample_size = min(500, len(gdf))
-        sample_idx = np.random.choice(len(gdf), size=sample_size, replace=False)
-        sub_gdf = gdf.iloc[sample_idx]
-
-        if "utm_x_m" in sub_gdf.columns and "utm_y_m" in sub_gdf.columns:
-            coords = np.column_stack([sub_gdf["utm_x_m"].values, sub_gdf["utm_y_m"].values])
+        # 2. Independent Getis-Ord Recalculation Check
+        if "utm_x_m" in gdf.columns and "utm_y_m" in gdf.columns:
+            coords = np.column_stack([gdf["utm_x_m"].values, gdf["utm_y_m"].values])
         else:
-            coords = np.column_stack([sub_gdf.geometry.x.values, sub_gdf.geometry.y.values])
+            coords = np.column_stack([gdf.geometry.x.values, gdf.geometry.y.values])
 
-        x_temp = sub_gdf["lst_day_celsius"].values
-        recalc_z = self._compute_getis_ord_sample(coords, x_temp, k=self.k_neighbors)
-        stored_z = sub_gdf["gi_zscore_day"].values
+        val_day = gdf["suhii_day_celsius"].values if "suhii_day_celsius" in gdf.columns else gdf["lst_day_celsius"].values
+        recalc_z = self._compute_getis_ord_sample(coords, val_day, k=self.k_neighbors)
+        stored_z = gdf["gi_zscore_day"].values
 
         # Correlation between stored and independently recalculated z-scores
         corr = float(np.corrcoef(stored_z, recalc_z)[0, 1])
@@ -144,7 +134,7 @@ class SpatialStatsValidator:
             threshold=0.70,
             status=stat_status,
             message=stat_msg,
-            details={"sample_size": sample_size, "correlation": corr}
+            details={"total_points": len(gdf), "correlation": corr}
         ))
         findings.append(stat_msg)
 

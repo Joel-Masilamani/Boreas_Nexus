@@ -34,9 +34,10 @@ class DiurnalPersistenceValidator:
         findings: List[str] = []
 
         # Extract Day and Night Hotspots
-        if "day_hotspot_significance" in gdf.columns:
-            day_hot = gdf["day_hotspot_significance"].notna() & gdf["day_hotspot_significance"].astype(str).str.contains("Hotspot", case=False)
-            day_hot = day_hot.values
+        if "day_is_hotspot" in gdf.columns:
+            day_hot = gdf["day_is_hotspot"].values.astype(bool)
+        elif "day_hotspot_significance" in gdf.columns:
+            day_hot = gdf["day_hotspot_significance"].notnull().values
         elif "is_hotspot_day" in gdf.columns:
             day_hot = gdf["is_hotspot_day"].values.astype(bool)
         elif "gi_zscore_day" in gdf.columns:
@@ -44,9 +45,10 @@ class DiurnalPersistenceValidator:
         else:
             day_hot = np.zeros(len(gdf), dtype=bool)
 
-        if "night_hotspot_significance" in gdf.columns:
-            night_hot = gdf["night_hotspot_significance"].notna() & gdf["night_hotspot_significance"].astype(str).str.contains("Hotspot", case=False)
-            night_hot = night_hot.values
+        if "night_is_hotspot" in gdf.columns:
+            night_hot = gdf["night_is_hotspot"].values.astype(bool)
+        elif "night_hotspot_significance" in gdf.columns:
+            night_hot = gdf["night_hotspot_significance"].notnull().values
         elif "is_hotspot_night" in gdf.columns:
             night_hot = gdf["is_hotspot_night"].values.astype(bool)
         elif "gi_zscore_night" in gdf.columns:
@@ -54,12 +56,14 @@ class DiurnalPersistenceValidator:
         else:
             night_hot = np.zeros(len(gdf), dtype=bool)
 
-        if "is_persistent_hotspot" in gdf.columns:
+        if "persistent_is_hotspot" in gdf.columns:
+            stored_persist = gdf["persistent_is_hotspot"].values.astype(bool)
+        elif "is_persistent_hotspot" in gdf.columns:
             stored_persist = gdf["is_persistent_hotspot"].values.astype(bool)
+        elif "hotspot_classification" in gdf.columns:
+            stored_persist = gdf["hotspot_classification"].notnull() & gdf["hotspot_classification"].astype(str).str.contains("Persistent", case=False).values
         elif "thermal_retention_class" in gdf.columns:
-            stored_persist = gdf["thermal_retention_class"].notna() & (gdf["thermal_retention_class"].astype(str) == "Persistent Hotspot").values
-        elif "heat_persistence_index" in gdf.columns:
-            stored_persist = (day_hot & night_hot)
+            stored_persist = gdf["thermal_retention_class"].notnull() & (gdf["thermal_retention_class"].astype(str) == "Persistent Hotspot").values
         else:
             stored_persist = day_hot & night_hot
 

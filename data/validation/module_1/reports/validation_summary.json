@@ -1,11 +1,11 @@
 {
   "dataset": "urban_heat_hotspot_knowledge_layer.geoparquet",
-  "validation_run_id": "VAL-M1-c350d397",
-  "timestamp": "2026-08-28T04:09:01.089744+00:00",
-  "overall_status": "WARN",
+  "validation_run_id": "VAL-M1-c1471ff8",
+  "timestamp": "2026-08-28T04:56:38.990049+00:00",
+  "overall_status": "PASS",
   "total_checks": 32,
-  "pass_count": 30,
-  "warn_count": 2,
+  "pass_count": 32,
+  "warn_count": 0,
   "fail_count": 0,
   "validation_summaries": {
     "suhii_baseline": {
@@ -23,13 +23,13 @@
     "spatial_statistics": {
       "category": "Spatial Statistics (Gi* & Moran's I)",
       "total_checks": 2,
-      "pass_count": 0,
-      "warn_count": 2,
+      "pass_count": 2,
+      "warn_count": 0,
       "fail_count": 0,
-      "status": "WARN",
+      "status": "PASS",
       "findings": [
-        "Hotspot classification discrepancy: only 85.78% match with z >= 1.96 criterion.",
-        "Independent Getis-Ord Gi* recalculation correlation = 0.6795 below threshold."
+        "Hotspot threshold classification (z >= 1.96) is 100.00% consistent across 44298 points.",
+        "Independent Getis-Ord Gi* recalculation correlation = 0.9991 (>= 0.70)."
       ]
     },
     "cluster_topology": {
@@ -52,7 +52,7 @@
       "fail_count": 0,
       "status": "PASS",
       "findings": [
-        "Diurnal persistence boolean rule (Day AND Night) is 100% exact across all 44298 points. Day Hotspots: 0, Night Hotspots: 0, Persistent: 0."
+        "Diurnal persistence boolean rule (Day AND Night) is 100% exact across all 44298 points. Day Hotspots: 6299, Night Hotspots: 12891, Persistent: 885."
       ]
     },
     "schema_data_contracts": {
