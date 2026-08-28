@@ -191,6 +191,46 @@ def test_stage5_hotspot_pipeline(tmp_path):
     assert metrics["total_validated_hotspot_pixels"] >= 10
 
 
+def test_independent_day_night_clustering(tmp_path):
+    """Tests independent day and night 8-neighbour connected component analysis."""
+    lats = [13.08 + (i // 5)*0.001 for i in range(25)]
+    lons = [80.27 + (i % 5)*0.001 for i in range(25)]
+    utm_x, utm_y, _ = transform_wgs84_to_utm(lons, lats)
+
+    day_sig = [95 if i < 6 else None for i in range(25)]  # 6 connected day cells
+    night_sig = [95 if i >= 19 else None for i in range(25)]  # 6 connected night cells
+
+    dummy_gdf = gpd.GeoDataFrame({
+        "point_id": [f"P_{i}" for i in range(25)],
+        "latitude": lats,
+        "longitude": lons,
+        "utm_x_m": utm_x,
+        "utm_y_m": utm_y,
+        "lst_day_celsius": [40.0]*25,
+        "lst_night_celsius": [25.0]*25,
+        "suhii_day_celsius": [5.0]*25,
+        "suhii_night_celsius": [3.0]*25,
+        "day_hotspot_significance": day_sig,
+        "night_hotspot_significance": night_sig,
+        "heat_persistence_index": [0.6]*25
+    }, geometry=gpd.points_from_xy(lons, lats), crs="EPSG:4326")
+
+    generator = HotspotClusterGenerator(output_dir=tmp_path)
+    res_gdf, df_registry, gdf_clusters = generator.label_clusters(dummy_gdf)
+
+    assert "day_hotspot_id" in res_gdf.columns
+    assert "night_hotspot_id" in res_gdf.columns
+    assert "hotspot_group_id" in res_gdf.columns
+
+    # Verify Day-only cluster received day_hotspot_id and night_hotspot_id == None
+    assert res_gdf.iloc[0]["day_hotspot_id"] == "DAY_HOT_0001"
+    assert res_gdf.iloc[0]["night_hotspot_id"] is None
+
+    # Verify Night-only cluster received night_hotspot_id and day_hotspot_id == None
+    assert res_gdf.iloc[20]["night_hotspot_id"] == "NIGHT_HOT_0001"
+    assert res_gdf.iloc[20]["day_hotspot_id"] is None
+
+
 def test_stage6_knowledge_export_pipeline(tmp_path):
     hotspot_path = tmp_path / "module_1_stage5_hotspots.parquet"
     lats = [13.08 + i*0.001 for i in range(50)]
@@ -221,11 +261,16 @@ def test_stage6_knowledge_export_pipeline(tmp_path):
         "day_hotspot_significance": [95 if i < 30 else None for i in range(50)],
         "night_hotspot_significance": [99 if i < 10 else (95 if i < 30 else None) for i in range(50)],
         "is_validated_hotspot": [True if i < 30 else False for i in range(50)],
-        "hotspot_id": [f"HOT_{(i // 10) + 1:04d}" if i < 30 else None for i in range(50)],
+        "day_hotspot_id": [f"DAY_HOT_{(i // 10) + 1:04d}" if i < 30 else None for i in range(50)],
+        "night_hotspot_id": [f"NIGHT_HOT_{(i // 10) + 1:04d}" if i < 30 else None for i in range(50)],
+        "hotspot_group_id": [f"HG_{(i // 10) + 1:04d}" if i < 30 else None for i in range(50)],
+        "hotspot_id": [f"DAY_HOT_{(i // 10) + 1:04d}" if i < 30 else None for i in range(50)],
         "city_temperature_percentile": [90.0 if i < 30 else 20.0 for i in range(50)],
         "temperature_rank": [40 - i if i < 30 else 10 for i in range(50)],
         "temperature_total_pixels": [50]*50,
-        "hotspot_confidence_score": [85.0 if i < 30 else None for i in range(50)],
+        "day_hotspot_confidence_score": [85.0 if i < 30 else None for i in range(50)],
+        "night_hotspot_confidence_score": [88.0 if i < 30 else None for i in range(50)],
+        "hotspot_confidence_score": [88.0 if i < 30 else None for i in range(50)],
         "confidence_class": ["Very High" if i < 30 else None for i in range(50)],
         "hotspot_classification": ["95% Confidence Hotspot" if i < 30 else "Not Significant / Noise" for i in range(50)],
         "ndvi": [0.2 if i < 30 else 0.6 for i in range(50)],
@@ -269,6 +314,6 @@ def test_authoritative_knowledge_layer_schema():
     if p.exists():
         gdf = gpd.read_parquet(p)
         assert len(gdf) == 44298
-        required = ["point_id", "lst_day_celsius", "lst_night_celsius", "suhii_day_celsius", "gi_zscore_day"]
+        required = ["point_id", "lst_day_celsius", "lst_night_celsius", "suhii_day_celsius", "gi_zscore_day", "day_hotspot_id", "night_hotspot_id"]
         for col in required:
             assert col in gdf.columns

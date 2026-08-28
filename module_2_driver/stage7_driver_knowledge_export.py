@@ -1,18 +1,17 @@
 """
-Boreas-Nexus Module 2 - Stage 7: Urban Heat Driver Knowledge Layer Export
+Boreas-Nexus Module 2 - Stage 7: Driver Knowledge Layer Export
 
-Consolidates multi-source drivers, machine learning predictions, SHAP attributions,
-physics audit scores, and spatial GWR coefficients into the authoritative GeoParquet Knowledge
-Layer and cluster-level Driver Attribution Registry, enforcing column-specific nullability rules.
+Purpose: Consolidate all Module 2 driver attribution, SHAP values, domain audit scores,
+and spatial GWR outputs into the unified driver knowledge layer (GeoParquet) and generate
+the Cluster Attribution Registry (Parquet).
 """
 
 from pathlib import Path
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, List, Optional
 import json
-import numpy as np
 import pandas as pd
 import geopandas as gpd
-import yaml
+import numpy as np
 
 from utils.logger import logger
 from storage.storage_manager import StorageManager
@@ -20,128 +19,118 @@ from storage.storage_manager import StorageManager
 
 class Stage7DriverKnowledgeExporter:
     """
-    Stage 7: Knowledge Layer & Attribution Registry Exporter.
+    Consolidates and exports Module 2 driver intelligence outputs into GeoParquet and Parquet registry artifacts.
     """
 
     def __init__(
         self,
-        config_path: Path | str = Path("config/driver_analysis.yaml"),
-        output_dir: Optional[Path | str] = None,
-        metadata_dir: Optional[Path | str] = None
+        config_path: Path | str = Path("config/city.yaml"),
+        output_dir: Path | str | None = None,
+        metadata_dir: Path | str | None = None
     ):
         self.config_path = Path(config_path)
-        self.cfg = self._load_config()
-        self.storage = StorageManager()
-        
-        self.output_dir = Path(output_dir) if output_dir else self.storage.get_processed_dir("module_2")
-        self.metadata_dir = Path(metadata_dir) if metadata_dir else Path("data/metadata")
-        self.reports_dir = self.storage.get_export_dir("reports")
-        
+        self.storage_manager = StorageManager()
+        self.output_dir = Path(output_dir) if output_dir is not None else self.storage_manager.get_processed_dir("module_2")
+        self.metadata_dir = Path(metadata_dir) if metadata_dir is not None else self.output_dir
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.metadata_dir.mkdir(parents=True, exist_ok=True)
-        self.reports_dir.mkdir(parents=True, exist_ok=True)
-
-    def _load_config(self) -> Dict[str, Any]:
-        """Loads YAML configuration file."""
-        if self.config_path.exists():
-            with open(self.config_path, "r", encoding="utf-8") as f:
-                return yaml.safe_load(f) or {}
-        return {}
 
     def _validate_column_nullability(self, gdf: gpd.GeoDataFrame) -> Dict[str, Any]:
         """
-        Enforces column-specific nullability validation rules.
+        Validates column completeness across driver features and SHAP values.
         """
-        mandatory_non_null = [
-            "point_id", "geometry", "latitude", "longitude",
-            "ndvi", "ndbi", "ndwi", "building_density",
-            "distance_to_roads_m", "distance_to_water_m", "distance_to_parks_m",
-            "elevation_m", "slope_deg", "aspect_sin", "aspect_cos",
-            "lst_day_celsius", "lst_night_celsius"
+        total_rows = len(gdf)
+        null_counts = gdf.isnull().sum().to_dict()
+
+        critical_driver_cols = [
+            "point_id", "lst_day_celsius", "lst_night_celsius",
+            "building_density", "distance_to_water_m", "distance_to_roads_m", "distance_to_parks_m",
+            "ndvi", "ndbi", "ndwi", "elevation_m", "slope_deg"
         ]
 
-        # Add prediction columns if present
-        for pred in ["lgbm_pred_lst_day_celsius", "rf_pred_lst_day_celsius", "primary_driver_day"]:
-            if pred in gdf.columns:
-                mandatory_non_null.append(pred)
+        critical_nulls = {c: int(null_counts.get(c, 0)) for c in critical_driver_cols if c in gdf.columns}
+        has_critical_nulls = any(val > 0 for val in critical_nulls.values())
 
-        violations = {}
-        for col in mandatory_non_null:
-            if col in gdf.columns:
-                null_count = int(gdf[col].isna().sum())
-                if null_count > 0:
-                    violations[col] = null_count
+        report = {
+            "total_rows": total_rows,
+            "has_critical_nulls": has_critical_nulls,
+            "critical_column_null_counts": critical_nulls,
+            "all_column_null_counts": {k: int(v) for k, v in null_counts.items() if v > 0}
+        }
+        return report
 
-        if violations:
-            logger.warning(f"Nullability check flagged non-null column violations: {violations}")
-            # Cleanly impute numerical predictions or features
-            for col in violations:
-                if pd.api.types.is_numeric_dtype(gdf[col]):
-                    gdf[col] = gdf[col].fillna(gdf[col].median())
-
-        return {
-            "mandatory_columns_checked": len(mandatory_non_null),
-            "violations_found": len(violations),
-            "violations": violations,
-            "status": "PASSED" if len(violations) == 0 else "RESOLVED_BY_IMPUTATION"
+    def _summarize_group(self, hid: str, period: str, group: pd.DataFrame) -> Dict[str, Any]:
+        """Summarizes driver attributions for a single hotspot cluster entity."""
+        record = {
+            "hotspot_id": hid,
+            "period": period,
+            "hotspot_group_id": group["hotspot_group_id"].dropna().iloc[0] if "hotspot_group_id" in group.columns and group["hotspot_group_id"].notna().any() else None,
+            "pixel_count": len(group),
+            "mean_lst_day_celsius": float(group["lst_day_celsius"].mean()) if "lst_day_celsius" in group.columns else np.nan,
+            "mean_lst_night_celsius": float(group["lst_night_celsius"].mean()) if "lst_night_celsius" in group.columns else np.nan,
+            "mean_ndvi": float(group["ndvi"].mean()) if "ndvi" in group.columns else np.nan,
+            "mean_building_density": float(group["building_density"].mean()) if "building_density" in group.columns else np.nan,
+            "mean_distance_to_water_m": float(group["distance_to_water_m"].mean()) if "distance_to_water_m" in group.columns else np.nan,
         }
 
-    def _build_cluster_attribution_registry(
-        self,
-        gdf: gpd.GeoDataFrame
-    ) -> pd.DataFrame:
-        """
-        Aggregates pixel-level driver SHAP contributions and physics consistency
-        per validated hotspot cluster (HOT_xxxx).
-        """
-        if "hotspot_id" not in gdf.columns:
-            logger.warning("'hotspot_id' column not present. Returning empty registry.")
-            return pd.DataFrame()
+        # SHAP attributions
+        if "shap_day_ndvi" in group.columns:
+            record["mean_shap_day_ndvi"] = float(group["shap_day_ndvi"].mean())
+        if "shap_day_ndbi" in group.columns:
+            record["mean_shap_day_ndbi"] = float(group["shap_day_ndbi"].mean())
+        if "shap_day_building_density" in group.columns:
+            record["mean_shap_day_building_density"] = float(group["shap_day_building_density"].mean())
+        if "shap_day_distance_to_water_m" in group.columns:
+            record["mean_shap_day_distance_to_water_m"] = float(group["shap_day_distance_to_water_m"].mean())
 
-        hotspot_mask = gdf["hotspot_id"].notna()
-        hotspot_df = gdf[hotspot_mask]
+        # Dominant drivers
+        if "primary_driver_day" in group.columns:
+            mode_primary = group["primary_driver_day"].mode()
+            record["dominant_cluster_driver_day"] = str(mode_primary.iloc[0]) if len(mode_primary) > 0 else "unknown"
+        if "secondary_driver_day" in group.columns:
+            mode_sec = group["secondary_driver_day"].mode()
+            record["secondary_cluster_driver_day"] = str(mode_sec.iloc[0]) if len(mode_sec) > 0 else "unknown"
 
-        if len(hotspot_df) == 0:
+        # Physics / Domain consistency score
+        if "shap_domain_consistency_score_day" in group.columns:
+            record["mean_shap_domain_consistency_score_day"] = float(group["shap_domain_consistency_score_day"].mean())
+
+        return record
+
+    def _build_cluster_attribution_registry(self, gdf: gpd.GeoDataFrame) -> pd.DataFrame:
+        """
+        Builds the normalized Cluster Attribution Registry for period-specific hotspot entities.
+        """
+        logger.info("Building normalized Driver Cluster Attribution Registry...")
+
+        has_day = "day_hotspot_id" in gdf.columns and gdf["day_hotspot_id"].notna().any()
+        has_night = "night_hotspot_id" in gdf.columns and gdf["night_hotspot_id"].notna().any()
+        has_hotspot = "hotspot_id" in gdf.columns and gdf["hotspot_id"].notna().any()
+
+        if not (has_day or has_night or has_hotspot):
             logger.warning("No hotspot points detected. Empty cluster registry.")
             return pd.DataFrame()
 
         registry_records = []
-        clusters = hotspot_df.groupby("hotspot_id")
 
-        for hid, group in clusters:
-            record = {
-                "hotspot_id": hid,
-                "pixel_count": len(group),
-                "mean_lst_day_celsius": float(group["lst_day_celsius"].mean()) if "lst_day_celsius" in group else np.nan,
-                "mean_lst_night_celsius": float(group["lst_night_celsius"].mean()) if "lst_night_celsius" in group else np.nan,
-                "mean_ndvi": float(group["ndvi"].mean()) if "ndvi" in group else np.nan,
-                "mean_building_density": float(group["building_density"].mean()) if "building_density" in group else np.nan,
-                "mean_distance_to_water_m": float(group["distance_to_water_m"].mean()) if "distance_to_water_m" in group else np.nan,
-            }
+        if has_day:
+            day_df = gdf[gdf["day_hotspot_id"].notna()]
+            for hid, group in day_df.groupby("day_hotspot_id"):
+                rec = self._summarize_group(hid, "DAY", group)
+                registry_records.append(rec)
 
-            # SHAP attributions
-            if "shap_day_ndvi" in group.columns:
-                record["mean_shap_day_ndvi"] = float(group["shap_day_ndvi"].mean())
-            if "shap_day_ndbi" in group.columns:
-                record["mean_shap_day_ndbi"] = float(group["shap_day_ndbi"].mean())
-            if "shap_day_building_density" in group.columns:
-                record["mean_shap_day_building_density"] = float(group["shap_day_building_density"].mean())
-            if "shap_day_distance_to_water_m" in group.columns:
-                record["mean_shap_day_distance_to_water_m"] = float(group["shap_day_distance_to_water_m"].mean())
+        if has_night:
+            night_df = gdf[gdf["night_hotspot_id"].notna()]
+            for hid, group in night_df.groupby("night_hotspot_id"):
+                rec = self._summarize_group(hid, "NIGHT", group)
+                registry_records.append(rec)
 
-            # Dominant drivers
-            if "primary_driver_day" in group.columns:
-                mode_primary = group["primary_driver_day"].mode()
-                record["dominant_cluster_driver_day"] = str(mode_primary.iloc[0]) if len(mode_primary) > 0 else "unknown"
-            if "secondary_driver_day" in group.columns:
-                mode_sec = group["secondary_driver_day"].mode()
-                record["secondary_cluster_driver_day"] = str(mode_sec.iloc[0]) if len(mode_sec) > 0 else "unknown"
-
-            # Physics / Domain consistency score
-            if "shap_domain_consistency_score_day" in group.columns:
-                record["mean_shap_domain_consistency_score_day"] = float(group["shap_domain_consistency_score_day"].mean())
-
-            registry_records.append(record)
+        if len(registry_records) == 0 and has_hotspot:
+            hotspot_df = gdf[gdf["hotspot_id"].notna() & (gdf["hotspot_id"] != "")]
+            for hid, group in hotspot_df.groupby("hotspot_id"):
+                period = "DAY" if str(hid).startswith("DAY") else ("NIGHT" if str(hid).startswith("NIGHT") else "COMPOSITE")
+                rec = self._summarize_group(hid, period, group)
+                registry_records.append(rec)
 
         registry_df = pd.DataFrame(registry_records)
         return registry_df

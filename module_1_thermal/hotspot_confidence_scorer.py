@@ -136,7 +136,7 @@ class HotspotConfidenceScorer:
         return norm_arr
 
     def compute_confidence_scores(self, gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
-        """Calculates weighted hotspot_confidence_score and assigns confidence_class."""
+        """Calculates weighted hotspot_confidence_score and assigns confidence_class independently for day and night."""
         result_gdf = gdf.copy()
         logger.info("Computing Hotspot Confidence Scores (0-100)...")
 
@@ -148,13 +148,17 @@ class HotspotConfidenceScorer:
 
         z_day = result_gdf.get("gi_zscore_day", pd.Series(0.0, index=result_gdf.index)).values.astype(np.float64)
         z_night = result_gdf.get("gi_zscore_night", pd.Series(0.0, index=result_gdf.index)).values.astype(np.float64)
-        z_comp = np.maximum(z_day, z_night)
-        norm_gi = self._min_max_normalize(z_comp)
+
+        norm_gi_day = self._min_max_normalize(z_day)
+        norm_gi_night = self._min_max_normalize(z_night)
+        norm_gi_comp = self._min_max_normalize(np.maximum(z_day, z_night))
 
         suhii_day = result_gdf.get("suhii_day_celsius", pd.Series(0.0, index=result_gdf.index)).values.astype(np.float64)
         suhii_night = result_gdf.get("suhii_night_celsius", pd.Series(0.0, index=result_gdf.index)).values.astype(np.float64)
-        suhii_comp = np.maximum(suhii_day, suhii_night)
-        norm_suhii = self._min_max_normalize(suhii_comp)
+
+        norm_suhii_day = self._min_max_normalize(suhii_day)
+        norm_suhii_night = self._min_max_normalize(suhii_night)
+        norm_suhii_comp = self._min_max_normalize(np.maximum(suhii_day, suhii_night))
 
         hp = result_gdf.get("heat_persistence_index", pd.Series(0.0, index=result_gdf.index)).values.astype(np.float64)
         norm_hp = self._min_max_normalize(hp)
@@ -162,13 +166,13 @@ class HotspotConfidenceScorer:
         pct = result_gdf.get("city_temperature_percentile", pd.Series(0.0, index=result_gdf.index)).values.astype(np.float64)
         norm_pct = np.nan_to_num(pct / 100.0, nan=0.0)
 
-        raw_score = 100.0 * (
-            w_gi * norm_gi +
-            w_suhii * norm_suhii +
-            w_hp * norm_hp +
-            w_pct * norm_pct
-        )
-        scores = np.round(np.clip(raw_score, 0.0, 100.0), 2)
+        raw_score_day = 100.0 * (w_gi * norm_gi_day + w_suhii * norm_suhii_day + w_hp * norm_hp + w_pct * norm_pct)
+        raw_score_night = 100.0 * (w_gi * norm_gi_night + w_suhii * norm_suhii_night + w_hp * norm_hp + w_pct * norm_pct)
+        raw_score_comp = 100.0 * (w_gi * norm_gi_comp + w_suhii * norm_suhii_comp + w_hp * norm_hp + w_pct * norm_pct)
+
+        scores_day = np.round(np.clip(raw_score_day, 0.0, 100.0), 2)
+        scores_night = np.round(np.clip(raw_score_night, 0.0, 100.0), 2)
+        scores_comp = np.round(np.clip(raw_score_comp, 0.0, 100.0), 2)
 
         conf_classes_cfg = sorted(
             self.config["confidence_classes"],
@@ -176,31 +180,40 @@ class HotspotConfidenceScorer:
             reverse=True
         )
 
-        # Identify hotspot vs non-hotspot points
-        if "hotspot_id" in result_gdf.columns:
-            hotspot_mask = result_gdf["hotspot_id"].notnull() & (result_gdf["hotspot_id"] != "")
-        elif "is_validated_hotspot" in result_gdf.columns:
-            hotspot_mask = result_gdf["is_validated_hotspot"].values.astype(bool)
-        else:
-            hotspot_mask = np.ones(len(result_gdf), dtype=bool)
+        def assign_class(s: float) -> str:
+            for item in conf_classes_cfg:
+                threshold = float(item.get("min_score", item.get("min", 0)))
+                name = str(item.get("name", item.get("class", "Very Low")))
+                if s >= threshold:
+                    return name
+            return "Very Low"
 
-        final_scores = np.full(len(result_gdf), np.nan, dtype=np.float64)
+        # Masks for period-specific clusters
+        has_day_id = result_gdf["day_hotspot_id"].notnull() if "day_hotspot_id" in result_gdf.columns else pd.Series(False, index=result_gdf.index)
+        has_night_id = result_gdf["night_hotspot_id"].notnull() if "night_hotspot_id" in result_gdf.columns else pd.Series(False, index=result_gdf.index)
+
+        day_final_scores = np.full(len(result_gdf), np.nan, dtype=np.float64)
+        night_final_scores = np.full(len(result_gdf), np.nan, dtype=np.float64)
+        comp_final_scores = np.full(len(result_gdf), np.nan, dtype=np.float64)
         final_classes = np.full(len(result_gdf), None, dtype=object)
 
         for i in range(len(result_gdf)):
-            if hotspot_mask.iloc[i] if hasattr(hotspot_mask, 'iloc') else hotspot_mask[i]:
-                s = scores[i]
-                final_scores[i] = s
-                assigned_cls = "Very Low"
-                for item in conf_classes_cfg:
-                    threshold = float(item.get("min_score", item.get("min", 0)))
-                    name = str(item.get("name", item.get("class", "Very Low")))
-                    if s >= threshold:
-                        assigned_cls = name
-                        break
-                final_classes[i] = assigned_cls
+            d_flag = has_day_id.iloc[i] if hasattr(has_day_id, 'iloc') else has_day_id[i]
+            n_flag = has_night_id.iloc[i] if hasattr(has_night_id, 'iloc') else has_night_id[i]
 
-        result_gdf["hotspot_confidence_score"] = final_scores
+            if d_flag:
+                day_final_scores[i] = scores_day[i]
+            if n_flag:
+                night_final_scores[i] = scores_night[i]
+
+            if d_flag or n_flag:
+                comp_s = scores_comp[i]
+                comp_final_scores[i] = comp_s
+                final_classes[i] = assign_class(comp_s)
+
+        result_gdf["day_hotspot_confidence_score"] = day_final_scores
+        result_gdf["night_hotspot_confidence_score"] = night_final_scores
+        result_gdf["hotspot_confidence_score"] = comp_final_scores
         result_gdf["confidence_class"] = final_classes
 
         return result_gdf

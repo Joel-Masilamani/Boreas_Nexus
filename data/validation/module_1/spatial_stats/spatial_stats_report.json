@@ -1,7 +1,7 @@
 {
   "total_points_evaluated": 44298,
-  "day_hotspot_count": 6299,
-  "gi_zscore_mean": -0.06150872327302749,
-  "gi_zscore_max": 8.918318415776527,
-  "sample_recalc_correlation": 0.999126115132195
+  "day_hotspot_count": 7451,
+  "gi_zscore_mean": 0.005334844713168025,
+  "gi_zscore_max": 10.088998906419265,
+  "sample_recalc_correlation": 0.9999999999999991
 }

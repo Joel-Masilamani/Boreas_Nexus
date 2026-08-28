@@ -1,7 +1,7 @@
 {
   "dataset": "urban_heat_hotspot_knowledge_layer.geoparquet",
-  "validation_run_id": "VAL-M1-c1471ff8",
-  "timestamp": "2026-08-28T04:56:38.990049+00:00",
+  "validation_run_id": "VAL-M1-858c171d",
+  "timestamp": "2026-08-28T08:26:41.046116+00:00",
   "configuration_version": "1.0.0",
   "total_checks": 32,
   "pass_count": 32,
@@ -33,7 +33,7 @@
       "status": "PASS",
       "findings": [
         "Hotspot threshold classification (z >= 1.96) is 100.00% consistent across 44298 points.",
-        "Independent Getis-Ord Gi* recalculation correlation = 0.9991 (>= 0.70)."
+        "Independent Getis-Ord Gi* recalculation correlation = 1.0000 (>= 0.70)."
       ]
     },
     "cluster_topology": {
@@ -44,8 +44,8 @@
       "fail_count": 0,
       "status": "PASS",
       "findings": [
-        "All 85 hotspot clusters satisfy the minimum size threshold (>=5 points). Min size=5, Max size=11144.",
-        "Cluster confidence scores strictly in [0.0, 100.0] across 18118 points. Mean = 52.79%."
+        "All 167 independent hotspot clusters satisfy the minimum size threshold (>=5 connected cells / 0.05 km2 area). Min size=5, Max size=7593.",
+        "Cluster confidence scores strictly in [0.0, 100.0] across 19763 points. Mean = 51.71%."
       ]
     },
     "diurnal_persistence": {
@@ -56,7 +56,7 @@
       "fail_count": 0,
       "status": "PASS",
       "findings": [
-        "Diurnal persistence boolean rule (Day AND Night) is 100% exact across all 44298 points. Day Hotspots: 6299, Night Hotspots: 12891, Persistent: 885."
+        "Diurnal persistence boolean rule (Day AND Night) is 100% exact across all 44298 points. Day Hotspots: 7451, Night Hotspots: 13895, Persistent: 1403."
       ]
     },
     "schema_data_contracts": {
@@ -81,23 +81,23 @@
     },
     "spatial_stats_diagnostics": {
       "total_points_evaluated": 44298,
-      "day_hotspot_count": 6299,
-      "gi_zscore_mean": -0.06150872327302749,
-      "gi_zscore_max": 8.918318415776527,
-      "sample_recalc_correlation": 0.999126115132195
+      "day_hotspot_count": 7451,
+      "gi_zscore_mean": 0.005334844713168025,
+      "gi_zscore_max": 10.088998906419265,
+      "sample_recalc_correlation": 0.9999999999999991
     },
     "cluster_diagnostics": {
-      "total_validated_clusters": 85,
-      "total_clustered_points": 18118,
-      "mean_points_per_cluster": 213.1529411764706,
-      "largest_cluster_id": "HOT_0011",
-      "largest_cluster_size": 11144
+      "total_validated_clusters": 167,
+      "total_clustered_points": 19763,
+      "mean_points_per_cluster": 126.4311377245509,
+      "largest_cluster_id": "DAY_HOT_0012",
+      "largest_cluster_size": 1459
     },
     "persistence_diagnostics": {
-      "day_hotspots": 6299,
-      "night_hotspots": 12891,
-      "persistent_hotspots": 885,
-      "cooccurrence_percentage": 14.05
+      "day_hotspots": 7451,
+      "night_hotspots": 13895,
+      "persistent_hotspots": 1403,
+      "cooccurrence_percentage": 18.83
     },
     "schema_diagnostics": {
       "point_id": {
@@ -141,18 +141,18 @@
         "nullable_permitted": false
       },
       "gi_pvalue_day": {
-        "datatype": "float32",
+        "datatype": "float64",
         "null_count": 0,
         "nullable_permitted": false
       },
       "day_hotspot_significance": {
         "datatype": "float64",
-        "null_count": 37999,
+        "null_count": 36847,
         "nullable_permitted": true
       },
       "night_hotspot_significance": {
         "datatype": "float64",
-        "null_count": 31407,
+        "null_count": 30403,
         "nullable_permitted": true
       },
       "heat_persistence_index": {
@@ -162,12 +162,12 @@
       },
       "hotspot_id": {
         "datatype": "object",
-        "null_count": 26180,
+        "null_count": 24535,
         "nullable_permitted": true
       },
       "hotspot_confidence_score": {
         "datatype": "float64",
-        "null_count": 26180,
+        "null_count": 24535,
         "nullable_permitted": true
       }
     }

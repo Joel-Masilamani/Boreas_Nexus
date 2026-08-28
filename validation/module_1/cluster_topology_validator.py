@@ -1,8 +1,8 @@
 """
 Hotspot Cluster Topology & Continuity Validator
 
-Audits DBSCAN spatial cluster structures, verifying minimum cluster point thresholds
-(>= 5 pixels), spatial contiguity, absence of orphaned single-pixel clusters, and
+Audits DBSCAN/CCA spatial cluster structures, verifying minimum cluster point thresholds
+(>= 5 connected cells / 0.05 km2 aggregate area), spatial contiguity, absence of orphaned single-pixel clusters, and
 composite cluster confidence scoring formulas.
 """
 
@@ -18,7 +18,7 @@ from validation.core.models import ValidationResult, ValidationStatus, CheckSumm
 
 class ClusterTopologyValidator:
     """
-    Validates DBSCAN spatial clustering and cluster confidence scores.
+    Validates independent Day and Night spatial clustering and cluster confidence scores.
     """
 
     def __init__(self, config: Dict[str, Any]):
@@ -33,41 +33,37 @@ class ClusterTopologyValidator:
         results: List[ValidationResult] = []
         findings: List[str] = []
 
-        if "hotspot_id" not in gdf.columns:
+        has_day = "day_hotspot_id" in gdf.columns and gdf["day_hotspot_id"].notnull().any()
+        has_night = "night_hotspot_id" in gdf.columns and gdf["night_hotspot_id"].notnull().any()
+        has_hotspot = "hotspot_id" in gdf.columns and gdf["hotspot_id"].notnull().any()
+
+        if not (has_day or has_night or has_hotspot):
             res = ValidationResult(
                 validation_id="M1-CLUST-COL-001",
                 validation_type="CLUSTER_TOPOLOGY",
                 metric="column_presence",
-                expected="hotspot_id",
+                expected="day_hotspot_id or night_hotspot_id or hotspot_id",
                 actual="MISSING",
                 status=ValidationStatus.FAIL,
-                message="Column 'hotspot_id' missing from dataset."
+                message="Hotspot cluster ID columns missing from dataset."
             )
             return CheckSummary("Cluster Topology", 1, 0, 0, 1, ValidationStatus.FAIL, [res.message]), [res], {}
 
-        hotspot_mask = gdf["hotspot_id"].notna()
-        hotspot_df = gdf[hotspot_mask]
+        # 1. Cluster Size Distribution & Minimum Point Threshold Check (>= 5 connected cells)
+        if has_day or has_night:
+            day_sizes = gdf["day_hotspot_id"].value_counts() if has_day else pd.Series([], dtype=int)
+            night_sizes = gdf["night_hotspot_id"].value_counts() if has_night else pd.Series([], dtype=int)
+            cluster_sizes = pd.concat([day_sizes, night_sizes])
+        else:
+            hotspot_df = gdf[gdf["hotspot_id"].notnull() & (gdf["hotspot_id"] != "")]
+            cluster_sizes = hotspot_df["hotspot_id"].value_counts()
 
-        if len(hotspot_df) == 0:
-            res = ValidationResult(
-                validation_id="M1-CLUST-EMPTY",
-                validation_type="CLUSTER_TOPOLOGY",
-                metric="hotspot_cluster_count",
-                expected="> 0 clusters",
-                actual="0 clusters",
-                status=ValidationStatus.WARN,
-                message="No hotspot clusters found in dataset."
-            )
-            return CheckSummary("Cluster Topology", 1, 0, 1, 0, ValidationStatus.WARN, [res.message]), [res], {}
-
-        # 1. Cluster Size Distribution & Minimum Point Threshold Check
-        cluster_sizes = hotspot_df["hotspot_id"].value_counts()
         total_clusters = len(cluster_sizes)
         under_sized = int(np.sum(cluster_sizes < self.min_points))
 
         if under_sized == 0:
             size_status = ValidationStatus.PASS
-            size_msg = f"All {total_clusters} hotspot clusters satisfy the minimum size threshold (>={self.min_points} points). Min size={cluster_sizes.min()}, Max size={cluster_sizes.max()}."
+            size_msg = f"All {total_clusters} independent hotspot clusters satisfy the minimum size threshold (>={self.min_points} connected cells / 0.05 km2 area). Min size={cluster_sizes.min()}, Max size={cluster_sizes.max()}."
         else:
             size_status = ValidationStatus.WARN
             size_msg = f"Found {under_sized} clusters with fewer than {self.min_points} points."
@@ -135,7 +131,7 @@ class ClusterTopologyValidator:
 
         cluster_diagnostics = {
             "total_validated_clusters": total_clusters,
-            "total_clustered_points": len(hotspot_df),
+            "total_clustered_points": len(gdf[gdf["day_hotspot_id"].notnull() | gdf["night_hotspot_id"].notnull()]) if has_day or has_night else len(gdf[gdf["hotspot_id"].notnull()]),
             "mean_points_per_cluster": float(cluster_sizes.mean()),
             "largest_cluster_id": str(cluster_sizes.index[0]),
             "largest_cluster_size": int(cluster_sizes.iloc[0])

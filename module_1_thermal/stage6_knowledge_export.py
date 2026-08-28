@@ -39,11 +39,12 @@ AUTHORITATIVE_COLUMNS = [
     # 3. THERMAL
     "lst_day_celsius", "lst_night_celsius", "suhii_day_celsius", "suhii_night_celsius",
     "delta_lst_diurnal", "heat_persistence_index",
-    # 4. STATISTICS
+    # 4. STATISTICS & ENTITIES
     "gi_zscore_day", "gi_pvalue_day", "gi_zscore_night", "gi_pvalue_night",
     "day_hotspot_significance", "night_hotspot_significance",
-    "hotspot_id", "city_temperature_percentile", "temperature_rank", "temperature_total_pixels",
-    "hotspot_confidence_score",
+    "day_hotspot_id", "night_hotspot_id", "hotspot_group_id", "hotspot_id",
+    "city_temperature_percentile", "temperature_rank", "temperature_total_pixels",
+    "day_hotspot_confidence_score", "night_hotspot_confidence_score", "hotspot_confidence_score",
     # 5. ENVIRONMENT
     "ndvi", "ndbi", "ndwi", "building_density",
     "distance_to_water_m", "distance_to_roads_m", "distance_to_parks_m",
@@ -166,21 +167,17 @@ class Stage6KnowledgeExporter:
         result_gdf["scene_id"] = result_gdf.get("scene_id", "LC09_L2SP_142051_20240515")
         result_gdf["processing_version"] = result_gdf.get("processing_version", "1.0.0")
 
-        # Fill missing statistical/classification fields with sensible defaults if needed
-        if "day_hotspot_significance" not in result_gdf.columns:
-            result_gdf["day_hotspot_significance"] = None
-        if "night_hotspot_significance" not in result_gdf.columns:
-            result_gdf["night_hotspot_significance"] = None
-        if "hotspot_id" not in result_gdf.columns:
-            result_gdf["hotspot_id"] = None
-        if "city_temperature_percentile" not in result_gdf.columns:
-            result_gdf["city_temperature_percentile"] = np.nan
-        if "temperature_rank" not in result_gdf.columns:
-            result_gdf["temperature_rank"] = np.nan
+        # Fill missing statistical/classification/entity fields with sensible defaults if needed
+        for col in ["day_hotspot_significance", "night_hotspot_significance", "day_hotspot_id", "night_hotspot_id", "hotspot_group_id", "hotspot_id"]:
+            if col not in result_gdf.columns:
+                result_gdf[col] = None
+
+        for col in ["day_hotspot_confidence_score", "night_hotspot_confidence_score", "hotspot_confidence_score", "city_temperature_percentile", "temperature_rank"]:
+            if col not in result_gdf.columns:
+                result_gdf[col] = np.nan
+
         if "temperature_total_pixels" not in result_gdf.columns:
             result_gdf["temperature_total_pixels"] = len(result_gdf)
-        if "hotspot_confidence_score" not in result_gdf.columns:
-            result_gdf["hotspot_confidence_score"] = np.nan
         if "confidence_class" not in result_gdf.columns:
             result_gdf["confidence_class"] = None
         if "thermal_retention_class" not in result_gdf.columns:
@@ -201,62 +198,155 @@ class Stage6KnowledgeExporter:
         """Builds normalized Hotspot Registry dataframe without point-level redundancy."""
         logger.info("Building normalized Hotspot Registry (hotspot_registry.parquet)...")
         cols = [
-            "hotspot_id", "cluster_area_m2", "cluster_perimeter_m",
+            "hotspot_id", "period", "hotspot_group_id", "cluster_area_m2", "cluster_perimeter_m",
             "cluster_size_pixels", "cluster_centroid_x", "cluster_centroid_y", "cluster_bbox",
             "mean_lst", "peak_lst", "mean_suhii", "mean_heat_persistence",
             "mean_hotspot_confidence_score"
         ]
 
-        if "hotspot_id" not in gdf.columns:
-            return pd.DataFrame(columns=cols)
+        # Extract day and night cluster records from point dataset if not passed directly
+        records = []
+        
+        # Check if day_hotspot_id and night_hotspot_id are populated
+        has_day = "day_hotspot_id" in gdf.columns and gdf["day_hotspot_id"].notnull().any()
+        has_night = "night_hotspot_id" in gdf.columns and gdf["night_hotspot_id"].notnull().any()
 
-        hotspot_pts = gdf[gdf["hotspot_id"].notnull() & (gdf["hotspot_id"] != "")]
-        if len(hotspot_pts) == 0:
-            return pd.DataFrame(columns=cols)
+        dx = 100.0
+        dy = 100.0
 
-        registry_rows = []
-        for hid, group in hotspot_pts.groupby("hotspot_id"):
-            size_px = len(group)
+        if has_day:
+            day_pts = gdf[gdf["day_hotspot_id"].notnull() & (gdf["day_hotspot_id"] != "")]
+            for hid, group in day_pts.groupby("day_hotspot_id"):
+                size_px = len(group)
+                xs = group["utm_x_m"].values if "utm_x_m" in group.columns else group.geometry.x.values
+                ys = group["utm_y_m"].values if "utm_y_m" in group.columns else group.geometry.y.values
 
-            xs = group["utm_x_m"].values if "utm_x_m" in group.columns else group.geometry.x.values
-            ys = group["utm_y_m"].values if "utm_y_m" in group.columns else group.geometry.y.values
+                min_x, max_x = float(xs.min()), float(xs.max())
+                min_y, max_y = float(ys.min()), float(ys.max())
 
-            min_x, max_x = float(xs.min()), float(xs.max())
-            min_y, max_y = float(ys.min()), float(ys.max())
+                area_m2 = size_px * (dx * dy)
+                perimeter_m = 2.0 * ((max_x - min_x + dx) + (max_y - min_y + dy))
+                centroid_x = float(np.mean(xs))
+                centroid_y = float(np.mean(ys))
+                bbox_str = str([round(float(b), 2) for b in [min_x - dx/2, min_y - dy/2, max_x + dx/2, max_y + dy/2]])
 
-            dx = 100.0
-            dy = 100.0
-            area_m2 = size_px * (dx * dy)
-            perimeter_m = 2.0 * ((max_x - min_x + dx) + (max_y - min_y + dy))
+                mean_lst = float(group["lst_day_celsius"].mean())
+                peak_lst = float(group["lst_day_celsius"].max())
+                mean_suhii = float(group["suhii_day_celsius"].mean()) if "suhii_day_celsius" in group.columns else 0.0
+                mean_hp = float(group["heat_persistence_index"].mean()) if "heat_persistence_index" in group.columns else 0.0
 
-            centroid_x = float(np.mean(xs))
-            centroid_y = float(np.mean(ys))
-            bbox_str = str([round(float(b), 2) for b in [min_x - dx/2, min_y - dy/2, max_x + dx/2, max_y + dy/2]])
+                conf_col = "day_hotspot_confidence_score" if "day_hotspot_confidence_score" in group.columns else "hotspot_confidence_score"
+                valid_conf = group[conf_col].dropna() if conf_col in group.columns else pd.Series([], dtype=float)
+                mean_conf = float(valid_conf.mean()) if len(valid_conf) > 0 else 0.0
 
-            mean_lst = float(group["lst_day_celsius"].mean())
-            peak_lst = float(group["lst_day_celsius"].max())
-            mean_suhii = float(group["suhii_day_celsius"].mean()) if "suhii_day_celsius" in group.columns else 0.0
-            mean_hp = float(group["heat_persistence_index"].mean()) if "heat_persistence_index" in group.columns else 0.0
+                grp_id = group["hotspot_group_id"].dropna().iloc[0] if "hotspot_group_id" in group.columns and group["hotspot_group_id"].notnull().any() else None
 
-            valid_conf = group["hotspot_confidence_score"].dropna() if "hotspot_confidence_score" in group.columns else pd.Series([], dtype=float)
-            mean_conf = float(valid_conf.mean()) if len(valid_conf) > 0 else 0.0
+                records.append({
+                    "hotspot_id": str(hid),
+                    "period": "DAY",
+                    "hotspot_group_id": str(grp_id) if grp_id is not None else None,
+                    "cluster_area_m2": round(area_m2, 2),
+                    "cluster_perimeter_m": round(perimeter_m, 2),
+                    "cluster_size_pixels": size_px,
+                    "cluster_centroid_x": round(centroid_x, 2),
+                    "cluster_centroid_y": round(centroid_y, 2),
+                    "cluster_bbox": bbox_str,
+                    "mean_lst": round(mean_lst, 2),
+                    "peak_lst": round(peak_lst, 2),
+                    "mean_suhii": round(mean_suhii, 2),
+                    "mean_heat_persistence": round(mean_hp, 3),
+                    "mean_hotspot_confidence_score": round(mean_conf, 2)
+                })
 
-            registry_rows.append({
-                "hotspot_id": str(hid),
-                "cluster_area_m2": round(area_m2, 2),
-                "cluster_perimeter_m": round(perimeter_m, 2),
-                "cluster_size_pixels": size_px,
-                "cluster_centroid_x": round(centroid_x, 2),
-                "cluster_centroid_y": round(centroid_y, 2),
-                "cluster_bbox": bbox_str,
-                "mean_lst": round(mean_lst, 2),
-                "peak_lst": round(peak_lst, 2),
-                "mean_suhii": round(mean_suhii, 2),
-                "mean_heat_persistence": round(mean_hp, 3),
-                "mean_hotspot_confidence_score": round(mean_conf, 2)
-            })
+        if has_night:
+            night_pts = gdf[gdf["night_hotspot_id"].notnull() & (gdf["night_hotspot_id"] != "")]
+            for hid, group in night_pts.groupby("night_hotspot_id"):
+                size_px = len(group)
+                xs = group["utm_x_m"].values if "utm_x_m" in group.columns else group.geometry.x.values
+                ys = group["utm_y_m"].values if "utm_y_m" in group.columns else group.geometry.y.values
 
-        return pd.DataFrame(registry_rows)
+                min_x, max_x = float(xs.min()), float(xs.max())
+                min_y, max_y = float(ys.min()), float(ys.max())
+
+                area_m2 = size_px * (dx * dy)
+                perimeter_m = 2.0 * ((max_x - min_x + dx) + (max_y - min_y + dy))
+                centroid_x = float(np.mean(xs))
+                centroid_y = float(np.mean(ys))
+                bbox_str = str([round(float(b), 2) for b in [min_x - dx/2, min_y - dy/2, max_x + dx/2, max_y + dy/2]])
+
+                mean_lst = float(group["lst_night_celsius"].mean())
+                peak_lst = float(group["lst_night_celsius"].max())
+                mean_suhii = float(group["suhii_night_celsius"].mean()) if "suhii_night_celsius" in group.columns else 0.0
+                mean_hp = float(group["heat_persistence_index"].mean()) if "heat_persistence_index" in group.columns else 0.0
+
+                conf_col = "night_hotspot_confidence_score" if "night_hotspot_confidence_score" in group.columns else "hotspot_confidence_score"
+                valid_conf = group[conf_col].dropna() if conf_col in group.columns else pd.Series([], dtype=float)
+                mean_conf = float(valid_conf.mean()) if len(valid_conf) > 0 else 0.0
+
+                grp_id = group["hotspot_group_id"].dropna().iloc[0] if "hotspot_group_id" in group.columns and group["hotspot_group_id"].notnull().any() else None
+
+                records.append({
+                    "hotspot_id": str(hid),
+                    "period": "NIGHT",
+                    "hotspot_group_id": str(grp_id) if grp_id is not None else None,
+                    "cluster_area_m2": round(area_m2, 2),
+                    "cluster_perimeter_m": round(perimeter_m, 2),
+                    "cluster_size_pixels": size_px,
+                    "cluster_centroid_x": round(centroid_x, 2),
+                    "cluster_centroid_y": round(centroid_y, 2),
+                    "cluster_bbox": bbox_str,
+                    "mean_lst": round(mean_lst, 2),
+                    "peak_lst": round(peak_lst, 2),
+                    "mean_suhii": round(mean_suhii, 2),
+                    "mean_heat_persistence": round(mean_hp, 3),
+                    "mean_hotspot_confidence_score": round(mean_conf, 2)
+                })
+
+        if len(records) == 0 and "hotspot_id" in gdf.columns:
+            # Fallback for single hotspot_id column
+            hotspot_pts = gdf[gdf["hotspot_id"].notnull() & (gdf["hotspot_id"] != "")]
+            for hid, group in hotspot_pts.groupby("hotspot_id"):
+                size_px = len(group)
+                xs = group["utm_x_m"].values if "utm_x_m" in group.columns else group.geometry.x.values
+                ys = group["utm_y_m"].values if "utm_y_m" in group.columns else group.geometry.y.values
+
+                min_x, max_x = float(xs.min()), float(xs.max())
+                min_y, max_y = float(ys.min()), float(ys.max())
+
+                area_m2 = size_px * (dx * dy)
+                perimeter_m = 2.0 * ((max_x - min_x + dx) + (max_y - min_y + dy))
+                centroid_x = float(np.mean(xs))
+                centroid_y = float(np.mean(ys))
+                bbox_str = str([round(float(b), 2) for b in [min_x - dx/2, min_y - dy/2, max_x + dx/2, max_y + dy/2]])
+
+                mean_lst = float(group["lst_day_celsius"].mean())
+                peak_lst = float(group["lst_day_celsius"].max())
+                mean_suhii = float(group["suhii_day_celsius"].mean()) if "suhii_day_celsius" in group.columns else 0.0
+                mean_hp = float(group["heat_persistence_index"].mean()) if "heat_persistence_index" in group.columns else 0.0
+
+                valid_conf = group["hotspot_confidence_score"].dropna() if "hotspot_confidence_score" in group.columns else pd.Series([], dtype=float)
+                mean_conf = float(valid_conf.mean()) if len(valid_conf) > 0 else 0.0
+
+                period_str = "DAY" if str(hid).startswith("DAY") else ("NIGHT" if str(hid).startswith("NIGHT") else "COMPOSITE")
+
+                records.append({
+                    "hotspot_id": str(hid),
+                    "period": period_str,
+                    "hotspot_group_id": None,
+                    "cluster_area_m2": round(area_m2, 2),
+                    "cluster_perimeter_m": round(perimeter_m, 2),
+                    "cluster_size_pixels": size_px,
+                    "cluster_centroid_x": round(centroid_x, 2),
+                    "cluster_centroid_y": round(centroid_y, 2),
+                    "cluster_bbox": bbox_str,
+                    "mean_lst": round(mean_lst, 2),
+                    "peak_lst": round(peak_lst, 2),
+                    "mean_suhii": round(mean_suhii, 2),
+                    "mean_heat_persistence": round(mean_hp, 3),
+                    "mean_hotspot_confidence_score": round(mean_conf, 2)
+                })
+
+        return pd.DataFrame(records) if len(records) > 0 else pd.DataFrame(columns=cols)
 
     def validate_knowledge_layer(
         self,
@@ -310,16 +400,16 @@ class Stage6KnowledgeExporter:
         totals_consistent = bool((gdf["temperature_total_pixels"] == expected_total).all())
 
         # 11. hotspot_id unique in registry
-        unique_ids = (len(df_registry["hotspot_id"]) == len(df_registry["hotspot_id"].unique())) if len(df_registry) > 0 else True
+        unique_ids = (len(df_registry["hotspot_id"]) == len(df_registry["hotspot_id"].unique())) if len(df_registry) > 0 and "hotspot_id" in df_registry.columns else True
 
-        # 12. Point belongs to at most one hotspot
-        single_cluster_membership = True  # Guaranteed by string identifier per row
+        # 12. Point belongs to at most one hotspot per period
+        single_cluster_membership = True
 
         # 13. Cluster areas > 0
-        areas_positive = bool((df_registry["cluster_area_m2"] > 0).all()) if len(df_registry) > 0 else True
+        areas_positive = bool((df_registry["cluster_area_m2"] > 0).all()) if len(df_registry) > 0 and "cluster_area_m2" in df_registry.columns else True
 
         # 14. Cluster perimeters > 0
-        perimeters_positive = bool((df_registry["cluster_perimeter_m"] > 0).all()) if len(df_registry) > 0 else True
+        perimeters_positive = bool((df_registry["cluster_perimeter_m"] > 0).all()) if len(df_registry) > 0 and "cluster_perimeter_m" in df_registry.columns else True
 
         # 15. Confidence scores within 0-100
         scores = gdf["hotspot_confidence_score"].dropna()
@@ -374,7 +464,7 @@ class Stage6KnowledgeExporter:
             "summary": {
                 "total_points": len(gdf),
                 "total_clusters": len(df_registry),
-                "total_hotspot_points": int((gdf["hotspot_id"].notnull()).sum()),
+                "total_hotspot_points": int(((gdf["day_hotspot_id"].notnull() if "day_hotspot_id" in gdf.columns else False) | (gdf["night_hotspot_id"].notnull() if "night_hotspot_id" in gdf.columns else False) | (gdf["hotspot_id"].notnull() if "hotspot_id" in gdf.columns else False)).sum()),
                 "total_land_pixels": expected_total
             }
         }
@@ -384,7 +474,15 @@ class Stage6KnowledgeExporter:
         n_total = len(gdf)
         n_urban = int(gdf["is_urban"].sum()) if "is_urban" in gdf.columns else 0
         n_rural = int(gdf["is_rural"].sum()) if "is_rural" in gdf.columns else 0
-        n_hotspots = int((gdf["hotspot_id"].notnull() & (gdf["hotspot_id"] != "")).sum()) if "hotspot_id" in gdf.columns else 0
+        
+        has_day_id = "day_hotspot_id" in gdf.columns and gdf["day_hotspot_id"].notnull().any()
+        has_night_id = "night_hotspot_id" in gdf.columns and gdf["night_hotspot_id"].notnull().any()
+        
+        if has_day_id or has_night_id:
+            n_hotspots = int(((gdf.get("day_hotspot_id", pd.Series()).notnull()) | (gdf.get("night_hotspot_id", pd.Series()).notnull())).sum())
+        else:
+            n_hotspots = int((gdf["hotspot_id"].notnull() & (gdf["hotspot_id"] != "")).sum()) if "hotspot_id" in gdf.columns else 0
+
         n_day_hotspots = int((gdf["day_hotspot_significance"].notnull()).sum()) if "day_hotspot_significance" in gdf.columns else 0
         n_night_hotspots = int((gdf["night_hotspot_significance"].notnull()).sum()) if "night_hotspot_significance" in gdf.columns else 0
         n_persistent = int(((gdf["day_hotspot_significance"].notnull()) & (gdf["night_hotspot_significance"].notnull())).sum()) if "day_hotspot_significance" in gdf.columns and "night_hotspot_significance" in gdf.columns else 0
