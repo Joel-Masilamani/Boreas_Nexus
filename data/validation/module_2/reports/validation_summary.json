@@ -1,11 +1,11 @@
 {
   "dataset": "urban_heat_driver_knowledge_layer.geoparquet",
-  "validation_run_id": "VAL-M2-4eeb6128",
-  "timestamp": "2026-08-28T08:27:02.258172+00:00",
+  "validation_run_id": "VAL-M2-84fb3bdf",
+  "timestamp": "2026-09-02T04:29:51.776872+00:00",
   "overall_status": "WARN",
-  "total_checks": 57,
+  "total_checks": 56,
   "pass_count": 43,
-  "warn_count": 14,
+  "warn_count": 13,
   "fail_count": 0,
   "configuration_gaps_count": 5,
   "validation_summaries": {
@@ -17,20 +17,20 @@
       "fail_count": 0,
       "status": "WARN",
       "findings": [
-        "All 120 building density values strictly within [0.0, 1.0] with 0 NaNs.",
-        "Stratified building density verification: 30 points evaluated across 3 strata (Overall MAE=0.3978, MaxAE=0.9860)."
+        "All 44298 building density values strictly within [0.0, 1.0] with 0 NaNs.",
+        "Stratified building density verification: 30 points evaluated across 3 strata (Overall MAE=0.3246, MaxAE=0.8780)."
       ]
     },
     "terrain_dem": {
       "category": "Terrain & DEM",
-      "total_checks": 5,
-      "pass_count": 1,
-      "warn_count": 4,
+      "total_checks": 4,
+      "pass_count": 2,
+      "warn_count": 2,
       "fail_count": 0,
       "status": "WARN",
       "findings": [
-        "All 120 elevation and slope values strictly within physical ranges with 0 NaNs.",
-        "Stratified terrain verification: 38 points evaluated across 3 strata (Elev MAE=19.54m, Slope MAE=13.75\u00b0)."
+        "All 44298 elevation and slope values strictly within physical ranges with 0 NaNs.",
+        "Stratified terrain verification: 23 points evaluated across 3 strata (Elev MAE=0.00m, Slope MAE=22.66\u00b0)."
       ]
     },
     "temporal_lineage": {
@@ -48,14 +48,14 @@
     "ml_spatial_leakage": {
       "category": "ML & Spatial Leakage",
       "total_checks": 2,
-      "pass_count": 2,
-      "warn_count": 0,
+      "pass_count": 1,
+      "warn_count": 1,
       "fail_count": 0,
-      "status": "PASS",
+      "status": "WARN",
       "findings": [
-        "Zero spatial block overlap (disjoint sets): 84 train, 18 val, 18 test blocks.",
-        "Spatial Block Split (Primary): R\u00b2=0.8933, RMSE=0.907\u00b0C.",
-        "Random Split (Secondary Benchmark): R\u00b2=0.9469, RMSE=0.548\u00b0C."
+        "Zero spatial block overlap (disjoint sets): 100 train, 21 val, 22 test blocks.",
+        "Spatial Block Split (Primary): R\u00b2=0.3075, RMSE=1.955\u00b0C.",
+        "Random Split (Secondary Benchmark): R\u00b2=0.4806, RMSE=1.732\u00b0C."
       ]
     },
     "shap_explainability": {
@@ -66,8 +66,8 @@
       "fail_count": 0,
       "status": "PASS",
       "findings": [
-        "SHAP additive property mathematically exact across all 120 points. Max Error = 8.53e-14 (<= 1.0e-04), Mean Error = 2.93e-14.",
-        "Driver rankings (primary/secondary/tertiary) are 100% consistent with abs(SHAP) sorting across all 120 points."
+        "SHAP additive property mathematically exact across all 44298 points. Max Error = 9.95e-14 (<= 1.0e-04), Mean Error = 2.59e-14.",
+        "Driver rankings (primary/secondary/tertiary) are 100% consistent with abs(SHAP) sorting across all 44298 points."
       ]
     },
     "gwr_statistical": {
@@ -78,8 +78,8 @@
       "fail_count": 0,
       "status": "WARN",
       "findings": [
-        "GWR Local R\u00b2 distribution: Min=0.9684, Median=0.9714, Mean=0.9714, Max=0.9737, Std=0.0013 across 120 points.",
-        "GWR Bandwidth Sensitivity (\u00b115% perturbation): Max parameter shift = 50.92% (threshold <= 25%). Parameter stability verified."
+        "GWR Local R\u00b2 distribution: Min=0.0017, Median=0.2149, Mean=0.2519, Max=0.884, Std=0.1713 across 44298 points.",
+        "GWR Bandwidth Sensitivity (\u00b115% perturbation): Max parameter shift = 26.58% (threshold <= 25%). Parameter stability verified."
       ]
     },
     "schema_data_contracts": {

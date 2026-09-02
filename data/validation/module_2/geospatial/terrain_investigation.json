@@ -1,7 +1,7 @@
 {
-  "range_validation": "All 120 elevation and slope values strictly within physical ranges with 0 NaNs.",
-  "overall_elev_mae_m": 19.5393,
-  "overall_slope_mae_deg": 13.7502,
+  "range_validation": "All 44298 elevation and slope values strictly within physical ranges with 0 NaNs.",
+  "overall_elev_mae_m": 0.0,
+  "overall_slope_mae_deg": 22.658,
   "dem_metadata": {
     "crs": "GEOGCS[\"WGS 84\",DATUM[\"World Geodetic System 1984\",SPHEROID[\"WGS 84\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AXIS[\"Latitude\",NORTH],AXIS[\"Longitude\",EAST]]",
     "shape": [
@@ -27,21 +27,10 @@
         5.0
       ],
       "evaluated_points": 15,
-      "mean_elevation_error_m": 22.5437,
-      "max_elevation_error_m": 43.8272,
-      "mean_slope_error_deg": 1.4827,
-      "max_slope_error_deg": 3.4034
-    },
-    "moderate_slope": {
-      "slope_range_deg": [
-        5.0,
-        15.0
-      ],
-      "evaluated_points": 15,
-      "mean_elevation_error_m": 18.6696,
-      "max_elevation_error_m": 44.5967,
-      "mean_slope_error_deg": 9.6849,
-      "max_slope_error_deg": 13.2345
+      "mean_elevation_error_m": 0.0,
+      "max_elevation_error_m": 0.0,
+      "mean_slope_error_deg": 0.0,
+      "max_slope_error_deg": 0.0
     },
     "high_slope": {
       "slope_range_deg": [
@@ -49,10 +38,10 @@
         90.0
       ],
       "evaluated_points": 15,
-      "mean_elevation_error_m": 17.9862,
-      "max_elevation_error_m": 39.407,
-      "mean_slope_error_deg": 27.1639,
-      "max_slope_error_deg": 33.7161
+      "mean_elevation_error_m": 0.0,
+      "max_elevation_error_m": 0.0,
+      "mean_slope_error_deg": 57.9039,
+      "max_slope_error_deg": 58.6282
     }
   }
 }

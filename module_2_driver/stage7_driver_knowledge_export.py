@@ -24,14 +24,16 @@ class Stage7DriverKnowledgeExporter:
 
     def __init__(
         self,
-        config_path: Path | str = Path("config/city.yaml"),
+        config_path: Path | str = Path("config/driver_analysis.yaml"),
         output_dir: Path | str | None = None,
-        metadata_dir: Path | str | None = None
+        metadata_dir: Path | str | None = None,
+        hotspot_registry_path: Path | str | None = None
     ):
         self.config_path = Path(config_path)
         self.storage_manager = StorageManager()
         self.output_dir = Path(output_dir) if output_dir is not None else self.storage_manager.get_processed_dir("module_2")
         self.metadata_dir = Path(metadata_dir) if metadata_dir is not None else self.output_dir
+        self.hotspot_registry_path = Path(hotspot_registry_path) if hotspot_registry_path is not None else Path("data/processed/module_1/hotspot_registry.parquet")
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.metadata_dir.mkdir(parents=True, exist_ok=True)
 
@@ -175,8 +177,36 @@ class Stage7DriverKnowledgeExporter:
                 rec = self._summarize_group(hid, period, group)
                 registry_records.append(rec)
 
-        registry_df = pd.DataFrame(registry_records)
-        return registry_df
+        attribution_df = pd.DataFrame(registry_records)
+
+        # Ingest and Join with Module 1 Authoritative Hotspot Registry
+        if self.hotspot_registry_path and self.hotspot_registry_path.exists():
+            logger.info(f"Ingesting authoritative Module 1 Hotspot Registry from: {self.hotspot_registry_path}")
+            try:
+                m1_registry = pd.read_parquet(self.hotspot_registry_path)
+                logger.info(f"Loaded {len(m1_registry)} authoritative entities from Module 1 registry.")
+
+                # Canonical merge on ['hotspot_id', 'period']
+                # Drop overlapping columns from attribution_df before merge (e.g. hotspot_group_id if present)
+                m2_drop_cols = [c for c in ["hotspot_group_id"] if c in attribution_df.columns]
+                m2_clean_attrib = attribution_df.drop(columns=m2_drop_cols, errors="ignore")
+
+                merged_registry = m1_registry.merge(
+                    m2_clean_attrib,
+                    on=["hotspot_id", "period"],
+                    how="inner"
+                )
+
+                if len(merged_registry) != len(m1_registry):
+                    logger.warning(
+                        f"Reconciliation row count mismatch: M1={len(m1_registry)}, Merged={len(merged_registry)}"
+                    )
+
+                return merged_registry
+            except Exception as e:
+                logger.error(f"Failed to join with Module 1 hotspot registry ({e}). Falling back to point attribution summary.")
+
+        return attribution_df
 
     def run(
         self,

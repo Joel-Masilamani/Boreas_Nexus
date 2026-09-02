@@ -36,11 +36,13 @@ class Module2DriverPipeline:
         self,
         config_path: Path | str = Path("config/driver_analysis.yaml"),
         output_dir: Optional[Path | str] = None,
-        metadata_dir: Optional[Path | str] = None
+        metadata_dir: Optional[Path | str] = None,
+        hotspot_registry_path: Optional[Path | str] = None
     ):
         self.config_path = Path(config_path)
         self.output_dir = Path(output_dir) if output_dir is not None else None
         self.metadata_dir = Path(metadata_dir) if metadata_dir is not None else None
+        self.hotspot_registry_path = Path(hotspot_registry_path) if hotspot_registry_path is not None else None
 
     def run(self, gdf_in: Optional[gpd.GeoDataFrame] = None) -> Dict[str, Any]:
         """
@@ -79,7 +81,8 @@ class Module2DriverPipeline:
         s7 = Stage7DriverKnowledgeExporter(
             config_path=self.config_path,
             output_dir=self.output_dir,
-            metadata_dir=self.metadata_dir
+            metadata_dir=self.metadata_dir,
+            hotspot_registry_path=self.hotspot_registry_path
         )
         all_metrics = {
             "stage1": m1, "stage2": m2, "stage3": m3,

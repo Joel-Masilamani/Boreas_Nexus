@@ -84,6 +84,7 @@ spatial_driver_intelligence:
 
 storage:
   input_knowledge_layer: "data/processed/module_1/urban_heat_hotspot_knowledge_layer.geoparquet"
+  input_hotspot_registry: "data/processed/module_1/hotspot_registry.parquet"
   output_driver_knowledge_layer: "data/processed/module_2/urban_heat_driver_knowledge_layer.geoparquet"
   output_registry: "data/processed/module_2/driver_attribution_registry.parquet"
   output_physics_audit: "data/metadata/driver_shap_domain_audit.json"

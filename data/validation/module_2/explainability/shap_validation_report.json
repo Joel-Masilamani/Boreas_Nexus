@@ -1,7 +1,7 @@
 {
   "reconstruction_check": {
-    "max_absolute_error": 8.526512829121202e-14,
-    "mean_absolute_error": 2.9250675955457455e-14
+    "max_absolute_error": 9.947598300641403e-14,
+    "mean_absolute_error": 2.5943359209123292e-14
   },
   "ranking_consistency": {
     "primary_match_pct": 100.0,

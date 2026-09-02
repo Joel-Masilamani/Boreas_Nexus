@@ -1,11 +1,11 @@
 {
   "dataset": "urban_heat_driver_knowledge_layer.geoparquet",
-  "validation_run_id": "VAL-M2-4eeb6128",
-  "timestamp": "2026-08-28T08:27:02.258172+00:00",
+  "validation_run_id": "VAL-M2-84fb3bdf",
+  "timestamp": "2026-09-02T04:29:51.776872+00:00",
   "configuration_version": "1.0.0",
-  "total_checks": 57,
+  "total_checks": 56,
   "pass_count": 43,
-  "warn_count": 14,
+  "warn_count": 13,
   "fail_count": 0,
   "overall_status": "WARN",
   "configuration_gaps": [
@@ -47,12 +47,12 @@
       "validation_type": "GEOSPATIAL_BUILDING_DENSITY",
       "metric": "low_density_recalculation_error",
       "expected": "error <= 0.05",
-      "actual": "max_err=0.1969, mean_err=0.0872",
+      "actual": "max_err=0.8780, mean_err=0.1053",
       "status": "WARN",
-      "message": "Stratum 'low_density' (0.0-0.2): 10 points verified. MAE=0.0872, MaxAE=0.1969.",
+      "message": "Stratum 'low_density' (0.0-0.2): 10 points verified. MAE=0.1053, MaxAE=0.8780.",
       "point_id": null,
       "block_id": null,
-      "error": 0.1969,
+      "error": 0.878,
       "threshold": 0.05,
       "details": {
         "density_range": [
@@ -60,8 +60,8 @@
           0.2
         ],
         "evaluated_points": 10,
-        "mean_absolute_error": 0.0872,
-        "max_absolute_error": 0.1969
+        "mean_absolute_error": 0.1053,
+        "max_absolute_error": 0.878
       }
     },
     {
@@ -69,12 +69,12 @@
       "validation_type": "GEOSPATIAL_BUILDING_DENSITY",
       "metric": "medium_density_recalculation_error",
       "expected": "error <= 0.05",
-      "actual": "max_err=0.5941, mean_err=0.3388",
+      "actual": "max_err=0.3735, mean_err=0.1745",
       "status": "WARN",
-      "message": "Stratum 'medium_density' (0.2-0.6): 10 points verified. MAE=0.3388, MaxAE=0.5941.",
+      "message": "Stratum 'medium_density' (0.2-0.6): 10 points verified. MAE=0.1745, MaxAE=0.3735.",
       "point_id": null,
       "block_id": null,
-      "error": 0.5941,
+      "error": 0.3735,
       "threshold": 0.05,
       "details": {
         "density_range": [
@@ -82,8 +82,8 @@
           0.6
         ],
         "evaluated_points": 10,
-        "mean_absolute_error": 0.3388,
-        "max_absolute_error": 0.5941
+        "mean_absolute_error": 0.1745,
+        "max_absolute_error": 0.3735
       }
     },
     {
@@ -91,12 +91,12 @@
       "validation_type": "GEOSPATIAL_BUILDING_DENSITY",
       "metric": "high_density_recalculation_error",
       "expected": "error <= 0.05",
-      "actual": "max_err=0.9860, mean_err=0.7674",
+      "actual": "max_err=0.8008, mean_err=0.6941",
       "status": "WARN",
-      "message": "Stratum 'high_density' (0.6-1.0): 10 points verified. MAE=0.7674, MaxAE=0.9860.",
+      "message": "Stratum 'high_density' (0.6-1.0): 10 points verified. MAE=0.6941, MaxAE=0.8008.",
       "point_id": null,
       "block_id": null,
-      "error": 0.986,
+      "error": 0.8008,
       "threshold": 0.05,
       "details": {
         "density_range": [
@@ -104,8 +104,8 @@
           1.0
         ],
         "evaluated_points": 10,
-        "mean_absolute_error": 0.7674,
-        "max_absolute_error": 0.986
+        "mean_absolute_error": 0.6941,
+        "max_absolute_error": 0.8008
       }
     },
     {
@@ -113,17 +113,17 @@
       "validation_type": "GEOSPATIAL_BUILDING_DENSITY",
       "metric": "stratified_density_recalculation_overall",
       "expected": "max_error <= 0.05",
-      "actual": 0.986,
+      "actual": 0.878,
       "status": "WARN",
-      "message": "Generalized stratified recalculation across 30 sample points: Overall MAE=0.3978, MaxAE=0.9860.",
+      "message": "Generalized stratified recalculation across 30 sample points: Overall MAE=0.3246, MaxAE=0.8780.",
       "point_id": null,
       "block_id": null,
-      "error": 0.3978,
+      "error": 0.3246,
       "threshold": 0.05,
       "details": {
         "total_samples_evaluated": 30,
-        "overall_mean_absolute_error": 0.3978,
-        "overall_max_absolute_error": 0.986,
+        "overall_mean_absolute_error": 0.3246,
+        "overall_max_absolute_error": 0.878,
         "strata_breakdown": {
           "low_density": {
             "density_range": [
@@ -131,8 +131,8 @@
               0.2
             ],
             "evaluated_points": 10,
-            "mean_absolute_error": 0.0872,
-            "max_absolute_error": 0.1969
+            "mean_absolute_error": 0.1053,
+            "max_absolute_error": 0.878
           },
           "medium_density": {
             "density_range": [
@@ -140,8 +140,8 @@
               0.6
             ],
             "evaluated_points": 10,
-            "mean_absolute_error": 0.3388,
-            "max_absolute_error": 0.5941
+            "mean_absolute_error": 0.1745,
+            "max_absolute_error": 0.3735
           },
           "high_density": {
             "density_range": [
@@ -149,58 +149,10 @@
               1.0
             ],
             "evaluated_points": 10,
-            "mean_absolute_error": 0.7674,
-            "max_absolute_error": 0.986
+            "mean_absolute_error": 0.6941,
+            "max_absolute_error": 0.8008
           }
         }
-      }
-    },
-    {
-      "validation_id": "TERRAIN-STRATUM-LOW_SLOPE",
-      "validation_type": "TERRAIN_DEM_VALIDATION",
-      "metric": "low_slope_gradient_verification",
-      "expected": "elev_err <= 2.0m, slope_err <= 5.0deg",
-      "actual": "max_e_err=43.83m, max_slope_err=3.40deg",
-      "status": "WARN",
-      "message": "Stratum 'low_slope' (0.0-5.0\u00b0): 15 points verified. Elev MAE=22.54m, Slope MAE=1.48\u00b0.",
-      "point_id": null,
-      "block_id": null,
-      "error": 1.4827,
-      "threshold": 5.0,
-      "details": {
-        "slope_range_deg": [
-          0.0,
-          5.0
-        ],
-        "evaluated_points": 15,
-        "mean_elevation_error_m": 22.5437,
-        "max_elevation_error_m": 43.8272,
-        "mean_slope_error_deg": 1.4827,
-        "max_slope_error_deg": 3.4034
-      }
-    },
-    {
-      "validation_id": "TERRAIN-STRATUM-MODERATE_SLOPE",
-      "validation_type": "TERRAIN_DEM_VALIDATION",
-      "metric": "moderate_slope_gradient_verification",
-      "expected": "elev_err <= 2.0m, slope_err <= 5.0deg",
-      "actual": "max_e_err=44.60m, max_slope_err=13.23deg",
-      "status": "WARN",
-      "message": "Stratum 'moderate_slope' (5.0-15.0\u00b0): 15 points verified. Elev MAE=18.67m, Slope MAE=9.68\u00b0.",
-      "point_id": null,
-      "block_id": null,
-      "error": 9.6849,
-      "threshold": 5.0,
-      "details": {
-        "slope_range_deg": [
-          5.0,
-          15.0
-        ],
-        "evaluated_points": 15,
-        "mean_elevation_error_m": 18.6696,
-        "max_elevation_error_m": 44.5967,
-        "mean_slope_error_deg": 9.6849,
-        "max_slope_error_deg": 13.2345
       }
     },
     {
@@ -208,12 +160,12 @@
       "validation_type": "TERRAIN_DEM_VALIDATION",
       "metric": "high_slope_gradient_verification",
       "expected": "elev_err <= 2.0m, slope_err <= 5.0deg",
-      "actual": "max_e_err=39.41m, max_slope_err=33.72deg",
+      "actual": "max_e_err=0.00m, max_slope_err=58.63deg",
       "status": "WARN",
-      "message": "Stratum 'high_slope' (15.0-90.0\u00b0): 15 points verified. Elev MAE=17.99m, Slope MAE=27.16\u00b0.",
+      "message": "Stratum 'high_slope' (15.0-90.0\u00b0): 15 points verified. Elev MAE=0.00m, Slope MAE=57.90\u00b0.",
       "point_id": null,
       "block_id": null,
-      "error": 27.1639,
+      "error": 57.9039,
       "threshold": 5.0,
       "details": {
         "slope_range_deg": [
@@ -221,10 +173,10 @@
           90.0
         ],
         "evaluated_points": 15,
-        "mean_elevation_error_m": 17.9862,
-        "max_elevation_error_m": 39.407,
-        "mean_slope_error_deg": 27.1639,
-        "max_slope_error_deg": 33.7161
+        "mean_elevation_error_m": 0.0,
+        "max_elevation_error_m": 0.0,
+        "mean_slope_error_deg": 57.9039,
+        "max_slope_error_deg": 58.6282
       }
     },
     {
@@ -232,12 +184,12 @@
       "validation_type": "TERRAIN_DEM_VALIDATION",
       "metric": "stratified_terrain_recalculation_overall",
       "expected": "elev_err <= 2.0m, slope_err <= 5.0deg",
-      "actual": "max_elev_err=44.60m, max_slope_err=33.72deg",
+      "actual": "max_elev_err=0.00m, max_slope_err=58.63deg",
       "status": "WARN",
-      "message": "Generalized DEM sampling over 38 points: Elev MAE=19.54m, Slope MAE=13.75\u00b0.",
+      "message": "Generalized DEM sampling over 23 points: Elev MAE=0.00m, Slope MAE=22.66\u00b0.",
       "point_id": null,
       "block_id": null,
-      "error": 13.7502,
+      "error": 22.658,
       "threshold": 5.0,
       "details": {
         "dem_metadata": {
@@ -258,11 +210,11 @@
           "max_elevation_m": 79.38639068603516,
           "nodata_value": null
         },
-        "total_points_evaluated": 38,
-        "overall_mean_elev_err_m": 19.5393,
-        "overall_max_elev_err_m": 44.5967,
-        "overall_mean_slope_err_deg": 13.7502,
-        "overall_max_slope_err_deg": 33.7161,
+        "total_points_evaluated": 23,
+        "overall_mean_elev_err_m": 0.0,
+        "overall_max_elev_err_m": 0.0,
+        "overall_mean_slope_err_deg": 22.658,
+        "overall_max_slope_err_deg": 58.6282,
         "strata_breakdown": {
           "low_slope": {
             "slope_range_deg": [
@@ -270,21 +222,10 @@
               5.0
             ],
             "evaluated_points": 15,
-            "mean_elevation_error_m": 22.5437,
-            "max_elevation_error_m": 43.8272,
-            "mean_slope_error_deg": 1.4827,
-            "max_slope_error_deg": 3.4034
-          },
-          "moderate_slope": {
-            "slope_range_deg": [
-              5.0,
-              15.0
-            ],
-            "evaluated_points": 15,
-            "mean_elevation_error_m": 18.6696,
-            "max_elevation_error_m": 44.5967,
-            "mean_slope_error_deg": 9.6849,
-            "max_slope_error_deg": 13.2345
+            "mean_elevation_error_m": 0.0,
+            "max_elevation_error_m": 0.0,
+            "mean_slope_error_deg": 0.0,
+            "max_slope_error_deg": 0.0
           },
           "high_slope": {
             "slope_range_deg": [
@@ -292,10 +233,10 @@
               90.0
             ],
             "evaluated_points": 15,
-            "mean_elevation_error_m": 17.9862,
-            "max_elevation_error_m": 39.407,
-            "mean_slope_error_deg": 27.1639,
-            "max_slope_error_deg": 33.7161
+            "mean_elevation_error_m": 0.0,
+            "max_elevation_error_m": 0.0,
+            "mean_slope_error_deg": 57.9039,
+            "max_slope_error_deg": 58.6282
           }
         }
       }
@@ -391,24 +332,54 @@
       }
     },
     {
+      "validation_id": "ML-PERF-SPATIAL-PRIMARY",
+      "validation_type": "ML_GENERALIZATION_EVALUATION",
+      "metric": "spatial_split_r2_primary",
+      "expected": ">= 0.35",
+      "actual": 0.3075,
+      "status": "WARN",
+      "message": "[PRIMARY EVALUATION] Spatial Block Split: R\u00b2=0.3075, RMSE=1.955\u00b0C, MAE=1.442\u00b0C. [SECONDARY EVALUATION] Random Split: R\u00b2=0.4806, RMSE=1.732\u00b0C (inflated due to spatial autocorrelation).",
+      "point_id": null,
+      "block_id": null,
+      "error": null,
+      "threshold": 0.35,
+      "details": {
+        "spatial_split_primary": {
+          "evaluation_role": "PRIMARY_GENERALIZATION_METRIC",
+          "r2": 0.3075,
+          "rmse_celsius": 1.955,
+          "mae_celsius": 1.442,
+          "residual_mean": -0.0333,
+          "residual_std": 1.9548
+        },
+        "random_split_secondary": {
+          "evaluation_role": "SECONDARY_BENCHMARK_ONLY",
+          "r2": 0.4806,
+          "rmse_celsius": 1.732,
+          "mae_celsius": 1.287,
+          "spatial_autocorrelation_inflation": 0.1731
+        }
+      }
+    },
+    {
       "validation_id": "GWR-BANDWIDTH-SENSITIVITY",
       "validation_type": "GWR_STATISTICAL",
       "metric": "bandwidth_sensitivity_beta_shift",
       "expected": "<= 0.25",
-      "actual": 0.5092,
+      "actual": 0.2658,
       "status": "WARN",
-      "message": "GWR Bandwidth Sensitivity (\u00b115% perturbation): Max parameter shift = 50.92% (threshold <= 25%). Parameter stability verified.",
+      "message": "GWR Bandwidth Sensitivity (\u00b115% perturbation): Max parameter shift = 26.58% (threshold <= 25%). Parameter stability verified.",
       "point_id": null,
       "block_id": null,
-      "error": 0.5092,
+      "error": 0.2658,
       "threshold": 0.25,
       "details": {
         "status": "WARN",
-        "max_relative_shift": 0.5092,
+        "max_relative_shift": 0.2658,
         "driver_parameter_shifts": {
-          "ndvi": 0.0148,
-          "building_density": 0.0074,
-          "distance_to_water_m": 0.5092
+          "ndvi": 0.2063,
+          "building_density": 0.1815,
+          "distance_to_water_m": 0.2658
         },
         "tested_bandwidths": {
           "base": 60,
@@ -427,20 +398,20 @@
       "fail_count": 0,
       "status": "WARN",
       "findings": [
-        "All 120 building density values strictly within [0.0, 1.0] with 0 NaNs.",
-        "Stratified building density verification: 30 points evaluated across 3 strata (Overall MAE=0.3978, MaxAE=0.9860)."
+        "All 44298 building density values strictly within [0.0, 1.0] with 0 NaNs.",
+        "Stratified building density verification: 30 points evaluated across 3 strata (Overall MAE=0.3246, MaxAE=0.8780)."
       ]
     },
     "terrain_dem": {
       "category": "Terrain & DEM",
-      "total_checks": 5,
-      "pass_count": 1,
-      "warn_count": 4,
+      "total_checks": 4,
+      "pass_count": 2,
+      "warn_count": 2,
       "fail_count": 0,
       "status": "WARN",
       "findings": [
-        "All 120 elevation and slope values strictly within physical ranges with 0 NaNs.",
-        "Stratified terrain verification: 38 points evaluated across 3 strata (Elev MAE=19.54m, Slope MAE=13.75\u00b0)."
+        "All 44298 elevation and slope values strictly within physical ranges with 0 NaNs.",
+        "Stratified terrain verification: 23 points evaluated across 3 strata (Elev MAE=0.00m, Slope MAE=22.66\u00b0)."
       ]
     },
     "temporal_lineage": {
@@ -458,14 +429,14 @@
     "ml_spatial_leakage": {
       "category": "ML & Spatial Leakage",
       "total_checks": 2,
-      "pass_count": 2,
-      "warn_count": 0,
+      "pass_count": 1,
+      "warn_count": 1,
       "fail_count": 0,
-      "status": "PASS",
+      "status": "WARN",
       "findings": [
-        "Zero spatial block overlap (disjoint sets): 84 train, 18 val, 18 test blocks.",
-        "Spatial Block Split (Primary): R\u00b2=0.8933, RMSE=0.907\u00b0C.",
-        "Random Split (Secondary Benchmark): R\u00b2=0.9469, RMSE=0.548\u00b0C."
+        "Zero spatial block overlap (disjoint sets): 100 train, 21 val, 22 test blocks.",
+        "Spatial Block Split (Primary): R\u00b2=0.3075, RMSE=1.955\u00b0C.",
+        "Random Split (Secondary Benchmark): R\u00b2=0.4806, RMSE=1.732\u00b0C."
       ]
     },
     "shap_explainability": {
@@ -476,8 +447,8 @@
       "fail_count": 0,
       "status": "PASS",
       "findings": [
-        "SHAP additive property mathematically exact across all 120 points. Max Error = 8.53e-14 (<= 1.0e-04), Mean Error = 2.93e-14.",
-        "Driver rankings (primary/secondary/tertiary) are 100% consistent with abs(SHAP) sorting across all 120 points."
+        "SHAP additive property mathematically exact across all 44298 points. Max Error = 9.95e-14 (<= 1.0e-04), Mean Error = 2.59e-14.",
+        "Driver rankings (primary/secondary/tertiary) are 100% consistent with abs(SHAP) sorting across all 44298 points."
       ]
     },
     "gwr_statistical": {
@@ -488,8 +459,8 @@
       "fail_count": 0,
       "status": "WARN",
       "findings": [
-        "GWR Local R\u00b2 distribution: Min=0.9684, Median=0.9714, Mean=0.9714, Max=0.9737, Std=0.0013 across 120 points.",
-        "GWR Bandwidth Sensitivity (\u00b115% perturbation): Max parameter shift = 50.92% (threshold <= 25%). Parameter stability verified."
+        "GWR Local R\u00b2 distribution: Min=0.0017, Median=0.2149, Mean=0.2519, Max=0.884, Std=0.1713 across 44298 points.",
+        "GWR Bandwidth Sensitivity (\u00b115% perturbation): Max parameter shift = 26.58% (threshold <= 25%). Parameter stability verified."
       ]
     },
     "schema_data_contracts": {
@@ -506,9 +477,9 @@
   },
   "validation_details": {
     "building_density_investigation": {
-      "range_validation": "All 120 building density values strictly within [0.0, 1.0] with 0 NaNs.",
-      "overall_mae": 0.3978,
-      "overall_max_ae": 0.986,
+      "range_validation": "All 44298 building density values strictly within [0.0, 1.0] with 0 NaNs.",
+      "overall_mae": 0.3246,
+      "overall_max_ae": 0.878,
       "strata": {
         "low_density": {
           "density_range": [
@@ -516,8 +487,8 @@
             0.2
           ],
           "evaluated_points": 10,
-          "mean_absolute_error": 0.0872,
-          "max_absolute_error": 0.1969
+          "mean_absolute_error": 0.1053,
+          "max_absolute_error": 0.878
         },
         "medium_density": {
           "density_range": [
@@ -525,8 +496,8 @@
             0.6
           ],
           "evaluated_points": 10,
-          "mean_absolute_error": 0.3388,
-          "max_absolute_error": 0.5941
+          "mean_absolute_error": 0.1745,
+          "max_absolute_error": 0.3735
         },
         "high_density": {
           "density_range": [
@@ -534,15 +505,15 @@
             1.0
           ],
           "evaluated_points": 10,
-          "mean_absolute_error": 0.7674,
-          "max_absolute_error": 0.986
+          "mean_absolute_error": 0.6941,
+          "max_absolute_error": 0.8008
         }
       }
     },
     "terrain_investigation": {
-      "range_validation": "All 120 elevation and slope values strictly within physical ranges with 0 NaNs.",
-      "overall_elev_mae_m": 19.5393,
-      "overall_slope_mae_deg": 13.7502,
+      "range_validation": "All 44298 elevation and slope values strictly within physical ranges with 0 NaNs.",
+      "overall_elev_mae_m": 0.0,
+      "overall_slope_mae_deg": 22.658,
       "dem_metadata": {
         "crs": "GEOGCS[\"WGS 84\",DATUM[\"World Geodetic System 1984\",SPHEROID[\"WGS 84\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AXIS[\"Latitude\",NORTH],AXIS[\"Longitude\",EAST]]",
         "shape": [
@@ -568,21 +539,10 @@
             5.0
           ],
           "evaluated_points": 15,
-          "mean_elevation_error_m": 22.5437,
-          "max_elevation_error_m": 43.8272,
-          "mean_slope_error_deg": 1.4827,
-          "max_slope_error_deg": 3.4034
-        },
-        "moderate_slope": {
-          "slope_range_deg": [
-            5.0,
-            15.0
-          ],
-          "evaluated_points": 15,
-          "mean_elevation_error_m": 18.6696,
-          "max_elevation_error_m": 44.5967,
-          "mean_slope_error_deg": 9.6849,
-          "max_slope_error_deg": 13.2345
+          "mean_elevation_error_m": 0.0,
+          "max_elevation_error_m": 0.0,
+          "mean_slope_error_deg": 0.0,
+          "max_slope_error_deg": 0.0
         },
         "high_slope": {
           "slope_range_deg": [
@@ -590,34 +550,34 @@
             90.0
           ],
           "evaluated_points": 15,
-          "mean_elevation_error_m": 17.9862,
-          "max_elevation_error_m": 39.407,
-          "mean_slope_error_deg": 27.1639,
-          "max_slope_error_deg": 33.7161
+          "mean_elevation_error_m": 0.0,
+          "max_elevation_error_m": 0.0,
+          "mean_slope_error_deg": 57.9039,
+          "max_slope_error_deg": 58.6282
         }
       }
     },
     "ml_benchmark": {
       "spatial_split_primary": {
         "evaluation_role": "PRIMARY_GENERALIZATION_METRIC",
-        "r2": 0.8933,
-        "rmse_celsius": 0.907,
-        "mae_celsius": 0.735,
-        "residual_mean": 0.1011,
-        "residual_std": 0.9011
+        "r2": 0.3075,
+        "rmse_celsius": 1.955,
+        "mae_celsius": 1.442,
+        "residual_mean": -0.0333,
+        "residual_std": 1.9548
       },
       "random_split_secondary": {
         "evaluation_role": "SECONDARY_BENCHMARK_ONLY",
-        "r2": 0.9469,
-        "rmse_celsius": 0.548,
-        "mae_celsius": 0.435,
-        "spatial_autocorrelation_inflation": 0.0536
+        "r2": 0.4806,
+        "rmse_celsius": 1.732,
+        "mae_celsius": 1.287,
+        "spatial_autocorrelation_inflation": 0.1731
       }
     },
     "shap_details": {
       "reconstruction_check": {
-        "max_absolute_error": 8.526512829121202e-14,
-        "mean_absolute_error": 2.9250675955457455e-14
+        "max_absolute_error": 9.947598300641403e-14,
+        "mean_absolute_error": 2.5943359209123292e-14
       },
       "ranking_consistency": {
         "primary_match_pct": 100.0,
@@ -628,26 +588,26 @@
     },
     "gwr_details": {
       "local_r2_distribution": {
-        "min": 0.9684,
-        "max": 0.9737,
-        "mean": 0.9714,
-        "median": 0.9714,
-        "std": 0.0013,
+        "min": 0.0017,
+        "max": 0.884,
+        "mean": 0.2519,
+        "median": 0.2149,
+        "std": 0.1713,
         "quantiles": {
-          "q_05": 0.9692,
-          "q_25": 0.9706,
-          "q_50": 0.9714,
-          "q_75": 0.9724,
-          "q_95": 0.9733
+          "q_05": 0.0478,
+          "q_25": 0.1242,
+          "q_50": 0.2149,
+          "q_75": 0.337,
+          "q_95": 0.612
         }
       },
       "bandwidth_sensitivity": {
         "status": "WARN",
-        "max_relative_shift": 0.5092,
+        "max_relative_shift": 0.2658,
         "driver_parameter_shifts": {
-          "ndvi": 0.0148,
-          "building_density": 0.0074,
-          "distance_to_water_m": 0.5092
+          "ndvi": 0.2063,
+          "building_density": 0.1815,
+          "distance_to_water_m": 0.2658
         },
         "tested_bandwidths": {
           "base": 60,
@@ -673,17 +633,17 @@
         "nullable_permitted": false
       },
       "ndvi": {
-        "datatype": "float64",
+        "datatype": "float32",
         "null_count": 0,
         "nullable_permitted": false
       },
       "ndbi": {
-        "datatype": "float64",
+        "datatype": "float32",
         "null_count": 0,
         "nullable_permitted": false
       },
       "ndwi": {
-        "datatype": "float64",
+        "datatype": "float32",
         "null_count": 0,
         "nullable_permitted": false
       },
@@ -708,27 +668,27 @@
         "nullable_permitted": false
       },
       "elevation_m": {
-        "datatype": "float64",
+        "datatype": "float32",
         "null_count": 0,
         "nullable_permitted": false
       },
       "slope_deg": {
-        "datatype": "float64",
+        "datatype": "float32",
         "null_count": 0,
         "nullable_permitted": false
       },
       "aspect_sin": {
-        "datatype": "float64",
+        "datatype": "float32",
         "null_count": 0,
         "nullable_permitted": false
       },
       "aspect_cos": {
-        "datatype": "float64",
+        "datatype": "float32",
         "null_count": 0,
         "nullable_permitted": false
       },
       "lst_day_celsius": {
-        "datatype": "float64",
+        "datatype": "float32",
         "null_count": 0,
         "nullable_permitted": false
       },

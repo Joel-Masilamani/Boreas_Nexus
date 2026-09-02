@@ -312,3 +312,92 @@ def test_stage7_period_aware_attribution_day_and_night(tmp_path):
     assert np.isclose(night_row["mean_shap_building_density"], 1.8)
     assert np.isclose(night_row["mean_shap_ndvi"], -0.05)
     assert np.isclose(night_row["domain_consistency_score"], 88.0)
+
+
+def test_stage7_module_1_registry_ingestion_and_join(tmp_path):
+    """Verifies that Stage 7 ingests and joins Module 1's authoritative hotspot registry."""
+    # 1. Create mock Module 1 Hotspot Registry
+    m1_reg_data = {
+        "hotspot_id": ["DAY_HOT_0001", "NIGHT_HOT_0001"],
+        "period": ["DAY", "NIGHT"],
+        "hotspot_group_id": ["HG_0001", "HG_0001"],
+        "cluster_area_m2": [100000.0, 50000.0],
+        "cluster_perimeter_m": [1400.0, 900.0],
+        "cluster_size_pixels": [10, 5],
+        "cluster_centroid_x": [400500.0, 401000.0],
+        "cluster_centroid_y": [1400500.0, 1401000.0],
+        "cluster_bbox": ["[400000, 1400000, 401000, 1401000]", "[400500, 1400500, 401500, 1401500]"],
+        "mean_lst": [41.5, 27.2],
+        "peak_lst": [43.0, 28.5],
+        "mean_suhii": [4.5, 2.8],
+        "mean_heat_persistence": [0.85, 0.75],
+        "mean_hotspot_confidence_score": [92.0, 89.0]
+    }
+    m1_reg_df = pd.DataFrame(m1_reg_data)
+    m1_reg_path = tmp_path / "hotspot_registry.parquet"
+    m1_reg_df.to_parquet(m1_reg_path, index=False)
+
+    # 2. Create sample point GDF
+    n = 15
+    lats = np.linspace(13.0, 13.1, n)
+    lons = np.linspace(80.1, 80.2, n)
+    data = {
+        "point_id": [f"pt_{i:06d}" for i in range(1, n + 1)],
+        "latitude": lats,
+        "longitude": lons,
+        "utm_x_m": 400000 + np.arange(n) * 100,
+        "utm_y_m": 1400000 + np.arange(n) * 100,
+        "land_cover_code": [50] * n,
+        "ndvi": [0.3] * n,
+        "ndbi": [0.2] * n,
+        "ndwi": [-0.1] * n,
+        "building_density": [0.6] * n,
+        "distance_to_roads_m": [25.0] * n,
+        "distance_to_water_m": [300.0] * n,
+        "distance_to_parks_m": [500.0] * n,
+        "elevation_m": [15.0] * n,
+        "slope_deg": [2.0] * n,
+        "aspect_sin": [0.0] * n,
+        "aspect_cos": [1.0] * n,
+        "lst_day_celsius": [38.5] * n,
+        "lst_night_celsius": [26.0] * n,
+        "primary_driver_day": ["ndvi"] * 10 + ["distance_to_parks_m"] * 5,
+        "secondary_driver_day": ["distance_to_water_m"] * n,
+        "primary_driver_night": ["building_density"] * n,
+        "secondary_driver_night": ["land_cover_code"] * n,
+        "shap_day_ndvi": [-1.2] * n,
+        "shap_day_building_density": [0.1] * n,
+        "shap_night_ndvi": [-0.05] * n,
+        "shap_night_building_density": [1.8] * n,
+        "shap_domain_consistency_score_day": [92.0] * n,
+        "shap_domain_consistency_score_night": [88.0] * n,
+        "day_hotspot_id": ["DAY_HOT_0001"] * 10 + [None] * 5,
+        "night_hotspot_id": [None] * 10 + ["NIGHT_HOT_0001"] * 5,
+        "hotspot_group_id": ["HG_0001"] * n,
+        "geometry": [Point(xy) for xy in zip(lons, lats)]
+    }
+    sample_gdf = gpd.GeoDataFrame(data, crs="EPSG:4326")
+
+    # 3. Execute Stage 7 with M1 registry injected
+    exporter = Stage7DriverKnowledgeExporter(
+        output_dir=tmp_path / "out",
+        metadata_dir=tmp_path / "out",
+        hotspot_registry_path=m1_reg_path
+    )
+    manifest = exporter.run(gdf_in=sample_gdf)
+    assert manifest["status"] == "SUCCESS"
+
+    merged_reg = pd.read_parquet(tmp_path / "out" / "driver_attribution_registry.parquet")
+    assert len(merged_reg) == 2
+
+    # Check Module 1 columns are preserved
+    assert "cluster_area_m2" in merged_reg.columns
+    assert "peak_lst" in merged_reg.columns
+    assert "mean_suhii" in merged_reg.columns
+    assert merged_reg.loc[merged_reg["hotspot_id"] == "DAY_HOT_0001", "cluster_area_m2"].iloc[0] == 100000.0
+    assert merged_reg.loc[merged_reg["hotspot_id"] == "NIGHT_HOT_0001", "cluster_area_m2"].iloc[0] == 50000.0
+
+    # Check Module 2 driver columns are attached
+    assert "dominant_driver" in merged_reg.columns
+    assert merged_reg.loc[merged_reg["hotspot_id"] == "DAY_HOT_0001", "dominant_driver"].iloc[0] == "ndvi"
+    assert merged_reg.loc[merged_reg["hotspot_id"] == "NIGHT_HOT_0001", "dominant_driver"].iloc[0] == "building_density"
