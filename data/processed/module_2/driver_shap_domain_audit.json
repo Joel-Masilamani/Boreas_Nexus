@@ -78,21 +78,21 @@
       "unique_spatial_blocks": 143,
       "cv_metrics": {
         "lst_day_celsius": {
-          "r2_mean": 0.37728265999157323,
-          "r2_std": 0.051417196951612766,
-          "rmse_mean": 1.8032490821843212,
-          "rmse_std": 0.1739716999473534,
-          "mae_mean": 1.317305999367318,
-          "mae_std": 0.129557272785752,
+          "r2_mean": 0.37728265999157307,
+          "r2_std": 0.05141719695161274,
+          "rmse_mean": 1.8032490821843215,
+          "rmse_std": 0.17397169994735345,
+          "mae_mean": 1.3173059993673182,
+          "mae_std": 0.12955727278575216,
           "n_splits_used": 5
         },
         "lst_night_celsius": {
           "r2_mean": 0.9835639387819082,
-          "r2_std": 0.0006015732682482323,
-          "rmse_mean": 0.30518819963612537,
-          "rmse_std": 0.0025657441379145964,
-          "mae_mean": 0.24289069390546816,
-          "mae_std": 0.002388190834946772,
+          "r2_std": 0.0006015732682482184,
+          "rmse_mean": 0.3051881996361253,
+          "rmse_std": 0.00256574413791459,
+          "mae_mean": 0.2428906939054681,
+          "mae_std": 0.0023881908349467555,
           "n_splits_used": 5
         }
       },
@@ -273,7 +273,10 @@
         "distance_to_parks_m",
         "elevation_m"
       ],
-      "optimal_bandwidth": 60.0,
+      "day_optimal_bandwidth": 60.0,
+      "day_mean_local_r2": 0.25189116720922944,
+      "night_optimal_bandwidth": 60.0,
+      "night_mean_local_r2": 0.6445475488364903,
       "mean_local_r2": 0.25189116720922944
     }
   }

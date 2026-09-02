@@ -204,6 +204,30 @@ class Stage7DriverKnowledgeExporter:
                     how="inner"
                 )
 
+                # Compute Diurnal Driver Shift for entities in multi-period hotspot groups
+                if "hotspot_group_id" in merged_registry.columns and "dominant_driver" in merged_registry.columns:
+                    day_group_drivers = (
+                        merged_registry[merged_registry["period"] == "DAY"]
+                        .dropna(subset=["hotspot_group_id"])
+                        .set_index("hotspot_group_id")["dominant_driver"]
+                        .to_dict()
+                    )
+                    night_group_drivers = (
+                        merged_registry[merged_registry["period"] == "NIGHT"]
+                        .dropna(subset=["hotspot_group_id"])
+                        .set_index("hotspot_group_id")["dominant_driver"]
+                        .to_dict()
+                    )
+
+                    shifts = []
+                    for _, row in merged_registry.iterrows():
+                        gid = row.get("hotspot_group_id")
+                        if pd.notna(gid) and gid in day_group_drivers and gid in night_group_drivers:
+                            shifts.append(f"{day_group_drivers[gid]} -> {night_group_drivers[gid]}")
+                        else:
+                            shifts.append(None)
+                    merged_registry["diurnal_driver_shift"] = shifts
+
                 if len(merged_registry) != len(m1_registry):
                     logger.warning(
                         f"Reconciliation row count mismatch: M1={len(m1_registry)}, Merged={len(merged_registry)}"

@@ -403,3 +403,12 @@ def test_stage7_module_1_registry_ingestion_and_join(tmp_path):
     assert "dominant_driver" in merged_reg.columns
     assert merged_reg.loc[merged_reg["hotspot_id"] == "DAY_HOT_0001", "dominant_driver"].iloc[0] == "ndvi"
     assert merged_reg.loc[merged_reg["hotspot_id"] == "NIGHT_HOT_0001", "dominant_driver"].iloc[0] == "building_density"
+
+    # Check Phase 5 Consensus and Diurnal Shift intelligence
+    assert "driver_consensus_pct" in merged_reg.columns
+    assert merged_reg.loc[merged_reg["hotspot_id"] == "DAY_HOT_0001", "driver_consensus_pct"].iloc[0] == 100.0
+    assert merged_reg.loc[merged_reg["hotspot_id"] == "NIGHT_HOT_0001", "driver_consensus_pct"].iloc[0] == 100.0
+
+    assert "diurnal_driver_shift" in merged_reg.columns
+    assert merged_reg.loc[merged_reg["hotspot_id"] == "DAY_HOT_0001", "diurnal_driver_shift"].iloc[0] == "ndvi -> building_density"
+    assert merged_reg.loc[merged_reg["hotspot_id"] == "NIGHT_HOT_0001", "diurnal_driver_shift"].iloc[0] == "ndvi -> building_density"
