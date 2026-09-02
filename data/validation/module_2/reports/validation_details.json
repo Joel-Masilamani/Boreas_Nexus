@@ -1,10 +1,10 @@
 {
   "dataset": "urban_heat_driver_knowledge_layer.geoparquet",
-  "validation_run_id": "VAL-M2-84fb3bdf",
-  "timestamp": "2026-09-02T04:29:51.776872+00:00",
+  "validation_run_id": "VAL-M2-91c392c3",
+  "timestamp": "2026-09-02T04:48:06.344631+00:00",
   "configuration_version": "1.0.0",
-  "total_checks": 56,
-  "pass_count": 43,
+  "total_checks": 62,
+  "pass_count": 49,
   "warn_count": 13,
   "fail_count": 0,
   "overall_status": "WARN",
@@ -473,6 +473,15 @@
       "findings": [
         "Validated 18 formal field contracts with 0 failures."
       ]
+    },
+    "cluster_attribution_registry": {
+      "category": "CLUSTER_ATTRIBUTION_REGISTRY",
+      "total_checks": 6,
+      "pass_count": 6,
+      "warn_count": 0,
+      "fail_count": 0,
+      "status": "PASS",
+      "findings": []
     }
   },
   "validation_details": {
@@ -707,6 +716,23 @@
         "null_count": 0,
         "nullable_permitted": false
       }
+    },
+    "cluster_attribution_details": {
+      "total_entities": 167,
+      "period_counts": {
+        "DAY": 128,
+        "NIGHT": 39
+      },
+      "night_dominant_drivers": {
+        "building_density": 39
+      },
+      "present_morphology_columns": [
+        "cluster_area_m2",
+        "cluster_perimeter_m",
+        "cluster_size_pixels",
+        "peak_lst",
+        "mean_suhii"
+      ]
     }
   }
 }

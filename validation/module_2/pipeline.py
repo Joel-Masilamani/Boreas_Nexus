@@ -26,6 +26,7 @@ from validation.module_2.ml.spatial_leakage_validator import SpatialLeakageValid
 from validation.module_2.explainability.shap_validator import ShapValidator
 from validation.module_2.spatial.gwr_validator import GWRValidator
 from validation.module_2.schema.schema_range_validator import SchemaRangeValidator
+from validation.module_2.schema.cluster_attribution_validator import ClusterAttributionValidator
 
 
 class Module2ValidationPipeline:
@@ -149,6 +150,19 @@ class Module2ValidationPipeline:
         all_results.extend(sch_res)
         all_summaries["schema_data_contracts"] = sch_sum.to_dict()
         all_details["schema_details"] = sch_diag
+
+        # -------------------------------------------------------------
+        # Suite 7: Cluster Attribution Registry Validation
+        # -------------------------------------------------------------
+        reg_file = self.val_config.registry_path
+        if reg_file and reg_file.exists():
+            logger.info(f"Loading Driver Attribution Registry from {reg_file}...")
+            registry_df = pd.read_parquet(reg_file)
+            cluster_val = ClusterAttributionValidator()
+            cl_sum, cl_res, cl_diag = cluster_val.validate(registry_df)
+            all_results.extend(cl_res)
+            all_summaries["cluster_attribution_registry"] = cl_sum.to_dict()
+            all_details["cluster_attribution_details"] = cl_diag
 
         # -------------------------------------------------------------
         # Aggregate Report & Status Computation

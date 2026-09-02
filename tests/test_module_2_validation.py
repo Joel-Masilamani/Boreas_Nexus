@@ -17,6 +17,7 @@ from validation.module_2.ml.spatial_leakage_validator import SpatialBlockSplitte
 from validation.module_2.explainability.shap_validator import ShapValidator
 from validation.module_2.spatial.gwr_validator import GWRValidator
 from validation.module_2.schema.schema_range_validator import SchemaRangeValidator
+from validation.module_2.schema.cluster_attribution_validator import ClusterAttributionValidator
 from validation.module_2.pipeline import Module2ValidationPipeline
 
 
@@ -117,6 +118,33 @@ def test_schema_range_validator(sample_shap_gdf):
     val = SchemaRangeValidator(cfg.raw_cfg)
     summary, results, diag = val.validate(sample_shap_gdf)
     assert summary.total_checks > 0
+
+
+def test_cluster_attribution_validator_pass():
+    """Tests ClusterAttributionValidator against a valid 167-entity synthetic registry."""
+    day_ids = [f"DAY_HOT_{i:04d}" for i in range(1, 129)]
+    night_ids = [f"NIGHT_HOT_{i:04d}" for i in range(1, 40)]
+    all_ids = day_ids + night_ids
+    periods = ["DAY"] * 128 + ["NIGHT"] * 39
+
+    df = pd.DataFrame({
+        "hotspot_id": all_ids,
+        "period": periods,
+        "hotspot_group_id": ["HG_0001"] * 72 + [None] * 95,
+        "cluster_area_m2": [10000.0] * 167,
+        "cluster_perimeter_m": [400.0] * 167,
+        "cluster_size_pixels": [10] * 167,
+        "peak_lst": [42.0] * 128 + [28.0] * 39,
+        "mean_suhii": [3.5] * 167,
+        "dominant_driver": ["ndvi"] * 128 + ["building_density"] * 39,
+        "domain_consistency_score": [95.0] * 167,
+        "mean_shap_building_density": [0.5] * 167
+    })
+
+    validator = ClusterAttributionValidator()
+    summary, results, diag = validator.validate(df)
+    assert summary.fail_count == 0
+    assert summary.pass_count >= 5
 
 
 def test_module2_validation_pipeline_real_dataset():

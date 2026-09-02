@@ -180,6 +180,8 @@ def test_stage6_spatially_balanced_gwr(sample_stage2_gdf):
     metrics = s6.run(gdf_in=sample_stage2_gdf)
     assert metrics["status"] in ["SUCCESS", "SKIPPED", "FAILED_FALLBACK"]
     assert "gwr_local_r2" in s6.last_gdf.columns
+    assert "gwr_day_local_r2" in s6.last_gdf.columns
+    assert "gwr_night_local_r2" in s6.last_gdf.columns
 
 
 def test_stage7_export_and_registry_generation(tmp_path):

@@ -12,3 +12,7 @@ class ValidationConfig(BaseValidationConfig):
 
     def __init__(self, config_path: Path | str = Path("config/module2_validation_config.yaml")):
         super().__init__(config_path=config_path)
+
+    @property
+    def registry_path(self) -> Path:
+        return Path(self.raw_cfg.get("registry_path", "data/processed/module_2/driver_attribution_registry.parquet"))
