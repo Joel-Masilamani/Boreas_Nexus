@@ -236,9 +236,79 @@ def test_module_2_spatial_alignment_with_module_1():
         assert (gdf_m1["point_id"].values == gdf_m2["point_id"].values).all()
 
 
-def test_module_2_pipeline_end_to_end(sample_stage2_gdf):
-    pipeline = Module2DriverPipeline()
+def test_module_2_pipeline_end_to_end(sample_stage2_gdf, tmp_path):
+    pipeline = Module2DriverPipeline(output_dir=tmp_path, metadata_dir=tmp_path)
     summary = pipeline.run(gdf_in=sample_stage2_gdf)
     assert summary["status"] == "SUCCESS"
     assert "stage1_metrics" in summary
     assert "stage7_manifest" in summary
+    assert (tmp_path / "urban_heat_driver_knowledge_layer.geoparquet").exists()
+    assert (tmp_path / "driver_attribution_registry.parquet").exists()
+
+
+def test_stage7_period_aware_attribution_day_and_night(tmp_path):
+    """Verifies that Stage 7 correctly assigns day drivers to DAY entities and night drivers to NIGHT entities."""
+    n = 20
+    lats = np.linspace(13.0, 13.1, n)
+    lons = np.linspace(80.1, 80.2, n)
+    data = {
+        "point_id": [f"pt_{i:06d}" for i in range(1, n + 1)],
+        "latitude": lats,
+        "longitude": lons,
+        "utm_x_m": 400000 + np.arange(n) * 100,
+        "utm_y_m": 1400000 + np.arange(n) * 100,
+        "land_cover_code": [50] * n,
+        "ndvi": [0.3] * n,
+        "ndbi": [0.2] * n,
+        "ndwi": [-0.1] * n,
+        "building_density": [0.6] * n,
+        "distance_to_roads_m": [25.0] * n,
+        "distance_to_water_m": [300.0] * n,
+        "distance_to_parks_m": [500.0] * n,
+        "elevation_m": [15.0] * n,
+        "slope_deg": [2.0] * n,
+        "aspect_sin": [0.0] * n,
+        "aspect_cos": [1.0] * n,
+        "lst_day_celsius": [38.5] * n,
+        "lst_night_celsius": [26.0] * n,
+        "primary_driver_day": ["ndvi"] * 10 + ["distance_to_parks_m"] * 10,
+        "secondary_driver_day": ["distance_to_water_m"] * n,
+        "primary_driver_night": ["building_density"] * 10 + ["building_density"] * 10,
+        "secondary_driver_night": ["land_cover_code"] * n,
+        "shap_day_ndvi": [-1.2] * n,
+        "shap_day_building_density": [0.1] * n,
+        "shap_night_ndvi": [-0.05] * n,
+        "shap_night_building_density": [1.8] * n,
+        "shap_domain_consistency_score_day": [92.0] * n,
+        "shap_domain_consistency_score_night": [88.0] * n,
+        "day_hotspot_id": ["DAY_HOT_0001"] * 10 + [None] * 10,
+        "night_hotspot_id": [None] * 10 + ["NIGHT_HOT_0001"] * 10,
+        "hotspot_group_id": ["HG_0001"] * 10 + ["HG_0001"] * 10,
+        "geometry": [Point(xy) for xy in zip(lons, lats)]
+    }
+    sample_gdf = gpd.GeoDataFrame(data, crs="EPSG:4326")
+    exporter = Stage7DriverKnowledgeExporter(output_dir=tmp_path, metadata_dir=tmp_path)
+    manifest = exporter.run(gdf_in=sample_gdf)
+    assert manifest["status"] == "SUCCESS"
+
+    registry_path = tmp_path / "driver_attribution_registry.parquet"
+    assert registry_path.exists()
+    registry_df = pd.read_parquet(registry_path)
+
+    assert len(registry_df) == 2
+    day_row = registry_df[registry_df["period"] == "DAY"].iloc[0]
+    night_row = registry_df[registry_df["period"] == "NIGHT"].iloc[0]
+
+    # DAY assertions
+    assert day_row["hotspot_id"] == "DAY_HOT_0001"
+    assert day_row["dominant_driver"] == "ndvi"
+    assert np.isclose(day_row["mean_shap_ndvi"], -1.2)
+    assert np.isclose(day_row["mean_shap_building_density"], 0.1)
+    assert np.isclose(day_row["domain_consistency_score"], 92.0)
+
+    # NIGHT assertions
+    assert night_row["hotspot_id"] == "NIGHT_HOT_0001"
+    assert night_row["dominant_driver"] == "building_density"
+    assert np.isclose(night_row["mean_shap_building_density"], 1.8)
+    assert np.isclose(night_row["mean_shap_ndvi"], -0.05)
+    assert np.isclose(night_row["domain_consistency_score"], 88.0)

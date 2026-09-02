@@ -59,11 +59,39 @@ class Stage7DriverKnowledgeExporter:
         }
         return report
 
+    PERIOD_ATTRIBUTION_MAP = {
+        "DAY": {
+            "primary_driver": "primary_driver_day",
+            "secondary_driver": "secondary_driver_day",
+            "tertiary_driver": "tertiary_driver_day",
+            "shap_building_density": "shap_day_building_density",
+            "shap_ndvi": "shap_day_ndvi",
+            "shap_ndbi": "shap_day_ndbi",
+            "shap_distance_to_water_m": "shap_day_distance_to_water_m",
+            "shap_distance_to_parks_m": "shap_day_distance_to_parks_m",
+            "domain_consistency_score": "shap_domain_consistency_score_day",
+        },
+        "NIGHT": {
+            "primary_driver": "primary_driver_night",
+            "secondary_driver": "secondary_driver_night",
+            "tertiary_driver": "tertiary_driver_night",
+            "shap_building_density": "shap_night_building_density",
+            "shap_ndvi": "shap_night_ndvi",
+            "shap_ndbi": "shap_night_ndbi",
+            "shap_distance_to_water_m": "shap_night_distance_to_water_m",
+            "shap_distance_to_parks_m": "shap_night_distance_to_parks_m",
+            "domain_consistency_score": "shap_domain_consistency_score_night",
+        }
+    }
+
     def _summarize_group(self, hid: str, period: str, group: pd.DataFrame) -> Dict[str, Any]:
         """Summarizes driver attributions for a single hotspot cluster entity."""
+        p_upper = str(period).upper()
+        mapping = self.PERIOD_ATTRIBUTION_MAP.get(p_upper, self.PERIOD_ATTRIBUTION_MAP["DAY"])
+
         record = {
             "hotspot_id": hid,
-            "period": period,
+            "period": p_upper,
             "hotspot_group_id": group["hotspot_group_id"].dropna().iloc[0] if "hotspot_group_id" in group.columns and group["hotspot_group_id"].notna().any() else None,
             "pixel_count": len(group),
             "mean_lst_day_celsius": float(group["lst_day_celsius"].mean()) if "lst_day_celsius" in group.columns else np.nan,
@@ -73,27 +101,42 @@ class Stage7DriverKnowledgeExporter:
             "mean_distance_to_water_m": float(group["distance_to_water_m"].mean()) if "distance_to_water_m" in group.columns else np.nan,
         }
 
-        # SHAP attributions
-        if "shap_day_ndvi" in group.columns:
-            record["mean_shap_day_ndvi"] = float(group["shap_day_ndvi"].mean())
-        if "shap_day_ndbi" in group.columns:
-            record["mean_shap_day_ndbi"] = float(group["shap_day_ndbi"].mean())
-        if "shap_day_building_density" in group.columns:
-            record["mean_shap_day_building_density"] = float(group["shap_day_building_density"].mean())
-        if "shap_day_distance_to_water_m" in group.columns:
-            record["mean_shap_day_distance_to_water_m"] = float(group["shap_day_distance_to_water_m"].mean())
+        # Normalized SHAP attributions (period-correct)
+        shap_fields = [
+            "shap_building_density", "shap_ndvi", "shap_ndbi",
+            "shap_distance_to_water_m", "shap_distance_to_parks_m"
+        ]
+        for field in shap_fields:
+            col_name = mapping.get(field)
+            record[f"mean_{field}"] = float(group[col_name].mean()) if col_name and col_name in group.columns else np.nan
 
-        # Dominant drivers
-        if "primary_driver_day" in group.columns:
-            mode_primary = group["primary_driver_day"].mode()
-            record["dominant_cluster_driver_day"] = str(mode_primary.iloc[0]) if len(mode_primary) > 0 else "unknown"
-        if "secondary_driver_day" in group.columns:
-            mode_sec = group["secondary_driver_day"].mode()
-            record["secondary_cluster_driver_day"] = str(mode_sec.iloc[0]) if len(mode_sec) > 0 else "unknown"
+        # Normalized Dominant and Secondary drivers (period-correct)
+        prim_col = mapping.get("primary_driver")
+        if prim_col and prim_col in group.columns:
+            mode_primary = group[prim_col].mode()
+            record["dominant_driver"] = str(mode_primary.iloc[0]) if len(mode_primary) > 0 else "unknown"
+        else:
+            record["dominant_driver"] = "unknown"
 
-        # Physics / Domain consistency score
-        if "shap_domain_consistency_score_day" in group.columns:
-            record["mean_shap_domain_consistency_score_day"] = float(group["shap_domain_consistency_score_day"].mean())
+        sec_col = mapping.get("secondary_driver")
+        if sec_col and sec_col in group.columns:
+            mode_sec = group[sec_col].mode()
+            record["secondary_driver"] = str(mode_sec.iloc[0]) if len(mode_sec) > 0 else "unknown"
+        else:
+            record["secondary_driver"] = "unknown"
+
+        # Normalized Physics / Domain consistency score (period-correct)
+        cons_col = mapping.get("domain_consistency_score")
+        record["domain_consistency_score"] = float(group[cons_col].mean()) if cons_col and cons_col in group.columns else np.nan
+
+        # Backward compatibility aliases
+        record["dominant_cluster_driver_day"] = record["dominant_driver"]
+        record["secondary_cluster_driver_day"] = record["secondary_driver"]
+        record["mean_shap_day_ndvi"] = record["mean_shap_ndvi"]
+        record["mean_shap_day_ndbi"] = record["mean_shap_ndbi"]
+        record["mean_shap_day_building_density"] = record["mean_shap_building_density"]
+        record["mean_shap_day_distance_to_water_m"] = record["mean_shap_distance_to_water_m"]
+        record["mean_shap_domain_consistency_score_day"] = record["domain_consistency_score"]
 
         return record
 

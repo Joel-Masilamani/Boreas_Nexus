@@ -34,9 +34,13 @@ class Module2DriverPipeline:
 
     def __init__(
         self,
-        config_path: Path | str = Path("config/driver_analysis.yaml")
+        config_path: Path | str = Path("config/driver_analysis.yaml"),
+        output_dir: Optional[Path | str] = None,
+        metadata_dir: Optional[Path | str] = None
     ):
         self.config_path = Path(config_path)
+        self.output_dir = Path(output_dir) if output_dir is not None else None
+        self.metadata_dir = Path(metadata_dir) if metadata_dir is not None else None
 
     def run(self, gdf_in: Optional[gpd.GeoDataFrame] = None) -> Dict[str, Any]:
         """
@@ -72,7 +76,11 @@ class Module2DriverPipeline:
         m6 = s6.run(gdf_in=s5.last_gdf)
 
         # Stage 7: Driver Knowledge Layer & Registry Export
-        s7 = Stage7DriverKnowledgeExporter(config_path=self.config_path)
+        s7 = Stage7DriverKnowledgeExporter(
+            config_path=self.config_path,
+            output_dir=self.output_dir,
+            metadata_dir=self.metadata_dir
+        )
         all_metrics = {
             "stage1": m1, "stage2": m2, "stage3": m3,
             "stage4": m4, "stage5": m5, "stage6": m6
