@@ -168,7 +168,7 @@ class GWRValidator:
         }
 
         dist_msg = (
-            f"GWR Local R² distribution: Min={r2_dist['min']}, Median={r2_dist['median']}, "
+            f"GWR Day Local R² distribution: Min={r2_dist['min']}, Median={r2_dist['median']}, "
             f"Mean={r2_dist['mean']}, Max={r2_dist['max']}, Std={r2_dist['std']} across {len(r2_vals)} points."
         )
         results.append(ValidationResult(
@@ -182,6 +182,36 @@ class GWRValidator:
             details=r2_dist
         ))
         findings.append(dist_msg)
+
+        # 1b. Night Local R² Distribution (if present)
+        night_r2_dist = None
+        if "gwr_night_local_r2" in gdf.columns:
+            r2_night_vals = gdf["gwr_night_local_r2"].dropna().values
+            if len(r2_night_vals) > 0:
+                quant_night = {f"q_{int(q*100):02d}": round(float(np.quantile(r2_night_vals, q)), 4) for q in self.quantiles}
+                night_r2_dist = {
+                    "min": round(float(np.min(r2_night_vals)), 4),
+                    "max": round(float(np.max(r2_night_vals)), 4),
+                    "mean": round(float(np.mean(r2_night_vals)), 4),
+                    "median": round(float(np.median(r2_night_vals)), 4),
+                    "std": round(float(np.std(r2_night_vals)), 4),
+                    "quantiles": quant_night
+                }
+                night_dist_msg = (
+                    f"GWR Night Local R² distribution: Min={night_r2_dist['min']}, Median={night_r2_dist['median']}, "
+                    f"Mean={night_r2_dist['mean']}, Max={night_r2_dist['max']}, Std={night_r2_dist['std']} across {len(r2_night_vals)} points."
+                )
+                results.append(ValidationResult(
+                    validation_id="GWR-NIGHT-R2-DISTRIBUTION",
+                    validation_type="GWR_STATISTICAL",
+                    metric="night_local_r2_distribution",
+                    expected="Valid statistical distribution within [0.0, 1.0]",
+                    actual=f"Mean={night_r2_dist['mean']}, Median={night_r2_dist['median']}",
+                    status=ValidationStatus.PASS,
+                    message=night_dist_msg,
+                    details=night_r2_dist
+                ))
+                findings.append(night_dist_msg)
 
         # 2. Bandwidth Sensitivity Analysis (±15% test)
         sensitivity_report = self._evaluate_bandwidth_sensitivity(gdf, k_base=60)

@@ -142,9 +142,53 @@ class Stage6SpatialGWR:
 
         return all_betas, all_local_r2, float(optimal_bw)
 
+    def _fit_gwr_for_target(
+        self,
+        target_col: str,
+        prefix: str,
+        all_coords: np.ndarray,
+        coords_sample: np.ndarray,
+        sample_indices: np.ndarray,
+        X_sample: np.ndarray,
+        gdf: gpd.GeoDataFrame,
+        available_drivers: List[str]
+    ) -> Tuple[float, float, str]:
+        """
+        Fits GWR for a specific diurnal target and assigns local betas and local R2.
+        """
+        if target_col not in gdf.columns:
+            logger.warning(f"Target column '{target_col}' missing from dataset. Skipping GWR for {prefix}.")
+            return 0.0, 0.0, "SKIPPED"
+
+        y_sample = gdf[target_col].values[sample_indices]
+
+        try:
+            all_betas, all_local_r2, optimal_bw = self._fit_gwr_mgwr(
+                coords_sample=coords_sample,
+                X_sample=X_sample,
+                y_sample=y_sample,
+                all_coords=all_coords,
+                feature_names=available_drivers
+            )
+
+            # Store coefficients with period-specific prefix
+            gdf[f"{prefix}_intercept"] = all_betas[:, 0]
+            for idx, feat in enumerate(available_drivers):
+                gdf[f"{prefix}_beta_{feat}"] = all_betas[:, idx + 1]
+            gdf[f"{prefix}_local_r2"] = np.clip(all_local_r2, 0.0, 1.0)
+
+            mean_r2 = float(np.nanmean(gdf[f"{prefix}_local_r2"]))
+            status = "SUCCESS"
+            logger.info(f"GWR Spatial Modeling for {target_col} completed (optimal_bw={optimal_bw}, mean_local_r2={round(mean_r2, 4)}).")
+            return optimal_bw, mean_r2, status
+        except Exception as e:
+            logger.error(f"GWR fitting failed for {target_col}: {e}. Applying graceful fallback.")
+            gdf[f"{prefix}_local_r2"] = np.nan
+            return 0.0, 0.0, "FAILED_FALLBACK"
+
     def run(self, gdf_in: gpd.GeoDataFrame) -> Dict[str, Any]:
         """
-        Executes Stage 6 Spatial Driver Intelligence (GWR).
+        Executes Stage 6 Spatial Driver Intelligence (GWR) for both daytime and nighttime targets.
         """
         logger.info("--- Starting Module 2 Stage 6: Spatial Driver Intelligence (GWR) ---")
 
@@ -161,8 +205,9 @@ class Stage6SpatialGWR:
             else:
                 logger.warning("Package 'mgwr' not found. Skipping GWR execution cleanly.")
             
-            # Populate optional columns with NaN/None without crashing
             gdf["gwr_local_r2"] = np.nan
+            gdf["gwr_day_local_r2"] = np.nan
+            gdf["gwr_night_local_r2"] = np.nan
             self.last_gdf = gdf
             return {
                 "stage": "Stage 6: Spatial Driver Intelligence (GWR)",
@@ -180,8 +225,8 @@ class Stage6SpatialGWR:
                 if std_val > 1e-4:  # non-zero variance
                     available_drivers.append(d)
 
-        if not available_drivers or "lst_day_celsius" not in gdf.columns:
-            logger.warning("Missing required drivers or LST target for GWR. Skipping.")
+        if not available_drivers or ("lst_day_celsius" not in gdf.columns and "lst_night_celsius" not in gdf.columns):
+            logger.warning("Missing required drivers or LST targets for GWR. Skipping.")
             self.last_gdf = gdf
             return {"stage": "Stage 6: Spatial Driver Intelligence", "status": "SKIPPED"}
 
@@ -199,39 +244,51 @@ class Stage6SpatialGWR:
 
         coords_sample = all_coords[sample_indices]
         X_sample = gdf[available_drivers].values[sample_indices]
-        y_sample = gdf["lst_day_celsius"].values[sample_indices]
 
-        try:
-            all_betas, all_local_r2, optimal_bw = self._fit_gwr_mgwr(
-                coords_sample=coords_sample,
-                X_sample=X_sample,
-                y_sample=y_sample,
-                all_coords=all_coords,
-                feature_names=available_drivers
-            )
+        # Pass 1: Daytime LST GWR
+        bw_day, mean_r2_day, status_day = self._fit_gwr_for_target(
+            target_col="lst_day_celsius",
+            prefix="gwr_day",
+            all_coords=all_coords,
+            coords_sample=coords_sample,
+            sample_indices=sample_indices,
+            X_sample=X_sample,
+            gdf=gdf,
+            available_drivers=available_drivers
+        )
 
-            # Store coefficients
-            gdf["gwr_intercept"] = all_betas[:, 0]
-            for idx, feat in enumerate(available_drivers):
-                gdf[f"gwr_beta_{feat}"] = all_betas[:, idx + 1]
-            gdf["gwr_local_r2"] = np.clip(all_local_r2, 0.0, 1.0)
+        # Pass 2: Nighttime LST GWR
+        bw_night, mean_r2_night, status_night = self._fit_gwr_for_target(
+            target_col="lst_night_celsius",
+            prefix="gwr_night",
+            all_coords=all_coords,
+            coords_sample=coords_sample,
+            sample_indices=sample_indices,
+            X_sample=X_sample,
+            gdf=gdf,
+            available_drivers=available_drivers
+        )
 
-            status = "SUCCESS"
-            logger.info(f"GWR Spatial Modeling completed with optimal bandwidth = {optimal_bw}.")
-        except Exception as e:
-            logger.error(f"GWR fitting failed: {e}. Applying graceful fallback.")
-            status = "FAILED_FALLBACK"
-            gdf["gwr_local_r2"] = np.nan
-            optimal_bw = 0.0
+        # Backward compatibility aliases (mirror daytime GWR)
+        gdf["gwr_intercept"] = gdf["gwr_day_intercept"] if "gwr_day_intercept" in gdf.columns else np.nan
+        for feat in available_drivers:
+            if f"gwr_day_beta_{feat}" in gdf.columns:
+                gdf[f"gwr_beta_{feat}"] = gdf[f"gwr_day_beta_{feat}"]
+        gdf["gwr_local_r2"] = gdf["gwr_day_local_r2"] if "gwr_day_local_r2" in gdf.columns else np.nan
 
         self.last_gdf = gdf
 
+        overall_status = "SUCCESS" if (status_day == "SUCCESS" or status_night == "SUCCESS") else "FAILED_FALLBACK"
+
         stage_metrics = {
             "stage": "Stage 6: Spatial Driver Intelligence (GWR)",
-            "status": status,
+            "status": overall_status,
             "sample_points_used": len(sample_indices),
             "drivers_modeled": available_drivers,
-            "optimal_bandwidth": optimal_bw,
+            "day_optimal_bandwidth": bw_day,
+            "day_mean_local_r2": mean_r2_day,
+            "night_optimal_bandwidth": bw_night,
+            "night_mean_local_r2": mean_r2_night,
             "mean_local_r2": float(np.nanmean(gdf["gwr_local_r2"])) if "gwr_local_r2" in gdf.columns else 0.0
         }
 

@@ -116,9 +116,16 @@ class Stage7DriverKnowledgeExporter:
         prim_col = mapping.get("primary_driver")
         if prim_col and prim_col in group.columns:
             mode_primary = group[prim_col].mode()
-            record["dominant_driver"] = str(mode_primary.iloc[0]) if len(mode_primary) > 0 else "unknown"
+            if len(mode_primary) > 0:
+                dom_driver = str(mode_primary.iloc[0])
+                record["dominant_driver"] = dom_driver
+                record["driver_consensus_pct"] = round(float((group[prim_col] == dom_driver).mean() * 100.0), 2)
+            else:
+                record["dominant_driver"] = "unknown"
+                record["driver_consensus_pct"] = 0.0
         else:
             record["dominant_driver"] = "unknown"
+            record["driver_consensus_pct"] = 0.0
 
         sec_col = mapping.get("secondary_driver")
         if sec_col and sec_col in group.columns:
