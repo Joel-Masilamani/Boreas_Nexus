@@ -1,7 +1,7 @@
 {
   "dataset": "urban_heat_hotspot_knowledge_layer.geoparquet",
-  "validation_run_id": "VAL-M1-97d747a0",
-  "timestamp": "2026-09-02T04:28:50.732773+00:00",
+  "validation_run_id": "VAL-M1-4b999b13",
+  "timestamp": "2026-09-02T05:18:23.930658+00:00",
   "configuration_version": "1.0.0",
   "total_checks": 32,
   "pass_count": 32,
