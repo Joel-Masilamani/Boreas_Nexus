@@ -16,8 +16,11 @@ htmlcov/
 
 # Project Data & Cache
 data/raw/
+backend/data/raw/
 cache/
+backend/cache/
 logs/
+backend/logs/
 *.log
 
 # IDE & Editor specific

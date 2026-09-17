@@ -1,6 +1,17 @@
 """
 Shared Pytest Fixtures for Boreas-Nexus Test Suites
 """
+import os
+import sys
+from pathlib import Path
+
+# Ensure backend directory is in sys.path and is working directory
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+if str(BACKEND_DIR) not in sys.path:
+    sys.path.insert(0, str(BACKEND_DIR))
+
+if Path.cwd() != BACKEND_DIR and (BACKEND_DIR / "config").exists():
+    os.chdir(BACKEND_DIR)
 
 import pytest
 import numpy as np
