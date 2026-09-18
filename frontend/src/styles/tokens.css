@@ -1,0 +1,51 @@
+:root {
+  /* Canvas & Panel Surfaces (from Figma design.css) */
+  --bnx-bg: #05050F;
+  --bnx-panel: #191932;
+  --bnx-panel-elevated: #1F1F43;
+  --bnx-panel-active: #25245D;
+  --bnx-border: #323273;
+  --bnx-border-subtle: #242748;
+  --bnx-border-muted: #363661;
+
+  /* Typography Colors */
+  --bnx-text-primary: #FFFFFF;
+  --bnx-text-secondary: #E2E8F0;
+  --bnx-text-muted: #6A6A9F;
+  --bnx-text-dim: #535193;
+
+  /* System Identity Accents */
+  --bnx-blue: #176BF8;
+  --bnx-blue-vibrant: #383DCA;
+  --bnx-purple: #942BE6;
+  --bnx-cyan: #4DFFDF;
+  --bnx-cyan-glow: rgba(77, 255, 223, 0.35);
+  --bnx-purple-glow: rgba(148, 43, 230, 0.35);
+  --bnx-blue-glow: rgba(23, 107, 248, 0.4);
+
+  /* Thermal Semantics (STRICT) */
+  --thermal-cool: #3B82F6;
+  --thermal-moderate: #5EFF5A;
+  --thermal-warm: #FFA63F;
+  --thermal-hot: #FF7A00;
+  --thermal-extreme: #FF0707;
+  --thermal-critical: #EC223B;
+
+  /* Shadows (exact from design.css) */
+  --bnx-shadow-card: 0px 20px 13px rgba(0, 0, 0, 0.09),
+                     0px 8.15px 6.52px rgba(0, 0, 0, 0.07),
+                     0px 1.85px 3.15px rgba(0, 0, 0, 0.04);
+  --bnx-shadow-modal: 0px 100px 80px rgba(0, 0, 0, 0.3),
+                      0px 64.8px 46.9px rgba(0, 0, 0, 0.22),
+                      0px 38.5px 25.5px rgba(0, 0, 0, 0.18),
+                      0px 20px 13px rgba(0, 0, 0, 0.15);
+
+  --bnx-glow-selected: 0 0 16px rgba(77, 255, 223, 0.6), 0 0 32px rgba(23, 107, 248, 0.3);
+  --bnx-glow-hotspot: 0 0 20px rgba(236, 34, 59, 0.6);
+
+  /* Radii */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+}
